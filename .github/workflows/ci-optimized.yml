@@ -112,6 +112,12 @@ jobs:
           name: generated-protos
           path: server/internal/proto
 
+      - name: Verify proto files
+        run: |
+          ls -la server/internal/proto/
+          test -f server/internal/proto/common.pb.go
+          echo "Proto files verified"
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -161,6 +167,12 @@ jobs:
         with:
           name: generated-protos
           path: server/internal/proto
+
+      - name: Verify proto files
+        run: |
+          ls -la server/internal/proto/
+          test -f server/internal/proto/common.pb.go
+          echo "Proto files verified"
 
       - name: Set up Go
         uses: actions/setup-go@v5
