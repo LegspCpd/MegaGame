@@ -493,6 +493,8 @@ type DialogueChoice struct {
 	NextNode    string
 	Conditions  []string
 	Consequences []string
+	// EndsConversation is set when picking this choice closes the dialogue.
+	EndsConversation bool
 }
 
 type SubtitleEntry struct {
@@ -753,3 +755,45 @@ const (
 	EasingOutBounce
 	EasingInOutBounce
 )
+
+// Component identity for the components that carry plain data without their own
+// ComponentID method. Registered in RegisterAllComponents above.
+func (VehicleModifications) ComponentID() ecs.ComponentID { return CompVehicleMods }
+
+func (WeaponAttachments) ComponentID() ecs.ComponentID { return CompWeaponAttachments }
+
+func (WeaponCondition) ComponentID() ecs.ComponentID { return CompWeaponCondition }
+
+// Vector2 is a 2-component vector, used for input axes.
+type Vector2 struct {
+	X float32
+	Y float32
+}
+
+func (Vector2) Add(o Vector2) Vector2   { return Vector2{X: o.X, Y: o.Y} }
+func (v Vector2) Sub(o Vector2) Vector2    { return Vector2{v.X - o.X, v.Y - o.Y} }
+func (v Vector2) Mul(s float32) Vector2    { return Vector2{v.X * s, v.Y * s} }
+func (v Vector2) LengthSq() float32        { return v.X*v.X + v.Y*v.Y }
+func (v Vector2) Length() float32          { return float32(math.Sqrt(float64(v.LengthSq()))) }
+func (v Vector2) Normalized() Vector2 {
+	l := v.Length()
+	if l == 0 {
+		return Vector2{}
+	}
+	return Vector2{v.X / l, v.Y / l}
+}
+
+// SubtitleData is the dialogue subtitle payload attached to a dialogue node.
+type SubtitleData struct {
+	Text     string
+	Speaker  string
+	Duration float32
+}
+
+// AnimationCue describes a one-shot animation attached to a dialogue node.
+type AnimationCue struct {
+	Name      string
+	StartTime float32
+	Duration  float32
+	Loop      bool
+}

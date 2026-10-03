@@ -481,10 +481,10 @@ type ServerMetrics struct {
 	NetworkTime      atomic.Int64
 }
 
-func NewOptimizedGameServer(world *ecs.World, scheduler *ecs.SystemManager) *OptimizedGameServer {
+func NewOptimizedGameServer(world *ecs.World, scheduler *ecs.SystemScheduler) *OptimizedGameServer {
 	s := &OptimizedGameServer{
 		world:            world,
-		scheduler:        scheduler.(*ecs.SystemScheduler), // type assertion
+		scheduler:        scheduler,
 		clients:          make(map[string]*OptimizedClientSession),
 		tickRate:         60,
 		stopCh:           make(chan struct{}),

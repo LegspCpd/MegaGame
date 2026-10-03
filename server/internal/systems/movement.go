@@ -1,6 +1,8 @@
 package systems
 
 import (
+	"math"
+
 	"github.com/megame/server/internal/components"
 	"github.com/megame/server/internal/ecs"
 )
@@ -72,7 +74,7 @@ func (s *MovementSystem) Update(world *ecs.World, dt float32) {
 		a := ai.(*components.AIComponent)
 
 		if n.IsFleeing {
-			s.handleFlee(t, p, n, a, dt)
+			s.handleFlee(t, p, n, a, world, dt)
 		} else if n.IsInCombat {
 			s.handleCombatMovement(t, p, n, a, world, dt)
 		} else {
@@ -96,7 +98,7 @@ func (s *MovementSystem) Update(world *ecs.World, dt float32) {
 	})
 }
 
-func (s *MovementSystem) handleFlee(t *components.TransformComponent, p *components.PhysicsComponent, n *components.NPCComponent, a *components.AIComponent, dt float32) {
+func (s *MovementSystem) handleFlee(t *components.TransformComponent, p *components.PhysicsComponent, n *components.NPCComponent, a *components.AIComponent, world *ecs.World, dt float32) {
 	// Flee from target
 	if n.TargetEntity != 0 {
 		if targetTransform, ok := world.GetComponent(n.TargetEntity, components.CompTransform); ok {

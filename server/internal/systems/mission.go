@@ -82,21 +82,21 @@ func (s *MissionSystem) Update(world *ecs.World, dt float32) {
 
 func (s *MissionSystem) checkObjective(world *ecs.World, playerEntity ecs.EntityID, objDef *MissionObjective, objProgress *components.ObjectiveProgress, player *components.PlayerComponent) {
 	switch objDef.Type {
-	case components.ObjectiveGoTo:
+	case ObjectiveGoTo:
 		s.checkGoTo(world, playerEntity, objDef, objProgress)
-	case components.ObjectiveKill:
+	case ObjectiveKill:
 		s.checkKill(world, playerEntity, objDef, objProgress)
-	case components.ObjectiveDestroy:
+	case ObjectiveDestroy:
 		s.checkDestroy(world, playerEntity, objDef, objProgress)
-	case components.ObjectiveCollect:
+	case ObjectiveCollect:
 		s.checkCollect(world, playerEntity, objDef, objProgress)
-	case components.ObjectiveDeliver:
+	case ObjectiveDeliver:
 		s.checkDeliver(world, playerEntity, objDef, objProgress)
-	case components.ObjectiveSurviveWaves:
+	case ObjectiveSurviveWaves:
 		s.checkSurvive(objDef, objProgress)
-	case components.ObjectiveLoseWanted:
+	case ObjectiveLoseWanted:
 		s.checkLoseWanted(player, objDef, objProgress)
-	case components.ObjectiveRaceCheckpoint:
+	case ObjectiveRaceCheckpoint:
 		s.checkRaceCheckpoint(world, playerEntity, objDef, objProgress)
 	}
 }
@@ -562,11 +562,12 @@ func (s *DialogueSystem) processNode(world *ecs.World, d *components.DialogueCom
 		d.Choices = make([]components.DialogueChoice, len(node.Choices))
 		for i, choice := range node.Choices {
 			d.Choices[i] = components.DialogueChoice{
-				ID:           choice.ID,
-				Text:         choice.Text,
-				NextNode:     choice.NextNodeID,
-				Conditions:   choice.Conditions,
-				Consequences: choice.Consequences,
+				ID:               choice.ID,
+				Text:             choice.Text,
+				NextNode:         choice.NextNodeID,
+				Conditions:       choice.Conditions,
+				Consequences:     choice.Consequences,
+				EndsConversation: choice.EndsConversation,
 			}
 		}
 	}
@@ -594,13 +595,13 @@ func (s *DialogueSystem) SelectChoice(world *ecs.World, playerEntity ecs.EntityI
 	// Change reputation
 	// Would update faction reputation
 
-	if choice.EndsConversation || choice.NextNodeID == "" {
+	if choice.EndsConversation || choice.NextNode == "" {
 		s.EndDialogue(world, playerEntity)
 		return
 	}
 
-	d.CurrentNode = choice.NextNodeID
-	if nextNode, ok := dialogueDef.Nodes[choice.NextNodeID]; ok {
+	d.CurrentNode = choice.NextNode
+	if nextNode, ok := dialogueDef.Nodes[choice.NextNode]; ok {
 		s.processNode(world, d, nextNode)
 	}
 }
