@@ -119,6 +119,7 @@ jobs:
           echo "=== Server internal proto dir ==="
           ls -la ../server/internal/
           echo "=== Generate Go protos ==="
+          echo "Running: protoc --go_out=../server/internal/proto --go_opt=paths=source_relative --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative *.proto"
           protoc --go_out=../server/internal/proto --go_opt=paths=source_relative \
             --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative \
             *.proto 2>&1
@@ -127,6 +128,7 @@ jobs:
           echo "=== Check server/internal/proto after Go ==="
           ls -la ../server/internal/proto/
           echo "=== Generate C# protos ==="
+          echo "Running: protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto --csharp_opt=base_namespace=Megame *.proto"
           protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto \
             --csharp_opt=base_namespace=Megame \
             *.proto 2>&1
