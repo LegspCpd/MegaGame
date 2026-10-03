@@ -1,6 +1,6 @@
 # ============================================================================
 # OPTIMIZED CI/CD PIPELINE
-# Uses buf for reliable protobuf generation
+# Uses pre-generated proto files (committed to repo) for reliability
 # ============================================================================
 
 name: CI/CD Optimized
@@ -32,10 +32,10 @@ env:
 
 jobs:
   # ============================================================================
-  # PROTOBUF GENERATION (via buf for reliability)
+  # VALIDATE PRE-GENERATED PROTO FILES
   # ============================================================================
-  protobuf:
-    name: Generate Protobuf
+  validate-protos:
+    name: Validate Pre-generated Protobuf
     runs-on: ubuntu-latest
     outputs:
       proto_hash: ${{ steps.proto_hash.outputs.hash }}
@@ -43,12 +43,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Generate Protobuf via buf
-        uses: bufbuild/buf-action@v1
-        with:
-          args: generate
-
-      - name: Verify generated files
+      - name: Verify pre-generated protos exist
         run: |
           test -f server/internal/proto/common.pb.go
           test -f server/internal/proto/entity.pb.go
@@ -58,7 +53,7 @@ jobs:
           test -f client/Assets/Scripts/Generated/Proto/Common.cs
           test -f client/Assets/Scripts/Generated/Proto/Entity.cs
           test -f client/Assets/Scripts/Generated/Proto/Network.cs
-          echo "All proto files generated successfully"
+          echo "All pre-generated proto files verified"
 
       - name: Calculate proto hash
         id: proto_hash
@@ -66,38 +61,23 @@ jobs:
           hash=$(find shared/proto -name "*.proto" -exec cat {} + | sha256sum | cut -d' ' -f1)
           echo "hash=$hash" >> $GITHUB_OUTPUT
 
-      - name: Upload generated protos
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-protos
-          path: |
-            server/internal/proto
-            client/Assets/Scripts/Generated/Proto
-          retention-days: 7
-
   # ============================================================================
   # GO SERVER - Build, Test, Lint, Security
   # ============================================================================
   go-lint:
     name: Go Lint & Vet
-    needs: protobuf
+    needs: validate-protos
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download proto artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: generated-protos
-          path: server/internal/proto
-
-      - name: Verify proto files
+      - name: Verify pre-generated protos exist
         run: |
           test -f server/internal/proto/common.pb.go
           test -f server/internal/proto/entity.pb.go
           test -f server/internal/proto/network.pb.go
-          echo "Proto files verified"
+          echo "Pre-generated proto files verified"
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -134,24 +114,18 @@ jobs:
 
   go-test:
     name: Go Test (Race Detector)
-    needs: protobuf
+    needs: validate-protos
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download proto artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: generated-protos
-          path: server/internal/proto
-
-      - name: Verify proto files
+      - name: Verify pre-generated protos exist
         run: |
           test -f server/internal/proto/common.pb.go
           test -f server/internal/proto/entity.pb.go
           test -f server/internal/proto/network.pb.go
-          echo "Proto files verified"
+          echo "Pre-generated proto files verified"
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -186,7 +160,7 @@ jobs:
 
   go-build:
     name: Go Build (Multi-arch)
-    needs: [protobuf, go-lint, go-test]
+    needs: [validate-protos, go-lint, go-test]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -199,18 +173,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download proto artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: generated-protos
-          path: server/internal/proto
-
-      - name: Verify proto files
+      - name: Verify pre-generated protos exist
         run: |
           test -f server/internal/proto/common.pb.go
           test -f server/internal/proto/entity.pb.go
           test -f server/internal/proto/network.pb.go
-          echo "Proto files verified"
+          echo "Pre-generated proto files verified"
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -276,7 +244,7 @@ jobs:
   # ============================================================================
   unity-test:
     name: Unity Tests
-    needs: protobuf
+    needs: validate-protos
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -285,18 +253,12 @@ jobs:
         with:
           lfs: true
 
-      - name: Download proto artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: generated-protos
-          path: client/Assets/Scripts/Generated/Proto
-
-      - name: Verify proto files
+      - name: Verify pre-generated protos exist
         run: |
           test -f client/Assets/Scripts/Generated/Proto/Common.cs
           test -f client/Assets/Scripts/Generated/Proto/Entity.cs
           test -f client/Assets/Scripts/Generated/Proto/Network.cs
-          echo "C# proto files verified"
+          echo "Pre-generated C# proto files verified"
 
       - name: Cache Library
         uses: actions/cache@v4
@@ -363,7 +325,7 @@ print('All tests passed')
 
   unity-build-linux:
     name: Unity Build Linux
-    needs: [protobuf, unity-test]
+    needs: [validate-protos, unity-test]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -372,18 +334,12 @@ print('All tests passed')
         with:
           lfs: true
 
-      - name: Download proto artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: generated-protos
-          path: client/Assets/Scripts/Generated/Proto
-
-      - name: Verify proto files
+      - name: Verify pre-generated protos exist
         run: |
           test -f client/Assets/Scripts/Generated/Proto/Common.cs
           test -f client/Assets/Scripts/Generated/Proto/Entity.cs
           test -f client/Assets/Scripts/Generated/Proto/Network.cs
-          echo "C# proto files verified"
+          echo "Pre-generated C# proto files verified"
 
       - name: Cache Library
         uses: actions/cache@v4
@@ -441,7 +397,7 @@ print('All tests passed')
 
   unity-build-windows:
     name: Unity Build Windows
-    needs: [protobuf, unity-test]
+    needs: [validate-protos, unity-test]
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -450,18 +406,12 @@ print('All tests passed')
         with:
           lfs: true
 
-      - name: Download proto artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: generated-protos
-          path: client/Assets/Scripts/Generated/Proto
-
-      - name: Verify proto files
+      - name: Verify pre-generated protos exist
         run: |
           test -f client/Assets/Scripts/Generated/Proto/Common.cs
           test -f client/Assets/Scripts/Generated/Proto/Entity.cs
           test -f client/Assets/Scripts/Generated/Proto/Network.cs
-          echo "C# proto files verified"
+          echo "Pre-generated C# proto files verified"
 
       - name: Cache Library
         uses: actions/cache@v4
@@ -691,12 +641,6 @@ benchmark:
       with:
         go-version: ${{ env.GO_VERSION }}
 
-    - name: Download proto artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: generated-protos
-        path: server/internal/proto
-
     - name: Run benchmarks
       run: |
         cd server
@@ -712,4 +656,5 @@ benchmark:
     - name: Compare with baseline
       run: |
         # Compare with stored baseline
-        echo "Benchmark comparison would run here"
+        echo "Benchmark comparison would run here"#   C I   f i x   v 2  
+ 
