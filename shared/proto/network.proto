@@ -117,7 +117,7 @@ message WantedZone {
 
 message RPCRequest {
   string request_id = 1;
-  string method = 2;
+  RPCMethod method = 2;
   bytes payload = 3;
 }
 

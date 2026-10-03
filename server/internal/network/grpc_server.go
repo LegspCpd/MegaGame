@@ -90,7 +90,9 @@ func (s *GameServer) broadcastSnapshots() {
 
 	for _, client := range s.clients {
 		if client.Stream != nil {
-			err := client.Stream.Send(snapshot)
+			err := client.Stream.Send(&network.ServerMessage{
+			Payload: &network.ServerMessage_Snapshot{Snapshot: snapshot},
+		})
 			if err != nil {
 				// Client disconnected
 				go s.handleDisconnect(client.PlayerID)
@@ -201,18 +203,18 @@ func (s *GameServer) buildVehicleUpdate(e ecs.EntityID) *network.VehicleStateUpd
 	vehicle, _ := s.world.GetComponent(e, components.CompVehicle)
 	v := vehicle.(*components.VehicleComponent)
 
-	doors := make([]*network.VehicleDoorState, len(v.Doors))
+	doors := make([]*entity.VehicleDoorState, len(v.Doors))
 	for i, d := range v.Doors {
-		doors[i] = &network.VehicleDoorState{
+		doors[i] = &entity.VehicleDoorState{
 			Index:     d.Index,
 			Angle:     d.Angle,
 			IsBroken:  d.Broken,
 		}
 	}
 
-	wheels := make([]*network.VehicleWheelState, len(v.Wheels))
+	wheels := make([]*entity.VehicleWheelState, len(v.Wheels))
 	for i, w := range v.Wheels {
-		wheels[i] = &network.VehicleWheelState{
+		wheels[i] = &entity.VehicleWheelState{
 			Index:                 w.Index,
 			Rotation:              w.Rotation,
 			SteerAngle:            w.SteerAngle,
@@ -565,7 +567,7 @@ func (s *GameServer) rpcSetVehicleMods(session *ClientSession, rpc *network.RPCR
 	return &network.RPCResponse{RequestId: rpc.RequestId, Success: true}
 }
 
-func (s *GameServer) rpcTriggerMission(session *ClientSession, rpc *network.RPCResponse) *network.RPCResponse {
+func (s *GameServer) rpcTriggerMission(session *ClientSession, rpc *network.RPCRequest) *network.RPCResponse {
 	if session.PlayerID == 0 {
 		return &network.RPCResponse{RequestId: rpc.RequestId, Success: false, Error: "Not spawned"}
 	}
