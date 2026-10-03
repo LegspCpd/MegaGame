@@ -43,71 +43,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install buf
-        run: |
-          BUF_VERSION=1.32.0
-          OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-          ARCH=$(uname -m)
-          if [ "$ARCH" = "x86_64" ]; then ARCH="x86_64"; fi
-          if [ "$ARCH" = "aarch64" ]; then ARCH="arm64"; fi
-          curl -fsSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-${OS}-${ARCH}" -o /usr/local/bin/buf
-          chmod +x /usr/local/bin/buf
-          buf --version
-
-      - name: Install Go protoc plugins
-        run: |
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
-      - name: Install protoc
-        run: |
-          sudo apt-get update && sudo apt-get install -y protobuf-compiler
-          protoc --version
-
-      - name: Generate Protobuf via protoc
+      - name: Generate Protobuf via buf
+        uses: bufbuild/buf-action@v1
         working-directory: shared/proto
-        run: |
-          set -ex
-          echo "=== Starting protoc generate ==="
-          echo "=== protoc version ==="
-          protoc --version
-          echo "=== Install Go protoc plugins ==="
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-          echo "=== Create output directories ==="
-          mkdir -p ../server/internal/proto
-          mkdir -p ../../client/Assets/Scripts/Generated/Proto
-          echo "=== List proto files ==="
-          ls -la *.proto
-          echo "=== Generate Go protos ==="
-          echo "Running: protoc --go_out=../server/internal/proto --go_opt=paths=source_relative --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative *.proto"
-          protoc --go_out=../server/internal/proto --go_opt=paths=source_relative \
-            --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative \
-            *.proto 2>&1
-          echo "Go protos generation exit code: $?"
-          echo "=== Go protos generated ==="
-          echo "=== Check server/internal/proto after Go ==="
-          ls -la ../server/internal/proto/
-          echo "=== Generate C# protos ==="
-          echo "Running: protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto --csharp_opt=base_namespace=Megame *.proto"
-          protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto \
-            --csharp_opt=base_namespace=Megame \
-            *.proto 2>&1
-          echo "C# protos generation exit code: $?"
-          echo "=== C# protos generated ==="
-          echo "=== Check client/Assets/Scripts/Generated/Proto after C# ==="
-          ls -la ../../client/Assets/Scripts/Generated/Proto/
-          echo "=== Generated Go files ==="
-          find ../server/internal/proto -name "*.pb.go" -o -name "*.pb.grpc.go" | head -20
-          echo "=== Generated C# files ==="
-          find ../../client/Assets/Scripts/Generated/Proto -name "*.cs" | head -20
+        with:
+          args: generate
 
       - name: Verify generated files
         run: |
-          ls -la server/internal/proto/*.pb.go
-          echo "Go proto files generated successfully"
+          test -f server/internal/proto/common.pb.go
+          test -f server/internal/proto/entity.pb.go
+          test -f server/internal/proto/network.pb.go
+          test -f server/internal/proto/gameplay.pb.go
+          test -f server/internal/proto/world.pb.go
+          test -f client/Assets/Scripts/Generated/Proto/Common.cs
+          test -f client/Assets/Scripts/Generated/Proto/Entity.cs
+          test -f client/Assets/Scripts/Generated/Proto/Network.cs
+          echo "All proto files generated successfully"
 
       - name: Calculate proto hash
         id: proto_hash
@@ -513,7 +465,7 @@ print('All tests passed')
           echo "C# proto files verified"
 
       - name: Cache Library
-        uses: actions/cache@v4
+        uses: actions.cache@v4
         with:
           path: |
             client/Library

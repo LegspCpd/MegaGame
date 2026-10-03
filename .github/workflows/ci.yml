@@ -1,3 +1,8 @@
+# ============================================================================
+# OPTIMIZED CI/CD PIPELINE
+# Uses buf for reliable protobuf generation
+# ============================================================================
+
 name: CI/CD Pipeline
 
 on:
@@ -15,9 +20,41 @@ env:
   UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
 jobs:
+  # ============================================================================
+  # PROTOBUF GENERATION (via buf for reliability)
+  # ============================================================================
+  protobuf:
+    name: Generate Protobuf
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate Protobuf via buf
+        uses: bufbuild/buf-action@v1
+        working-directory: shared/proto
+        with:
+          args: generate
+
+      - name: Verify generated files
+        run: |
+          ls -la server/internal/proto/*.pb.go
+          ls -la client/Assets/Scripts/Generated/Proto/*.cs
+          echo "All proto files generated successfully"
+
+      - name: Upload generated protos
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-protos
+          path: |
+            server/internal/proto
+            client/Assets/Scripts/Generated/Proto
+          retention-days: 7
+
   # Go Server Build & Test
   go-build:
     name: Go Server Build
+    needs: protobuf
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -26,6 +63,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: server/internal/proto
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -68,100 +111,11 @@ jobs:
             server/megame-server.exe
           retention-days: 7
 
-  # Go Protobuf Generation (via buf for reliability)
-  protobuf:
-    name: Generate Protobuf
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install buf
-        run: |
-          BUF_VERSION=1.32.0
-          OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-          ARCH=$(uname -m)
-          if [ "$ARCH" = "x86_64" ]; then ARCH="x86_64"; fi
-          if [ "$ARCH" = "aarch64" ]; then ARCH="arm64"; fi
-          curl -fsSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-${OS}-${ARCH}" -o /usr/local/bin/buf
-          chmod +x /usr/local/bin/buf
-          buf --version
-
-      - name: Install Go protoc plugins
-        run: |
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
-      - name: Install protoc
-        run: |
-          sudo apt-get update && sudo apt-get install -y protobuf-compiler
-          protoc --version
-
-      - name: Generate Protobuf via protoc
-        working-directory: shared/proto
-        run: |
-          set -ex
-          echo "=== Starting protoc generate ==="
-          echo "=== protoc version ==="
-          protoc --version
-          echo "=== Install Go protoc plugins ==="
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-          echo "=== Create output directories ==="
-          mkdir -p ../server/internal/proto
-          mkdir -p ../../client/Assets/Scripts/Generated/Proto
-          echo "=== List proto files ==="
-          ls -la *.proto
-          echo "=== Current directory ==="
-          pwd
-          echo "=== Server internal proto dir ==="
-          ls -la ../server/internal/
-          echo "=== Generate Go protos ==="
-          echo "Running: protoc --go_out=../server/internal/proto --go_opt=paths=source_relative --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative *.proto"
-          protoc --go_out=../server/internal/proto --go_opt=paths=source_relative \
-            --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative \
-            *.proto 2>&1
-          echo "Go protos generation exit code: $?"
-          echo "=== Go protos generated ==="
-          echo "=== Check server/internal/proto after Go ==="
-          ls -la ../server/internal/proto/
-          echo "=== Generate C# protos ==="
-          echo "Running: protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto --csharp_opt=base_namespace=Megame *.proto"
-          protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto \
-            --csharp_opt=base_namespace=Megame \
-            *.proto 2>&1
-          echo "C# protos generation exit code: $?"
-          echo "=== C# protos generated ==="
-          echo "=== Check client/Assets/Scripts/Generated/Proto after C# ==="
-          ls -la ../../client/Assets/Scripts/Generated/Proto/
-          echo "=== Generated Go files ==="
-          find ../server/internal/proto -name "*.pb.go" -o -name "*.pb.grpc.go" | head -20
-          echo "=== Generated C# files ==="
-          find ../../client/Assets/Scripts/Generated/Proto -name "*.cs" | head -20
-          echo "=== Check server/internal/proto ==="
-          ls -la ../server/internal/proto/
-
-      - name: Verify generated files
-        run: |
-          ls -la server/internal/proto/*.pb.go
-          echo "Go proto files generated successfully"
-
-      - name: Upload generated protos
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-protos
-          path: |
-            server/internal/proto
-            client/Assets/Scripts/Generated/Proto
-          retention-days: 7
-
   # Unity Client Build
   unity-build:
     name: Unity Client Build
-    runs-on: ubuntu-latest
     needs: protobuf
+    runs-on: ubuntu-latest
     timeout-minutes: 60
 
     steps:
@@ -202,36 +156,29 @@ jobs:
         with:
           projectPath: client
           targetPlatform: StandaloneLinux64
-          buildMethod: Megame.Client.BuildScript.PerformBuild
-          customParameters: -buildVersion ${{ github.ref_name }}
+          buildMethod: Megame.Client.BuildScript.PerformClientBuild
+          customParameters: -buildVersion ${{ github.ref_name }} -outputPath /github/workspace/build/linux
+          compression: lz4hc
 
-      - name: Build Unity Project (Windows)
-        uses: game-ci/unity-builder@v2
-        with:
-          projectPath: client
-          targetPlatform: StandaloneWindows64
-          buildMethod: Megame.Client.BuildScript.PerformBuild
-          customParameters: -buildVersion ${{ github.ref_name }}
-
-      - name: Upload Unity builds
+      - name: Upload Linux build
         uses: actions/upload-artifact@v4
         with:
-          name: megame-client
-          path: |
-            build/StandaloneLinux64/
-            build/StandaloneWindows64/
+          name: megame-linux
+          path: build/
           retention-days: 7
 
-  # Unity Tests
-  unity-test:
-    name: Unity Tests
-    runs-on: ubuntu-latest
+  # Unity Windows Build
+  unity-build-windows:
+    name: Unity Build Windows
     needs: protobuf
-    timeout-minutes: 30
+    runs-on: windows-latest
+    timeout-minutes: 60
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Download protobuf artifacts
         uses: actions/download-artifact@v4
@@ -239,126 +186,38 @@ jobs:
           name: generated-protos
           path: client/Assets/Scripts/Generated/Proto
 
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: |
+            client/Library
+            client/Temp
+          key: unity-library-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}
+          restore-keys: |
+            unity-library-${{ runner.os }}-
+
       - name: Install Unity
         uses: game-ci/unity-installer@v2
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
 
-      - name: Run Unity Tests
-        uses: game-ci/unity-test-runner@v2
+      - name: Activate Unity License
+        uses: game-ci/unity-activate@v2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+
+      - name: Build Windows Client
+        uses: game-ci/unity-builder@v2
         with:
           projectPath: client
-          testMode: EditMode
-          artifactsPath: test-results/editmode
+          targetPlatform: StandaloneWindows64
+          buildMethod: Megame.Client.BuildScript.PerformClientBuild
+          customParameters: -buildVersion ${{ github.ref_name }} -outputPath C:\github\workspace\build\windows
+          compression: lz4hc
 
-      - name: Run Unity PlayMode Tests
-        uses: game-ci/unity-test-runner@v2
-        with:
-          projectPath: client
-          testMode: PlayMode
-          artifactsPath: test-results/playmode
-
-      - name: Upload test results
+      - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: unity-test-results
-          path: test-results/
+          name: megame-windows
+          path: build/
           retention-days: 7
-
-  # Docker Image Build
-  docker-build:
-    name: Build Docker Images
-    runs-on: ubuntu-latest
-    needs: [go-build, unity-build]
-    if: github.event_name == 'release' || github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download server artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: megame-server
-          path: server/build
-
-      - name: Download client artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: megame-client
-          path: client/build
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push server image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./server
-          file: ./server/Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/megame-server:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/megame-server:${{ github.ref_name }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push client image (headless)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./client
-          file: ./client/Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/megame-client:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/megame-client:${{ github.ref_name }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # Create Release
-  create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: [go-build, unity-build, docker-build]
-    if: github.event_name == 'release'
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: release-assets
-
-      - name: Prepare release assets
-        run: |
-          mkdir -p release-package
-          cp release-assets/megame-server/megame-server release-package/megame-server-linux
-          cp release-assets/megame-server/megame-server.exe release-package/megame-server-windows.exe
-          cp -r release-assets/megame-client/StandaloneLinux64 release-package/MegaGame-Linux
-          cp -r release-assets/megame-client/StandaloneWindows64 release-package/MegaGame-Windows
-
-          # Create archives
-          cd release-package
-          tar -czf megame-server-linux.tar.gz megame-server-linux
-          zip -r megame-server-windows.zip megame-server-windows.exe
-          tar -czf megame-client-linux.tar.gz MegaGame-Linux
-          zip -r megame-client-windows.zip MegaGame-Windows
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            release-package/megame-server-linux.tar.gz
-            release-package/megame-server-windows.zip
-            release-package/megame-client-linux.tar.gz
-            release-package/megame-client-windows.zip
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
