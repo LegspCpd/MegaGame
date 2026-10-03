@@ -64,6 +64,9 @@ jobs:
         working-directory: shared/proto
         run: |
           echo "=== Starting buf generate ==="
+          echo "=== buf version ==="
+          buf --version
+          echo "=== buf generate ==="
           buf generate --debug -v 2>&1
           echo "=== Generated Go files ==="
           find ../server/internal/proto -name "*.pb.go" -o -name "*.pb.grpc.go" | head -20
