@@ -127,6 +127,13 @@ jobs:
       - name: Download dependencies
         run: cd server && go mod download
 
+      - name: Verify proto directory exists
+        run: |
+          ls -la server/internal/proto/
+          test -d server/internal/proto
+          test -f server/internal/proto/common.pb.go
+          echo "Proto directory verified"
+
       - name: Tidy dependencies
         run: cd server && go mod tidy
 
