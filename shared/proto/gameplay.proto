@@ -23,7 +23,7 @@ message Mission {
   repeated string reward_weapons = 12;     // weapon model IDs
   uint32 reward_xp = 13;
   string giver_npc_id = 14;                // NPC who gives this mission
-  Vector3 start_position = 15;
+  megame.common.Vector3 start_position = 15;
   string start_cutscene = 16;
   string end_cutscene = 17;
   bool is_replayable = 18;
@@ -65,7 +65,7 @@ message MissionObjective {
   ObjectiveStatus status = 4;
   int32 current_progress = 5;
   int32 target_progress = 6;
-  Vector3 target_position = 7;
+  megame.common.Vector3 target_position = 7;
   float target_radius = 8;
   uint64 target_entity_id = 9;
   string target_item_id = 10;
@@ -148,8 +148,8 @@ message CameraShot {
   }
   ShotType type = 1;
   uint64 target_entity = 2;
-  Vector3 position_offset = 3;
-  Vector3 look_at_offset = 4;
+  megame.common.Vector3 position_offset = 3;
+  megame.common.Vector3 look_at_offset = 4;
   float fov = 5;
   float duration = 6;                   // blend time
   float shake_intensity = 7;
@@ -172,11 +172,11 @@ enum SubtitlePosition {
 
 message SubtitleStyle {
   int32 font_size = 1;
-  Color color = 2;
-  Color outline_color = 3;
+  megame.common.Color color = 2;
+  megame.common.Color outline_color = 3;
   float outline_thickness = 4;
   bool background = 5;
-  Color background_color = 6;
+  megame.common.Color background_color = 6;
   bool speaker_name_visible = 7;
 }
 
