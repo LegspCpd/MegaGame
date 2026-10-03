@@ -29,7 +29,7 @@ message ClientInput {
   bool vehicle_handbrake = 18;
   bool vehicle_horn = 19;
   bool vehicle_lights = 20;
-  bool vehicle_siren = 20;
+  bool vehicle_siren = 21;
   bool vehicle_next_seat = 22;
   bool vehicle_prev_seat = 23;
   bool pause_menu = 24;
