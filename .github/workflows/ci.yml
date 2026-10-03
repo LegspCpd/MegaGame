@@ -101,6 +101,7 @@ jobs:
       - name: Generate Protobuf via protoc
         working-directory: shared/proto
         run: |
+          set -ex
           echo "=== Starting protoc generate ==="
           echo "=== protoc version ==="
           protoc --version
@@ -111,14 +112,18 @@ jobs:
           echo "=== Create output directories ==="
           mkdir -p ../server/internal/proto
           mkdir -p ../../client/Assets/Scripts/Generated/Proto
+          echo "=== List proto files ==="
+          ls -la *.proto
           echo "=== Generate Go protos ==="
           protoc --go_out=../server/internal/proto --go_opt=paths=source_relative \
             --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative \
             *.proto
+          echo "=== Go protos generated ==="
           echo "=== Generate C# protos ==="
           protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto \
             --csharp_opt=base_namespace=Megame \
             *.proto
+          echo "=== C# protos generated ==="
           echo "=== Generated Go files ==="
           find ../server/internal/proto -name "*.pb.go" -o -name "*.pb.grpc.go" | head -20
           echo "=== Generated C# files ==="
