@@ -88,7 +88,7 @@ message ClothingItem {
   Slot slot = 1;
   string item_id = 2;           // e.g., "cloth_tshirt_01", "cloth_jacket_leather_03"
   string variant = 3;           // texture variant
-  Color tint = 4;
+  megame.common.Color tint = 4;
   bool is_dirty = 5;
   float wear = 6;               // 0.0 - 1.0
 }
@@ -106,15 +106,15 @@ message AccessoryItem {
   }
   Slot slot = 1;
   string item_id = 2;
-  Color tint = 3;
+  megame.common.Color tint = 3;
 }
 
 message TattooItem {
   string tattoo_id = 1;         // e.g., "tattoo_dragon_back", "tattoo_skull_arm"
-  Vector3 position = 2;         // UV position on body
+  megame.common.Vector3 position = 2;         // UV position on body
   float scale = 3;
   float rotation = 4;
-  Color tint = 5;
+  megame.common.Color tint = 5;
 }
 
 message VehicleState {
@@ -177,7 +177,7 @@ message VehiclePerformanceSpecs {
 }
 
 message VehicleDimensions {
-  megame.common.Vector3 position = 2;
+  megame.common.Vector3 position = 1;
   megame.common.Vector3 wheel_base = 2;
   float ground_clearance = 3;
 }
