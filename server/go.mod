@@ -2,6 +2,10 @@ module megame/server
 
 go 1.23
 
+replace (
+	github.com/megame/shared/proto => ./internal/proto
+)
+
 require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/gorilla/websocket v1.5.1
