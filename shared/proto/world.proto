@@ -1,4 +1,4 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 
 package megame.world;
 
@@ -11,8 +11,8 @@ message WorldDefinition {
   string world_id = 1;
   string display_name = 2;
   string description = 3;
-  megame.common.megame.common.Vector3 world_origin = 4;             // world space origin
-  megame.common.megame.common.Vector3 world_size = 5;               // total world bounds
+  megame.common.Vector3 world_origin = 4;             // world space origin
+  megame.common.Vector3 world_size = 5;               // total world bounds
   repeated RegionDefinition regions = 6;
   repeated POIDefinition pois = 7;
   repeated RoadDefinition roads = 8;
@@ -599,4 +599,5 @@ message StarLayer {
   float twinkle_speed = 4;
   float rotation_speed = 5;              // degrees per hour
 }
+
 
