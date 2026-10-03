@@ -67,7 +67,7 @@ jobs:
           echo "=== buf version ==="
           buf --version
           echo "=== buf generate ==="
-          buf generate --debug -v 2>&1
+          buf generate --debug -v 2>&1 || echo "buf generate failed with exit code $?"
           echo "=== Generated Go files ==="
           find ../server/internal/proto -name "*.pb.go" -o -name "*.pb.grpc.go" | head -20
           echo "=== Generated C# files ==="
@@ -78,6 +78,8 @@ jobs:
           pwd
           echo "=== server/internal/proto exists ==="
           ls -la ../server/internal/
+          echo "=== buf.gen.yaml ==="
+          cat buf.gen.yaml
 
       - name: Verify generated files
         run: |
