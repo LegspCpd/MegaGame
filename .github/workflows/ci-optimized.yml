@@ -1,6 +1,7 @@
 # ============================================================================
 # OPTIMIZED CI/CD PIPELINE
 # Features: Parallel jobs, intelligent caching, matrix builds, security scanning
+# Protobuf generation via Docker for reliability
 # ============================================================================
 
 name: CI/CD Optimized
@@ -32,10 +33,10 @@ env:
 
 jobs:
   # ============================================================================
-  # PROTOBUF GENERATION (optional - pre-generated files committed to repo)
+  # PROTOBUF GENERATION (via Docker for reliability)
   # ============================================================================
   protobuf:
-    name: Generate Protobuf (optional)
+    name: Generate Protobuf
     runs-on: ubuntu-latest
     outputs:
       proto_hash: ${{ steps.proto_hash.outputs.hash }}
@@ -43,59 +44,69 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check if pre-generated protos exist
-        id: check_protos
+      - name: Generate Protobuf via Docker
         run: |
-          if [ -f server/internal/proto/common.pb.go ] && [ -f client/Assets/Scripts/Generated/Proto/Common.cs ]; then
-            echo "pre_generated=true" >> $GITHUB_OUTPUT
-          else
-            echo "pre_generated=false" >> $GITHUB_OUTPUT
-          fi
+          docker run --rm \
+            -v "${{ github.workspace }}/shared/proto:/proto" \
+            -v "${{ github.workspace }}/server/internal/proto:/out/go" \
+            -v "${{ github.workspace }}/client/Assets/Scripts/Generated/Proto:/out/csharp" \
+            ghcr.io/lando/protoc:25.1 \
+            --proto_path=/proto \
+            --go_out=/out/go --go_opt=paths=source_relative \
+            --go-grpc_out=/out/go --go-grpc_opt=paths=source_relative \
+            --csharp_out=/out/csharp --csharp_opt=base_namespace=Megame \
+            common.proto entity.proto gameplay.proto network.proto world.proto
 
-      - name: Generate Protobuf (fallback)
-        if: steps.check_protos.outputs.pre_generated == 'false'
+      - name: Verify generated files
         run: |
-          echo "Pre-generated protos not found, generating..."
-          # This would run in a Docker container with protoc pre-installed
-          # For now, we'll fail with a clear message
-          echo "ERROR: Pre-generated proto files not found in repository."
-          echo "Please generate proto files locally and commit them:"
-          echo "  cd shared/proto"
-          echo "  protoc --proto_path=. --go_out=../server/internal/proto --go_opt=paths=source_relative \\"
-          echo "    --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative \\"
-          echo "    common.proto entity.proto gameplay.proto network.proto world.proto"
-          echo "  protoc --proto_path=. --csharp_out=../client/Assets/Scripts/Generated/Proto \\"
-          echo "    --csharp_opt=base_namespace=Megame \\"
-          echo "    common.proto entity.proto gameplay.proto network.proto world.proto"
-          echo "Then commit the generated files to the repository."
-          exit 1
+          test -f server/internal/proto/common.pb.go
+          test -f server/internal/proto/entity.pb.go
+          test -f server/internal/proto/network.pb.go
+          test -f server/internal/proto/gameplay.pb.go
+          test -f server/internal/proto/world.pb.go
+          test -f client/Assets/Scripts/Generated/Proto/Common.cs
+          test -f client/Assets/Scripts/Generated/Proto/Entity.cs
+          test -f client/Assets/Scripts/Generated/Proto/Network.cs
+          echo "All proto files generated successfully"
 
       - name: Calculate proto hash
         id: proto_hash
         run: |
-          if [ -f server/internal/proto/common.pb.go ]; then
-            hash=$(find shared/proto -name "*.proto" -exec cat {} + | sha256sum | cut -d' ' -f1)
-            echo "hash=$hash" >> $GITHUB_OUTPUT
-          else
-            echo "hash=placeholder" >> $GITHUB_OUTPUT
-          fi
+          hash=$(find shared/proto -name "*.proto" -exec cat {} + | sha256sum | cut -d' ' -f1)
+          echo "hash=$hash" >> $GITHUB_OUTPUT
+
+      - name: Upload generated protos
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-protos
+          path: |
+            server/internal/proto
+            client/Assets/Scripts/Generated/Proto
+          retention-days: 7
 
   # ============================================================================
   # GO SERVER - Build, Test, Lint, Security
   # ============================================================================
   go-lint:
     name: Go Lint & Vet
+    needs: protobuf
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify pre-generated protos exist
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: server/internal/proto
+
+      - name: Verify proto files
         run: |
           test -f server/internal/proto/common.pb.go
           test -f server/internal/proto/entity.pb.go
           test -f server/internal/proto/network.pb.go
-          echo "Pre-generated proto files verified"
+          echo "Proto files verified"
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -132,17 +143,24 @@ jobs:
 
   go-test:
     name: Go Test (Race Detector)
+    needs: protobuf
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify pre-generated protos exist
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: server/internal/proto
+
+      - name: Verify proto files
         run: |
           test -f server/internal/proto/common.pb.go
           test -f server/internal/proto/entity.pb.go
           test -f server/internal/proto/network.pb.go
-          echo "Pre-generated proto files verified"
+          echo "Proto files verified"
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -177,7 +195,7 @@ jobs:
 
   go-build:
     name: Go Build (Multi-arch)
-    needs: [go-lint, go-test]
+    needs: [protobuf, go-lint, go-test]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -190,12 +208,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify pre-generated protos exist
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: server/internal/proto
+
+      - name: Verify proto files
         run: |
           test -f server/internal/proto/common.pb.go
           test -f server/internal/proto/entity.pb.go
           test -f server/internal/proto/network.pb.go
-          echo "Pre-generated proto files verified"
+          echo "Proto files verified"
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -261,6 +285,7 @@ jobs:
   # ============================================================================
   unity-test:
     name: Unity Tests
+    needs: protobuf
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -269,12 +294,18 @@ jobs:
         with:
           lfs: true
 
-      - name: Verify pre-generated protos exist
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: client/Assets/Scripts/Generated/Proto
+
+      - name: Verify proto files
         run: |
           test -f client/Assets/Scripts/Generated/Proto/Common.cs
           test -f client/Assets/Scripts/Generated/Proto/Entity.cs
           test -f client/Assets/Scripts/Generated/Proto/Network.cs
-          echo "Pre-generated C# proto files verified"
+          echo "C# proto files verified"
 
       - name: Cache Library
         uses: actions/cache@v4
@@ -341,7 +372,7 @@ print('All tests passed')
 
   unity-build-linux:
     name: Unity Build Linux
-    needs: [unity-test]
+    needs: [protobuf, unity-test]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -350,12 +381,18 @@ print('All tests passed')
         with:
           lfs: true
 
-      - name: Verify pre-generated protos exist
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: client/Assets/Scripts/Generated/Proto
+
+      - name: Verify proto files
         run: |
           test -f client/Assets/Scripts/Generated/Proto/Common.cs
           test -f client/Assets/Scripts/Generated/Proto/Entity.cs
           test -f client/Assets/Scripts/Generated/Proto/Network.cs
-          echo "Pre-generated C# proto files verified"
+          echo "C# proto files verified"
 
       - name: Cache Library
         uses: actions/cache@v4
@@ -366,11 +403,13 @@ print('All tests passed')
           key: unity-lib-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}-${{ github.sha }}
           restore-keys: |
             unity-lib-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}-
+            unity-lib-${{ runner.os }}-
 
       - name: Install Unity
         uses: game-ci/unity-installer@v2
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
+          cacheKey: unity-${{ env.UNITY_VERSION }}
 
       - name: Activate Unity
         uses: game-ci/unity-activate@v2
@@ -411,7 +450,7 @@ print('All tests passed')
 
   unity-build-windows:
     name: Unity Build Windows
-    needs: [unity-test]
+    needs: [protobuf, unity-test]
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -420,12 +459,18 @@ print('All tests passed')
         with:
           lfs: true
 
-      - name: Verify pre-generated protos exist
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: client/Assets/Scripts/Generated/Proto
+
+      - name: Verify proto files
         run: |
           test -f client/Assets/Scripts/Generated/Proto/Common.cs
           test -f client/Assets/Scripts/Generated/Proto/Entity.cs
           test -f client/Assets/Scripts/Generated/Proto/Network.cs
-          echo "Pre-generated C# proto files verified"
+          echo "C# proto files verified"
 
       - name: Cache Library
         uses: actions/cache@v4
@@ -436,6 +481,7 @@ print('All tests passed')
           key: unity-lib-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}-${{ github.sha }}
           restore-keys: |
             unity-lib-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}-
+            unity-lib-${{ runner.os }}-
 
       - name: Install Unity
         uses: game-ci/unity-installer@v2
@@ -653,6 +699,12 @@ benchmark:
       uses: actions/setup-go@v5
       with:
         go-version: ${{ env.GO_VERSION }}
+
+    - name: Download proto artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-protos
+        path: server/internal/proto
 
     - name: Run benchmarks
       run: |
