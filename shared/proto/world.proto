@@ -1,4 +1,4 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 
 package megame.world;
 
@@ -390,7 +390,7 @@ message AudioZoneDefinition {
 message WeatherRegionDefinition {
   string region_id = 1;
   Vector3 bounds_min = 2;
-  Vector3 bounds_max = 3.
+  Vector3 bounds_max = 3;
   repeated string allowed_weather = 4;
   map<string, float> weather_weights = 5;   // weather -> probability
   float transition_time = 6;               // seconds
@@ -399,7 +399,7 @@ message WeatherRegionDefinition {
 message PopulationZoneDefinition {
   string zone_id = 1;
   Vector3 bounds_min = 2;
-  Vector3 bounds_max = 3.
+  Vector3 bounds_max = 3;
   PedPopulationConfig peds = 4;
   VehiclePopulationConfig vehicles = 5;
   int32 max_peds = 6;
@@ -444,19 +444,19 @@ message VehicleModelWeight {
 
 message ScenarioDefinition {
   string scenario_id = 1;
-  string name = 2.
-  ScenarioType type = 3.
-  Vector3 position = 4.
-  Quaternion rotation = 5.
-  string model_path = 6.
-  string animation = 7.
-  repeated string required_props = 8.
-  float duration = 9.                      // 0 = infinite
-  bool loop = 10.
-  repeated string conditions = 11.         // lua conditions
-  int32 max_concurrent = 12.
-  string required_region = 13.
-  repeated string time_of_day = 14.
+  string name = 2;
+  ScenarioType type = 3;
+  Vector3 position = 4;
+  Quaternion rotation = 5;
+  string model_path = 6;
+  string animation = 7;
+  repeated string required_props = 8;
+  float duration = 9;
+  bool loop = 10;
+  repeated string conditions = 11;
+  int32 max_concurrent = 12;
+  string required_region = 13;
+  repeated string time_of_day = 14;
 }
 
 enum ScenarioType {
@@ -481,121 +481,121 @@ enum ScenarioType {
   SCENARIO_TYPE_DANCE = 18;
   SCENARIO_TYPE_EXERCISE = 19;            // jogging, yoga, weights
   SCENARIO_TYPE_FISHING = 20;
-  SCENARIO_TYPE_PICNIC = 21.
-  SCENARIO_TYPE_CAMPING = 22.
-  SCENARIO_TYPE_PROTEST = 23.
-  SCENARIO_TYPE_PARADE = 24.
-  SCENARIO_TYPE_EMERGENCY = 25.
-  SCENARIO_TYPE_CRIME = 26.
-  SCENARIO_TYPE_DEAL = 27.
-  SCENARIO_TYPE_VEHICLE_REPAIR = 28.
-  SCENARIO_TYPE_CAR_WASH = 29.
-  SCENARIO_TYPE_FUEL = 30.
-  SCENARIO_TYPE_PARKING = 31.
-  SCENARIO_TYPE_TAXI_WAIT = 32.
-  SCENARIO_TYPE_BUS_STOP = 33.
-  SCENARIO_TYPE_SUBWAY_WAIT = 34.
-  SCENARIO_TYPE_AIRPORT_WAIT = 35.
-  SCENARIO_TYPE_SHOPPING = 36.
-  SCENARIO_TYPE_WINDOW_SHOP = 37.
-  SCENARIO_TYPE_ATM = 38.
-  SCENARIO_TYPE_VENDING = 39.
-  SCENARIO_TYPE_PHOTO = 40.
-  SCENARIO_TYPE_SELFIE = 41.
-  SCENARIO_TYPE_ARGUE = 42.
-  SCENARIO_TYPE_FIGHT = 43.
-  SCENARIO_TYPE_ROBBERY = 44.
-  SCENARIO_TYPE_CARJACK = 45.
-  SCENARIO_TYPE_PURSE_SNATCH = 46.
-  SCENARIO_TYPE_VANDALISM = 47.
-  SCENARIO_TYPE_GRAFFITI = 48.
-  SCENARIO_TYPE_STREET_RACE = 49.
-  SCENARIO_TYPE_STUNT = 50.
-  SCENARIO_TYPE_PARACHUTE = 51.
-  SCENARIO_TYPE_BASE_JUMP = 52.
-  SCENARIO_TYPE_SKYDIVE = 53.
-  SCENARIO_TYPE_HELI_TOUR = 54.
-  SCENARIO_TYPE_BOAT_TOUR = 55.
-  SCENARIO_TYPE_SUBMARINE = 56.
-  SCENARIO_TYPE_DIVING = 57.
-  SCENARIO_TYPE_SURFING = 58.
-  SCENARIO_TYPE_SWIMMING = 59.
-  SCENARIO_TYPE_SUNBATHING = 60.
-  SCENARIO_TYPE_YOGA = 61.
-  SCENARIO_TYPE_MEDITATION = 62.
-  SCENARIO_TYPE_TAI_CHI = 63.
-  SCENARIO_TYPE_DOG_WALK = 64.
-  SCENARIO_TYPE_CAT_FEED = 65.
-  SCENARIO_TYPE_BIRD_WATCH = 66.
-  SCENARIO_TYPE_PHOTOGRAPHY = 67.
-  SCENARIO_TYPE_PAINTING = 68.
-  SCENARIO_TYPE_BUSKING = 69.
-  SCENARIO_TYPE_FORTUNE_TELLER = 70.
+  SCENARIO_TYPE_PICNIC = 21;
+  SCENARIO_TYPE_CAMPING = 22;
+  SCENARIO_TYPE_PROTEST = 23;
+  SCENARIO_TYPE_PARADE = 24;
+  SCENARIO_TYPE_EMERGENCY = 25;
+  SCENARIO_TYPE_CRIME = 26;
+  SCENARIO_TYPE_DEAL = 27;
+  SCENARIO_TYPE_VEHICLE_REPAIR = 28;
+  SCENARIO_TYPE_CAR_WASH = 29;
+  SCENARIO_TYPE_FUEL = 30;
+  SCENARIO_TYPE_PARKING = 31;
+  SCENARIO_TYPE_TAXI_WAIT = 32;
+  SCENARIO_TYPE_BUS_STOP = 33;
+  SCENARIO_TYPE_SUBWAY_WAIT = 34;
+  SCENARIO_TYPE_AIRPORT_WAIT = 35;
+  SCENARIO_TYPE_SHOPPING = 36;
+  SCENARIO_TYPE_WINDOW_SHOP = 37;
+  SCENARIO_TYPE_ATM = 38;
+  SCENARIO_TYPE_VENDING = 39;
+  SCENARIO_TYPE_PHOTO = 40;
+  SCENARIO_TYPE_SELFIE = 41;
+  SCENARIO_TYPE_ARGUE = 42;
+  SCENARIO_TYPE_FIGHT = 43;
+  SCENARIO_TYPE_ROBBERY = 44;
+  SCENARIO_TYPE_CARJACK = 45;
+  SCENARIO_TYPE_PURSE_SNATCH = 46;
+  SCENARIO_TYPE_VANDALISM = 47;
+  SCENARIO_TYPE_GRAFFITI = 48;
+  SCENARIO_TYPE_STREET_RACE = 49;
+  SCENARIO_TYPE_STUNT = 50;
+  SCENARIO_TYPE_PARACHUTE = 51;
+  SCENARIO_TYPE_BASE_JUMP = 52;
+  SCENARIO_TYPE_SKYDIVE = 53;
+  SCENARIO_TYPE_HELI_TOUR = 54;
+  SCENARIO_TYPE_BOAT_TOUR = 55;
+  SCENARIO_TYPE_SUBMARINE = 56;
+  SCENARIO_TYPE_DIVING = 57;
+  SCENARIO_TYPE_SURFING = 58;
+  SCENARIO_TYPE_SWIMMING = 59;
+  SCENARIO_TYPE_SUNBATHING = 60;
+  SCENARIO_TYPE_YOGA = 61;
+  SCENARIO_TYPE_MEDITATION = 62;
+  SCENARIO_TYPE_TAI_CHI = 63;
+  SCENARIO_TYPE_DOG_WALK = 64;
+  SCENARIO_TYPE_CAT_FEED = 65;
+  SCENARIO_TYPE_BIRD_WATCH = 66;
+  SCENARIO_TYPE_PHOTOGRAPHY = 67;
+  SCENARIO_TYPE_PAINTING = 68;
+  SCENARIO_TYPE_BUSKING = 69;
+  SCENARIO_TYPE_FORTUNE_TELLER = 70;
 }
 
 message TerrainLayerDefinition {
-  string layer_name = 1.
-  string diffuse_texture = 2.
-  string normal_texture = 3.
-  string mask_texture = 4.
-  float tile_size = 5.
-  float normal_strength = 6.
-  float metallic = 7.
-  float smoothness = 8.
-  Vector2 texture_offset = 9.
-  Vector2 texture_scale = 10.
+  string layer_name = 1;
+  string diffuse_texture = 2;
+  string normal_texture = 3;
+  string mask_texture = 4;
+  float tile_size = 5;
+  float normal_strength = 6;
+  float metallic = 7;
+  float smoothness = 8;
+  Vector2 texture_offset = 9;
+  Vector2 texture_scale = 10;
 }
 
 message WaterDefinition {
-  string water_material = 1.
-  float water_level = 2.
-  Vector3 flow_direction = 3.
-  float flow_speed = 4.
-  Color deep_color = 5.
-  Color shallow_color = 6.
-  float wave_scale = 7.
-  float wave_speed = 8.
-  bool has_foam = 9.
-  string foam_texture = 10.
-  bool has_caustics = 11.
-  string caustics_texture = 12.
-  bool underwater_fog = 13.
-  Color underwater_fog_color = 14.
-  float underwater_fog_density = 15.
+  string water_material = 1;
+  float water_level = 2;
+  Vector3 flow_direction = 3;
+  float flow_speed = 4;
+  Color deep_color = 5;
+  Color shallow_color = 6;
+  float wave_scale = 7;
+  float wave_speed = 8;
+  bool has_foam = 9;
+  string foam_texture = 10;
+  bool has_caustics = 11;
+  string caustics_texture = 12;
+  bool underwater_fog = 13;
+  Color underwater_fog_color = 14;
+  float underwater_fog_density = 15;
 }
 
 message SkyDefinition {
-  string skybox_material = 1.
-  string sun_disk_texture = 2.
-  string moon_texture = 3.
-  Color sun_color = 4.
-  float sun_intensity = 5.
-  Color moon_color = 6.
-  float moon_intensity = 7.
-  Color ambient_sky_color = 8.
-  Color ambient_equator_color = 9.
-  Color ambient_ground_color = 10.
-  repeated CloudLayer clouds = 11.
-  repeated StarLayer stars = 12.
-  float exposure = 13.
+  string skybox_material = 1;
+  string sun_disk_texture = 2;
+  string moon_texture = 3;
+  Color sun_color = 4;
+  float sun_intensity = 5;
+  Color moon_color = 6;
+  float moon_intensity = 7;
+  Color ambient_sky_color = 8;
+  Color ambient_equator_color = 9;
+  Color ambient_ground_color = 10;
+  repeated CloudLayer clouds = 11;
+  repeated StarLayer stars = 12;
+  float exposure = 13;
 }
 
 message CloudLayer {
-  string layer_name = 1.
-  string noise_texture = 2.
-  float altitude = 3.                    // km
-  float thickness = 4.
-  float coverage = 5.                    // 0-1
-  float speed = 6.
-  Vector2 direction = 7.
-  Color color = 8.
-  float density = 9.
+  string layer_name = 1;
+  string noise_texture = 2;
+  float altitude = 3;                    // km
+  float thickness = 4;
+  float coverage = 5;                    // 0-1
+  float speed = 6;
+  Vector2 direction = 7;
+  Color color = 8;
+  float density = 9;
 }
 
 message StarLayer {
-  string layer_name = 1.
-  string star_texture = 2.
-  float intensity = 3.
-  float twinkle_speed = 4.
-  float rotation_speed = 5.              // degrees per hour
+  string layer_name = 1;
+  string star_texture = 2;
+  float intensity = 3;
+  float twinkle_speed = 4;
+  float rotation_speed = 5;              // degrees per hour
 }
