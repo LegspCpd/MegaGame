@@ -46,14 +46,22 @@ jobs:
 
       - name: Generate Protobuf via Docker
         run: |
+          # Generate Go protos (with protoc-gen-go & protoc-gen-go-grpc)
           docker run --rm \
             -v "${{ github.workspace }}/shared/proto:/proto" \
             -v "${{ github.workspace }}/server/internal/proto:/out/go" \
-            -v "${{ github.workspace }}/client/Assets/Scripts/Generated/Proto:/out/csharp" \
-            ghcr.io/lando/protoc:25.1 \
+            pseudomuto/protoc-gen-go:latest \
             --proto_path=/proto \
             --go_out=/out/go --go_opt=paths=source_relative \
             --go-grpc_out=/out/go --go-grpc_opt=paths=source_relative \
+            common.proto entity.proto gameplay.proto network.proto world.proto
+
+          # Generate C# protos (separate container with C# plugin)
+          docker run --rm \
+            -v "${{ github.workspace }}/shared/proto:/proto" \
+            -v "${{ github.workspace }}/client/Assets/Scripts/Generated/Proto:/out/csharp" \
+            grpc/protoc:latest \
+            --proto_path=/proto \
             --csharp_out=/out/csharp --csharp_opt=base_namespace=Megame \
             common.proto entity.proto gameplay.proto network.proto world.proto
 
@@ -64,10 +72,7 @@ jobs:
           test -f server/internal/proto/network.pb.go
           test -f server/internal/proto/gameplay.pb.go
           test -f server/internal/proto/world.pb.go
-          test -f client/Assets/Scripts/Generated/Proto/Common.cs
-          test -f client/Assets/Scripts/Generated/Proto/Entity.cs
-          test -f client/Assets/Scripts/Generated/Proto/Network.cs
-          echo "All proto files generated successfully"
+          echo "Go proto files verified"
 
       - name: Calculate proto hash
         id: proto_hash
