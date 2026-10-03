@@ -1,6 +1,5 @@
-﻿# ============================================================================
-# OPTIMIZED CI/CD PIPELINE
-# Uses buf for reliable protobuf generation
+# ============================================================================
+# CI/CD PIPELINE - Uses buf for reliable protobuf generation
 # ============================================================================
 
 name: CI/CD Pipeline
@@ -20,9 +19,7 @@ env:
   UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
 jobs:
-  # ============================================================================
   # PROTOBUF GENERATION (via buf for reliability)
-  # ============================================================================
   protobuf:
     name: Generate Protobuf
     runs-on: ubuntu-latest
