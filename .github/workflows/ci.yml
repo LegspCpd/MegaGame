@@ -76,15 +76,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install buf
-        run: |
-          curl -sSL https://github.com/bufbuild/buf/releases/download/v1.32.0/buf-$(uname -s)-$(uname -m).tar.gz | tar -xz -C /usr/local/bin
-          buf --version
-
       - name: Generate Protobuf via buf
+        uses: bufbuild/buf-action@v1
         working-directory: shared/proto
-        run: |
-          buf generate
+        with:
+          args: generate
 
       - name: Verify generated files
         run: |
