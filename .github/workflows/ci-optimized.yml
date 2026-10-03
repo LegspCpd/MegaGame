@@ -84,13 +84,19 @@ jobs:
           echo "=== Generate Go protos ==="
           protoc --go_out=../server/internal/proto --go_opt=paths=source_relative \
             --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative \
-            *.proto || echo "Go protos generation failed with exit code $?"
+            *.proto 2>&1
+          echo "Go protos generation exit code: $?"
           echo "=== Go protos generated ==="
+          echo "=== Check server/internal/proto after Go ==="
+          ls -la ../server/internal/proto/
           echo "=== Generate C# protos ==="
           protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto \
             --csharp_opt=base_namespace=Megame \
-            *.proto || echo "C# protos generation failed with exit code $?"
+            *.proto 2>&1
+          echo "C# protos generation exit code: $?"
           echo "=== C# protos generated ==="
+          echo "=== Check client/Assets/Scripts/Generated/Proto after C# ==="
+          ls -la ../../client/Assets/Scripts/Generated/Proto/
           echo "=== Generated Go files ==="
           find ../server/internal/proto -name "*.pb.go" -o -name "*.pb.grpc.go" | head -20
           echo "=== Generated C# files ==="
