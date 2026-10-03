@@ -33,8 +33,8 @@ message EntityRef {
 message EntityState {
   EntityRef ref = 1;
   megame.common.Transform transform = 2;
-  Vector3 velocity = 3;
-  Vector3 angular_velocity = 4;
+  megame.common.Vector3 velocity = 3;
+  megame.common.Vector3 angular_velocity = 4;
   uint64 timestamp = 5;  // server tick
   bool is_local_player = 6;
 }
@@ -177,14 +177,14 @@ message VehiclePerformanceSpecs {
 }
 
 message VehicleDimensions {
-  Vector3 size = 1;
-  Vector3 wheel_base = 2;
+  megame.common.Vector3 position = 2;
+  megame.common.Vector3 wheel_base = 2;
   float ground_clearance = 3;
 }
 
 message SeatDefinition {
   int32 index = 1;
-  Vector3 position = 2;
+  megame.common.Vector3 position = 2;
   bool is_driver = 3;
   bool can_shoot = 4;
   string anim_set = 5;            // "driver_low", "driver_high", "passenger", "bike_driver"
@@ -298,12 +298,12 @@ message WeaponPerformanceSpecs {
 
 message FirstPersonData {
   string view_model = 1;            // first-person model path
-  Vector3 position_offset = 2;      // relative to camera
-  Quaternion rotation_offset = 3;
-  Vector3 aim_position_offset = 4;  // ADS position
-  Quaternion aim_rotation_offset = 5;
-  Vector3 inspect_position_offset = 6;
-  Quaternion inspect_rotation_offset = 7;
+  megame.common.Vector3 position_offset = 2;      // relative to camera
+  megame.common.Quaternion rotation_offset = 3;
+  megame.common.Vector3 aim_position_offset = 4;  // ADS position
+  megame.common.Quaternion aim_rotation_offset = 5;
+  megame.common.Vector3 inspect_position_offset = 6;
+  megame.common.Quaternion inspect_rotation_offset = 7;
   repeated AnimationReference animations = 8;
 }
 
@@ -331,8 +331,8 @@ message AttachmentSlot {
   SlotType type = 1;
   string slot_id = 2;               // unique identifier
   string default_attachment = 3;    // default attachment item_id
-  Vector3 position_offset = 4;
-  Quaternion rotation_offset = 5;
+  megame.common.Vector3 position_offset = 4;
+  megame.common.Quaternion rotation_offset = 5;
 }
 
 message WeaponAttachments {
@@ -359,6 +359,6 @@ message NPCState {
   int32 current_weapon_index = 9;
   bool is_fleeing = 10;
   bool is_in_combat = 11;
-  Vector3 home_position = 12;
+  megame.common.Vector3 home_position = 12;
   float wander_radius = 13;
 }
