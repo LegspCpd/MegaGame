@@ -63,7 +63,6 @@ jobs:
       - name: Generate Protobuf via buf
         working-directory: shared/proto
         run: |
-          buf generate --dry-run
           echo "=== Actual generation ==="
           buf generate -v
           echo "=== Generated Go files ==="
