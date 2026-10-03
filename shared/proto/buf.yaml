@@ -1,5 +1,5 @@
 version: v2
-name: megame/shared
+name: buf.build/megame/shared
 deps:
   - buf.build/googleapis/googleapis
 lint:
