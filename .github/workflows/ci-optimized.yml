@@ -60,26 +60,28 @@ jobs:
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      - name: Generate Protobuf via buf
+      - name: Generate Protobuf via protoc
         working-directory: shared/proto
         run: |
-          echo "=== Starting buf generate ==="
-          echo "=== buf version ==="
-          buf --version
-          echo "=== buf generate ==="
-          buf generate --debug -v 2>&1 || echo "buf generate failed with exit code $?"
+          echo "=== Starting protoc generate ==="
+          echo "=== protoc version ==="
+          protoc --version
+          echo "=== Install Go protoc plugins ==="
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          echo "=== Generate Go protos ==="
+          protoc --go_out=../server/internal/proto --go_opt=paths=source_relative \
+            --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative \
+            *.proto
+          echo "=== Generate C# protos ==="
+          protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto \
+            --csharp_opt=base_namespace=Megame \
+            *.proto
           echo "=== Generated Go files ==="
           find ../server/internal/proto -name "*.pb.go" -o -name "*.pb.grpc.go" | head -20
           echo "=== Generated C# files ==="
           find ../../client/Assets/Scripts/Generated/Proto -name "*.cs" | head -20
-          echo "=== All files in server/internal/proto ==="
-          ls -la ../server/internal/proto/
-          echo "=== Current directory ==="
-          pwd
-          echo "=== server/internal/proto exists ==="
-          ls -la ../server/internal/
-          echo "=== buf.gen.yaml ==="
-          cat buf.gen.yaml
 
       - name: Verify generated files
         run: |
