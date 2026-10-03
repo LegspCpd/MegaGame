@@ -5,7 +5,7 @@ package megame.network;
 import "entity.proto";
 import "common.proto";
 
-option go_package = "github.com/megame/server/internal/proto;network";
+option go_package = "github.com/megame/server/internal/proto/network;network";
 option csharp_namespace = "Megame.Network";
 
 message ClientInput {
@@ -231,3 +231,4 @@ message TriggerMissionRequest {
   string mission_id = 1;
   map<string, string> parameters = 2;
 }
+

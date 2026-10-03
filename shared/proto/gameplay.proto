@@ -4,7 +4,7 @@ package megame.gameplay;
 
 import "common.proto";
 
-option go_package = "github.com/megame/server/internal/proto;gameplay";
+option go_package = "github.com/megame/server/internal/proto/gameplay;gameplay";
 option csharp_namespace = "Megame.Gameplay";
 
 message Mission {
@@ -315,3 +315,4 @@ message GameStats {
   map<string, uint32> vehicle_usage = 15;    // vehicle_id -> seconds driven
   map<string, uint32> location_visits = 16;  // area_id -> count
 }
+

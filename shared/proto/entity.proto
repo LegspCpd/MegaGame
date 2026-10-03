@@ -4,7 +4,7 @@ package megame.entity;
 
 import "common.proto";
 
-option go_package = "github.com/megame/server/internal/proto;entity";
+option go_package = "github.com/megame/server/internal/proto/entity;entity";
 option csharp_namespace = "Megame.Entity";
 
 enum EntityType {
@@ -362,3 +362,4 @@ message NPCState {
   megame.common.Vector3 home_position = 12;
   float wander_radius = 13;
 }
+

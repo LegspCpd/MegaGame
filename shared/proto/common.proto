@@ -2,7 +2,7 @@
 
 package megame.common;
 
-option go_package = "github.com/megame/server/internal/proto;common";
+option go_package = "github.com/megame/server/internal/proto/common;common";
 option csharp_namespace = "Megame.Common";
 
 message Vector3 {
@@ -40,3 +40,4 @@ message Bounds {
   Vector3 center = 1;
   Vector3 size = 2;
 }
+
