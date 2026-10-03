@@ -1,18 +1,17 @@
-﻿name: CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [main, develop]
-    tags: [''v*'']
+    tags: ['v*']
   pull_request:
     branches: [main]
   release:
     types: [published]
 
 env:
-  GO_VERSION: ''1.23''
-  UNITY_VERSION: ''2022.3.20f1''
-  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  GO_VERSION: '1.23'
+  UNITY_VERSION: '2022.3.20f1'
 
 jobs:
   protobuf:
@@ -24,31 +23,154 @@ jobs:
 
       - name: Install buf
         run: |
+          set -euo pipefail
           BUF_VERSION=1.32.0
-          OS=$(uname -s | tr ''[:upper:]'' ''[:lower:]'')
-          ARCH=$(uname -m)
-          if [ "$ARCH" = "x86_64" ]; then ARCH="x86_64"; fi
-          if [ "$ARCH" = "aarch64" ]; then ARCH="arm64"; fi
-          curl -fsSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-${OS}-${ARCH}" -o /usr/local/bin/buf
+          curl -fsSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-$(uname -m).tar.gz" -o /tmp/buf.tar.gz
+          tar -xzf /tmp/buf.tar.gz -C /usr/local/bin buf
           chmod +x /usr/local/bin/buf
           buf --version
 
-      - name: Generate Protobuf
+      - name: Install protoc plugins
+        run: |
+          set -euo pipefail
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Generate Go protos
+        working-directory: shared/proto
+        run: buf generate
+
+      - name: Generate C# protos
         working-directory: shared/proto
         run: |
-          buf generate
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq protobuf-compiler
+          mkdir -p ../../../client/Assets/Scripts/Generated/Proto
+          protoc --csharp_out=../../../client/Assets/Scripts/Generated/Proto \
+            --csharp_opt=base_namespace=Megame \
+            *.proto
 
       - name: Verify generated files
         run: |
+          set -euo pipefail
           ls -la server/internal/proto/*.pb.go
           ls -la client/Assets/Scripts/Generated/Proto/*.cs
-          echo "All proto files generated successfully"
 
       - name: Upload generated protos
         uses: actions/upload-artifact@v4
         with:
           name: generated-protos
-          path:
-            - server/internal/proto
-            - client/Assets/Scripts/Generated/Proto
+          path: |
+            server/internal/proto
+            client/Assets/Scripts/Generated/Proto
           retention-days: 7
+
+  go-build:
+    name: Go Server Build
+    needs: protobuf
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: server/internal/proto
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false
+
+      - name: Download dependencies
+        working-directory: server
+        run: go mod tidy && go mod verify
+
+      - name: Build and vet
+        working-directory: server
+        run: |
+          go vet ./...
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o megame-server ./cmd/server
+
+      - name: Run tests
+        working-directory: server
+        run: go test ./...
+
+      - name: Upload server artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: megame-server
+          path: server/megame-server
+          retention-days: 7
+
+  unity-build:
+    name: Unity Client Build
+    needs: protobuf
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Download protobuf artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: client/Assets/Scripts/Generated/Proto
+
+      - name: Install Unity
+        uses: game-ci/unity-installer@v2
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          cacheKey: unity-${{ env.UNITY_VERSION }}
+
+      - name: Activate Unity License
+        uses: game-ci/unity-activate@v2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+
+      - name: Build Unity Project (Linux)
+        uses: game-ci/unity-builder@v2
+        with:
+          projectPath: client
+          targetPlatform: StandaloneLinux64
+          buildMethod: Megame.Client.BuildScript.PerformClientBuild
+          customParameters: -buildVersion ${{ github.ref_name }}
+          compression: lz4hc
+
+      - name: Upload Linux build
+        uses: actions/upload-artifact@v4
+        with:
+          name: megame-linux
+          path: build/
+          retention-days: 7
+
+  create-release:
+    name: Create GitHub Release
+    needs: [go-build, unity-build]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release-assets/**
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
