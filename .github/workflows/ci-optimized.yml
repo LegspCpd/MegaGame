@@ -103,6 +103,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Create proto directory
+        run: mkdir -p server/internal/proto
+
       - name: Download proto artifacts
         uses: actions/download-artifact@v4
         with:
@@ -149,6 +152,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Create proto directory
+        run: mkdir -p server/internal/proto
 
       - name: Download proto artifacts
         uses: actions/download-artifact@v4
