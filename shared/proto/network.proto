@@ -38,11 +38,6 @@ message ClientInput {
   repeated int32 custom_actions = 27;  // moddable actions
 }
 
-message Vector2 {
-  float x = 1;
-  float y = 2;
-}
-
 message ServerSnapshot {
   uint64 tick = 1;
   uint64 server_time_ms = 2;
@@ -170,8 +165,8 @@ enum RPCMethod {
   RPC_SET_TIME_OF_DAY = 300;
   RPC_SET_WEATHER = 301;
   RPC_TRIGGER_MISSION = 302;
-  RPC_COMPLETE_MISSION = 303;
-  RPC_FAIL_MISSION = 304;
+  RPC_COMPLETE_MISSION = 203;
+  RPC_FAIL_MISSION = 204;
   RPC_START_CUTSCENE = 305;
   RPC_SKIP_CUTSCENE = 306;
   // Social
@@ -188,21 +183,21 @@ enum RPCMethod {
 
 message SpawnPlayerRequest {
   megame.entity.CharacterAppearance appearance = 1;
-  Vector3 position = 2;
-  Quaternion rotation = 3;
+  megame.common.Vector3 position = 2;
+  megame.common.Quaternion rotation = 3;
 }
 
 message SpawnVehicleRequest {
   string model_id = 1;
-  Vector3 position = 2;
-  Quaternion rotation = 3;
+  megame.common.Vector3 position = 2;
+  megame.common.Quaternion rotation = 3;
   megame.entity.VehicleModifications mods = 4;
   bool warp_player = 5;
 }
 
 message TeleportRequest {
-  Vector3 position = 1;
-  Quaternion rotation = 2;
+  megame.common.Vector3 position = 1;
+  megame.common.Quaternion rotation = 2;
   bool preserve_momentum = 3;
 }
 
