@@ -11,4 +11,4 @@ plugins:
   - remote: buf.build/protocolbuffers/csharp:v30.2
     out: ../../client/Assets/Scripts/Generated/Proto
     opt:
-      csharp_namespace=Megame
+      - base_namespace=Megame
