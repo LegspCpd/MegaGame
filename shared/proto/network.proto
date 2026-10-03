@@ -5,7 +5,7 @@ package megame.network;
 import "entity.proto";
 import "common.proto";
 
-option go_package = "github.com/megame/server/internal/proto;network";
+option go_package = "github.com/megame/server/internal/proto;proto";
 option csharp_namespace = "Megame.Network";
 
 message ClientInput {
