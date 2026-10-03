@@ -27,6 +27,8 @@ env:
   UNITY_VERSION: '2022.3.20f1'
   DOCKER_REGISTRY: 'ghcr.io'
   IMAGE_NAME: '${{ github.repository }}'
+  GOPROXY: 'https://proxy.golang.org,direct'
+  GOSUMDB: 'sum.golang.org'
 
 jobs:
   # ============================================================================
@@ -110,6 +112,9 @@ jobs:
       - name: Download dependencies
         run: cd server && go mod download
 
+      - name: Tidy dependencies
+        run: cd server && go mod tidy
+
       - name: Run go vet
         run: cd server && go vet ./...
 
@@ -141,6 +146,9 @@ jobs:
 
       - name: Download dependencies
         run: cd server && go mod download
+
+      - name: Tidy dependencies
+        run: cd server && go mod tidy
 
       - name: Run tests with race detector
         run: |
@@ -184,6 +192,9 @@ jobs:
 
       - name: Download dependencies
         run: cd server && go mod download
+
+      - name: Tidy dependencies
+        run: cd server && go mod tidy
 
       - name: Download proto artifacts
         uses: actions/download-artifact@v4
