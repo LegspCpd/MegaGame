@@ -45,6 +45,7 @@ jobs:
 
       - name: Generate Protobuf via buf
         uses: bufbuild/buf-action@v1
+        working-directory: shared/proto
         with:
           args: generate
 
@@ -359,7 +360,7 @@ for f in ['test-results/editmode/results.xml', 'test-results/playmode/results.xm
         sys.exit(1)
 print('All tests passed')
 "
-            fi
+          fi
 
   unity-build-linux:
     name: Unity Build Linux
@@ -712,16 +713,4 @@ benchmark:
     - name: Compare with baseline
       run: |
         # Compare with stored baseline
-        echo "Benchmark comparison would run here"#   C I   f i x   v 3  
- #   F o r c e   b u f   r e b u i l d  
- #   F o r c e   b u f   r e b u i l d   v 2  
- #   F o r c e   b u f   r e b u i l d   v 3  
- #   F o r c e   b u f   r e b u i l d   v 4  
- #   F o r c e   b u f   r e b u i l d   v 5  
- #   F o r c e   b u f   r e b u i l d   v 6  
- #   F o r c e   b u f   r e b u i l d   v 7  
- #   F o r c e   b u f   r e b u i l d   v 8  
- #   F o r c e   b u f   r e b u i l d   v 9  
- #   F o r c e   b u f   r e b u i l d   v 1 0  
- #   F o r c e   r e b u i l d   w i t h   b u f   f i x e s  
- 
+        echo "Benchmark comparison would run here"
