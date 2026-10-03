@@ -1,0 +1,34 @@
+﻿name: Protobuf Test
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  protobuf:
+    name: Generate Protobuf
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate Protobuf via buf
+        uses: bufbuild/buf-action@v1
+        working-directory: shared/proto
+        with:
+          args: generate
+
+      - name: Verify generated files
+        run: |
+          ls -la server/internal/proto/*.pb.go
+          ls -la client/Assets/Scripts/Generated/Proto/*.cs
+          echo "All proto files generated successfully"
+
+      - name: Upload generated protos
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-protos
+          path:
+            - server/internal/proto
+            - client/Assets/Scripts/Generated/Proto
+          retention-days: 7
