@@ -1,4 +1,4 @@
-﻿syntax = "proto3";
+syntax = "proto3";
 
 package megame.world;
 
@@ -274,7 +274,7 @@ message LightSource {
   LightType type = 2;
   megame.common.Vector3 position = 3;
   megame.common.Quaternion rotation = 4;
-  megame.common.Color megame.common.Color = 5;
+  megame.common.Color color = 5;
   float intensity = 6;
   float range = 7;
   float spot_angle = 8;               // for spot lights
@@ -583,12 +583,12 @@ message SkyDefinition {
 message CloudLayer {
   string layer_name = 1;
   string noise_texture = 2;
-  float altitude = 3;                    // km
+  float altitude = 3;
   float thickness = 4;
-  float coverage = 5;                    // 0-1
+  float coverage = 5;
   float speed = 6;
   megame.common.Vector2 direction = 7;
-  megame.common.Color megame.common.Color = 8;
+  megame.common.Color color = 8;
   float density = 9;
 }
 
