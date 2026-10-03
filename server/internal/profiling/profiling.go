@@ -166,7 +166,7 @@ func (p *Profiler) runPprofServer() {
 	mux.HandleFunc("/debug/pprof/cmdline", nethttppprof.Cmdline)
 	mux.HandleFunc("/debug/pprof/profile", nethttppprof.Profile)
 	mux.HandleFunc("/debug/pprof/symbol", nethttppprof.Symbol)
-	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	mux.HandleFunc("/debug/pprof/trace", nethttppprof.Trace)
 	mux.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
 	mux.Handle("/debug/pprof/heap", pprof.Handler("heap"))
 	mux.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))

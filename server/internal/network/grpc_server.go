@@ -1,20 +1,14 @@
 package network
 
 import (
-	"context"
 	"sync"
 	"time"
 
 	"github.com/megame/server/internal/components"
 	"github.com/megame/server/internal/ecs"
-	"github.com/megame/server/internal/systems"
 	"github.com/megame/server/internal/proto/entity"
 	"github.com/megame/server/internal/proto/network"
-	"github.com/megame/server/internal/proto/gameplay"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // GameServer implements the gRPC service
