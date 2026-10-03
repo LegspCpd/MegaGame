@@ -1,10 +1,6 @@
-module megame/server
+﻿module github.com/megame/server
 
 go 1.23
-
-replace (
-	github.com/megame/shared/proto => ./internal/proto
-)
 
 require (
 	github.com/gogo/protobuf v1.3.2
@@ -32,3 +28,4 @@ require (
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
+

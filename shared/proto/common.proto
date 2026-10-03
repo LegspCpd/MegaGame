@@ -1,8 +1,8 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 
 package megame.common;
 
-option go_package = "github.com/megame/server/internal/proto;proto";
+option go_package = "github.com/megame/server/internal/proto;common";
 option csharp_namespace = "Megame.Common";
 
 message Vector3 {

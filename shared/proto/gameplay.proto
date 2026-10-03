@@ -1,10 +1,10 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 
 package megame.gameplay;
 
 import "common.proto";
 
-option go_package = "github.com/megame/server/internal/proto;proto";
+option go_package = "github.com/megame/server/internal/proto;gameplay";
 option csharp_namespace = "Megame.Gameplay";
 
 message Mission {

@@ -55,7 +55,7 @@ jobs:
       - name: Verify generated files
         run: |
           set -euo pipefail
-          ls -la server/internal/proto/*.pb.go
+          ls -la server/internal/proto/*/*.pb.go
           ls -la client/Assets/Scripts/Generated/Proto/*.cs
 
       - name: Upload generated protos

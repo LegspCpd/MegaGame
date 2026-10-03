@@ -1,4 +1,4 @@
-package network
+﻿package network
 
 import (
 	"context"
@@ -8,9 +8,9 @@ import (
 	"github.com/megame/server/internal/components"
 	"github.com/megame/server/internal/ecs"
 	"github.com/megame/server/internal/systems"
-	"github.com/megame/shared/proto/entity"
-	"github.com/megame/shared/proto/network"
-	"github.com/megame/shared/proto/gameplay"
+	"github.com/megame/server/internal/proto/entity"
+	"github.com/megame/server/internal/proto/network"
+	"github.com/megame/server/internal/proto/gameplay"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

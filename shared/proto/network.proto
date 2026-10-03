@@ -1,11 +1,11 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 
 package megame.network;
 
 import "entity.proto";
 import "common.proto";
 
-option go_package = "github.com/megame/server/internal/proto;proto";
+option go_package = "github.com/megame/server/internal/proto;network";
 option csharp_namespace = "Megame.Network";
 
 message ClientInput {

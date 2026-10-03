@@ -1,4 +1,4 @@
-package network
+﻿package network
 
 import (
 	"sync"
@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/megame/server/internal/ecs"
-	"github.com/megame/shared/proto/entity"
-	"github.com/megame/shared/proto/network"
+	"github.com/megame/server/internal/proto/entity"
+	"github.com/megame/server/internal/proto/network"
 	"google.golang.org/protobuf/proto"
 )
 
