@@ -226,9 +226,9 @@ func (s *VehicleSystem) updateGear(v *components.VehicleComponent, specs *Vehicl
 		v.CurrentGear = 1
 	}
 
-	if v.CurrentGear > 0 && v.CurrentGear < len(specs.GearRatios) {
+	if v.CurrentGear > 0 && v.CurrentGear < int32(len(specs.GearRatios)) {
 		// Shift up at high RPM
-		if v.RPM > specs.MaxRPM*0.85 && v.CurrentGear < len(specs.GearRatios)-1 {
+		if v.RPM > specs.MaxRPM*0.85 && v.CurrentGear < int32(len(specs.GearRatios))-1 {
 			v.CurrentGear++
 		}
 		// Shift down at low RPM
@@ -246,7 +246,7 @@ func (s *VehicleSystem) applySteering(t *components.TransformComponent, p *compo
 
 	// Calculate angular velocity from steering
 	// Angular velocity = speed * tan(steerAngle) / wheelbase
-	wheelbase := 2.8 // Would come from specs
+	wheelbase := float32(2.8) // Would come from specs
 	angularVel := speed * float32(math.Tan(float64(steerAngle))) / wheelbase
 
 	// Apply to physics
@@ -279,7 +279,7 @@ func (s *VehicleSystem) updateWheels(t *components.TransformComponent, v *compon
 		wheel := &v.Wheels[i]
 		
 		// Rotation based on speed
-		wheelRadius := 0.35 // Would come from wheel definition
+		wheelRadius := float32(0.35) // Would come from wheel definition
 		wheel.Rotation += speed / wheelRadius * dt
 		
 		// Steering angle for front wheels

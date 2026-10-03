@@ -166,9 +166,7 @@ func (s *WeaponSystem) StartReload(world *ecs.World, weaponEntity ecs.EntityID) 
 	w.IsReloading = true
 	w.ReloadProgress = 0
 
-	// Determine reload type
-	isTactical := w.AmmoInClip > 0
-	// Reload time would come from definition
+	// Reload time would come from the weapon definition
 }
 
 func (s *WeaponSystem) getReloadTime(w *components.WeaponComponent) float32 {
@@ -208,7 +206,7 @@ func (s *WeaponSystem) applySpread(baseDir components.Vector3, spread float32, d
 
 	// Generate random point in cone
 	angle := spread * s.rng.Float32() * 2 * math.Pi
-	radius := spread * math.Sqrt(s.rng.Float64())
+	radius := spread * float32(math.Sqrt(s.rng.Float64()))
 	
 	// Create orthogonal basis
 	up := components.Vector3{0, 1, 0}
@@ -473,9 +471,14 @@ func (s *WeaponSwitchSystem) SwitchWeapon(world *ecs.World, playerEntity ecs.Ent
 
 	p := player.(*components.PlayerComponent)
 
-	// Check if player owns weapon
+	// Check if player owns the weapon (inventory lives on InventoryComponent)
+	inventory, hasInventory := world.GetComponent(playerEntity, components.CompInventory)
+	if !hasInventory {
+		return false
+	}
+
 	hasWeapon := false
-	for _, w := range p.InventoryWeaponIDs {
+	for _, w := range inventory.(*components.InventoryComponent).Weapons {
 		if w == weaponEntity {
 			hasWeapon = true
 			break

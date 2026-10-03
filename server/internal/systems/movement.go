@@ -126,8 +126,7 @@ func (s *MovementSystem) handleCombatMovement(t *components.TransformComponent, 
 	// Get weapon range
 	var optimalRange float32 = 15.0
 	if n.CurrentWeaponIndex >= 0 && n.CurrentWeaponIndex < int32(len(n.Weapons)) {
-		if weaponComp, ok := world.GetComponent(n.Weapons[n.CurrentWeaponIndex], components.CompWeapon); ok {
-			weapon := weaponComp.(*components.WeaponComponent)
+		if _, ok := world.GetComponent(n.Weapons[n.CurrentWeaponIndex], components.CompWeapon); ok {
 			// Use weapon definition for range
 			optimalRange = 20.0 // Default, would come from weapon definition
 		}

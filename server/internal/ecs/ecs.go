@@ -1,6 +1,7 @@
 package ecs
 
 import (
+	"strconv"
 	"sync"
 	"sync/atomic"
 )
@@ -10,6 +11,12 @@ type EntityID uint64
 
 // ComponentID is a unique identifier for a component type
 type ComponentID uint32
+
+// String renders the numeric id. ComponentRegistry.GetName returns the
+// registered name when one is available; this is the fallback form.
+func (c ComponentID) String() string {
+	return "ComponentID(" + strconv.FormatUint(uint64(c), 10) + ")"
+}
 
 // ArchetypeID identifies a unique combination of components
 type ArchetypeID uint64

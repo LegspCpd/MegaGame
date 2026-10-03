@@ -4,8 +4,10 @@ import (
 	"context"
 	"expvar"
 	"net/http"
+	"os"
 	"runtime"
 	"runtime/pprof"
+	"runtime/trace"
 	"sync"
 	"time"
 
@@ -418,12 +420,3 @@ func (m *ServerMetrics) RecordRPC(method string, success bool, err error) {
 func (m *ServerMetrics) Stop() {
 	m.profiler.Stop()
 }
-
-// ============================================================================
-// Missing imports
-// ============================================================================
-
-import (
-	"os"
-	"runtime/trace"
-)

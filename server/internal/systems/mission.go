@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
 	"github.com/megame/server/internal/components"
@@ -658,7 +657,7 @@ type DialogueNode struct {
 	Conditions   []string
 	Actions      []string
 	CameraShot   *CameraShot
-	Subtitle     components.SubtitleData
+	Subtitle     components.SubtitleEntry
 	Animations   []components.AnimationCue
 }
 
@@ -837,7 +836,12 @@ func (s *AISystem) scanForThreats(world *ecs.World, entity ecs.EntityID, a *comp
 		if dist < 30.0 { // Detection range
 			// Check relationship
 			// If hostile, enter combat
-			if s.isHostile(n.RelationshipGroup, other) {
+			otherNPC, hasNPC := world.GetComponent(other, components.CompNPC)
+			otherGroup := int32(0)
+			if hasNPC {
+				otherGroup = otherNPC.(*components.NPCComponent).RelationshipGroup
+			}
+			if s.isHostile(n.RelationshipGroup, otherGroup) {
 				n.TargetEntity = other
 				n.IsInCombat = true
 				a.AlertLevel = components.AIAlertCombat
