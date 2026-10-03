@@ -44,10 +44,13 @@ jobs:
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq protobuf-compiler
-          mkdir -p ../../client/Assets/Scripts/Generated/Proto
-          protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto \
-            --csharp_opt=base_namespace=Megame \
-            *.proto
+          OUT=../../client/Assets/Scripts/Generated/Proto
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+          protoc --csharp_out="$OUT" --csharp_opt=base_namespace=Megame *.proto
+          # protoc emits one subdirectory per proto package; Unity needs them flat.
+          find "$OUT" -mindepth 2 -name '*.cs' -exec mv -t "$OUT" {} +
+          find "$OUT" -mindepth 1 -type d -empty -delete
 
       - name: Verify generated files
         run: |
