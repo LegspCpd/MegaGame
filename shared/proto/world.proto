@@ -11,8 +11,8 @@ message WorldDefinition {
   string world_id = 1;
   string display_name = 2;
   string description = 3;
-  Vector3 world_origin = 4;             // world space origin
-  Vector3 world_size = 5;               // total world bounds
+  megame.common.megame.common.Vector3 world_origin = 4;             // world space origin
+  megame.common.megame.common.Vector3 world_size = 5;               // total world bounds
   repeated RegionDefinition regions = 6;
   repeated POIDefinition pois = 7;
   repeated RoadDefinition roads = 8;
@@ -33,10 +33,10 @@ message RegionDefinition {
   string region_id = 1;
   string display_name = 2;
   string short_name = 3;                // for HUD
-  Vector3 center = 4;
+  megame.common.Vector3 center = 4;
   float radius = 5;
-  Vector3 bounds_min = 6;
-  Vector3 bounds_max = 7;
+  megame.common.Vector3 bounds_min = 6;
+  megame.common.Vector3 bounds_max = 7;
   RegionType type = 8;
   int32 population_density = 9;         // 0-100
   int32 traffic_density = 10;           // 0-100
@@ -73,9 +73,9 @@ message POIDefinition {
   string poi_id = 1;
   string display_name = 2;
   POIType type = 3;
-  Vector3 position = 4;
-  Quaternion rotation = 5;
-  Vector3 scale = 6;
+  megame.common.Vector3 position = 4;
+  megame.common.Quaternion rotation = 5;
+  megame.common.Vector3 scale = 6;
   string model_path = 7;
   repeated string tags = 8;             // "enterable", "mission_start", "shop", "safehouse"
   string interior_id = 9;               // if enterable
@@ -85,7 +85,7 @@ message POIDefinition {
   repeated string required_missions = 13;
   OpeningHours hours = 14;
   string blip_sprite = 15;              // map icon
-  Color blip_color = 16;
+  megame.common.Color blip_color = 16;
 }
 
 enum POIType {
@@ -159,7 +159,7 @@ message RoadDefinition {
   string road_id = 1;
   string name = 2;
   RoadType type = 3;
-  repeated Vector3 nodes = 4;         // spline points
+  repeated megame.common.Vector3 nodes = 4;         // spline points
   float width = 5;
   int32 lanes = 6;
   bool one_way = 7;
@@ -182,8 +182,8 @@ enum RoadType {
 }
 
 message TrafficLightDefinition {
-  Vector3 position = 1;
-  Quaternion rotation = 2;
+  megame.common.Vector3 position = 1;
+  megame.common.Quaternion rotation = 2;
   float cycle_time = 3;               // seconds
   float green_duration = 4;
   float yellow_duration = 5;
@@ -194,8 +194,8 @@ message TrafficLightDefinition {
 message NavMeshDefinition {
   string nav_mesh_id = 1;
   NavMeshType type = 2;
-  Vector3 bounds_min = 3;
-  Vector3 bounds_max = 4;
+  megame.common.Vector3 bounds_min = 3;
+  megame.common.Vector3 bounds_max = 4;
   float cell_size = 5;
   float agent_radius = 6;
   float agent_height = 7;
@@ -217,11 +217,11 @@ enum NavMeshType {
 message InteriorDefinition {
   string interior_id = 1;
   string display_name = 2;
-  Vector3 entrance_position = 3;
-  Quaternion entrance_rotation = 4;
-  Vector3 interior_origin = 5;        // position in interior space
-  Vector3 bounds_min = 6;
-  Vector3 bounds_max = 7;
+  megame.common.Vector3 entrance_position = 3;
+  megame.common.Quaternion entrance_rotation = 4;
+  megame.common.Vector3 interior_origin = 5;        // position in interior space
+  megame.common.Vector3 bounds_min = 6;
+  megame.common.Vector3 bounds_max = 7;
   string model_path = 8;
   string nav_mesh_id = 9;
   repeated InteriorPortal portals = 10;
@@ -234,12 +234,12 @@ message InteriorDefinition {
 
 message InteriorPortal {
   string portal_id = 1;
-  Vector3 position = 2;
-  Quaternion rotation = 3;
-  Vector3 size = 4;
+  megame.common.Vector3 position = 2;
+  megame.common.Quaternion rotation = 3;
+  megame.common.Vector3 size = 4;
   string target_interior = 5;         // empty = exterior
-  Vector3 target_position = 6;
-  Quaternion target_rotation = 7;
+  megame.common.Vector3 target_position = 6;
+  megame.common.Quaternion target_rotation = 7;
   bool is_locked = 8;
   string lock_type = 9;               // "key", "keycard", "hack", "mission"
   string required_item = 10;
@@ -248,9 +248,9 @@ message InteriorPortal {
 message InteriorProp {
   string prop_id = 1;
   string model_path = 2;
-  Vector3 position = 3;
-  Quaternion rotation = 4;
-  Vector3 scale = 5;
+  megame.common.Vector3 position = 3;
+  megame.common.Quaternion rotation = 4;
+  megame.common.Vector3 scale = 5;
   bool is_interactable = 6;
   string interaction_type = 7;        // "sit", "sleep", "work", "tv", "computer", "safe", "fridge"
   string required_mission = 8;
@@ -258,12 +258,12 @@ message InteriorProp {
 
 message LightingDefinition {
   string skybox = 1;
-  Color ambient_color = 2;
+  megame.common.Color ambient_color = 2;
   float ambient_intensity = 3;
   repeated LightSource lights = 4;
   repeated ReflectionProbe probes = 5;
   float exposure = 6;
-  Color fog_color = 7;
+  megame.common.Color fog_color = 7;
   float fog_density = 8;
   float fog_start = 9;
   float fog_end = 10;
@@ -272,9 +272,9 @@ message LightingDefinition {
 message LightSource {
   string light_id = 1;
   LightType type = 2;
-  Vector3 position = 3;
-  Quaternion rotation = 4;
-  Color color = 5;
+  megame.common.Vector3 position = 3;
+  megame.common.Quaternion rotation = 4;
+  megame.common.Color megame.common.Color = 5;
   float intensity = 6;
   float range = 7;
   float spot_angle = 8;               // for spot lights
@@ -297,8 +297,8 @@ enum LightType {
 
 message ReflectionProbe {
   string probe_id = 1;
-  Vector3 position = 2;
-  Vector3 size = 3;
+  megame.common.Vector3 position = 2;
+  megame.common.Vector3 size = 3;
   int32 resolution = 4;               // 128, 256, 512, 1024
   float hdr = 5;
   bool is_realtime = 6;
@@ -314,7 +314,7 @@ message AudioDefinition {
 message AudioEmitter {
   string emitter_id = 1;
   string audio_clip = 2;
-  Vector3 position = 3;
+  megame.common.Vector3 position = 3;
   float volume = 4;
   float pitch = 5;
   float spatial_blend = 6;            // 0 = 2D, 1 = 3D
@@ -328,8 +328,8 @@ message AudioEmitter {
 
 message AudioReverbZone {
   string zone_id = 1;
-  Vector3 bounds_min = 2;
-  Vector3 bounds_max = 3;
+  megame.common.Vector3 bounds_min = 2;
+  megame.common.Vector3 bounds_max = 3;
   AudioReverbPreset preset = 4;
   float decay_time = 5;
   float room_size = 6;
@@ -378,8 +378,8 @@ enum AudioReverbPreset {
 
 message AudioZoneDefinition {
   string zone_id = 1;
-  Vector3 bounds_min = 2;
-  Vector3 bounds_max = 3;
+  megame.common.Vector3 bounds_min = 2;
+  megame.common.Vector3 bounds_max = 3;
   string music_playlist = 4;
   float music_volume = 5;
   string ambient_sound = 6;
@@ -389,8 +389,8 @@ message AudioZoneDefinition {
 
 message WeatherRegionDefinition {
   string region_id = 1;
-  Vector3 bounds_min = 2;
-  Vector3 bounds_max = 3;
+  megame.common.Vector3 bounds_min = 2;
+  megame.common.Vector3 bounds_max = 3;
   repeated string allowed_weather = 4;
   map<string, float> weather_weights = 5;   // weather -> probability
   float transition_time = 6;               // seconds
@@ -398,8 +398,8 @@ message WeatherRegionDefinition {
 
 message PopulationZoneDefinition {
   string zone_id = 1;
-  Vector3 bounds_min = 2;
-  Vector3 bounds_max = 3;
+  megame.common.Vector3 bounds_min = 2;
+  megame.common.Vector3 bounds_max = 3;
   PedPopulationConfig peds = 4;
   VehiclePopulationConfig vehicles = 5;
   int32 max_peds = 6;
@@ -446,8 +446,8 @@ message ScenarioDefinition {
   string scenario_id = 1;
   string name = 2;
   ScenarioType type = 3;
-  Vector3 position = 4;
-  Quaternion rotation = 5;
+  megame.common.Vector3 position = 4;
+  megame.common.Quaternion rotation = 5;
   string model_path = 6;
   string animation = 7;
   repeated string required_props = 8;
@@ -542,17 +542,17 @@ message TerrainLayerDefinition {
   float normal_strength = 6;
   float metallic = 7;
   float smoothness = 8;
-  Vector2 texture_offset = 9;
-  Vector2 texture_scale = 10;
+  megame.common.Vector2 texture_offset = 9;
+  megame.common.Vector2 texture_scale = 10;
 }
 
 message WaterDefinition {
   string water_material = 1;
   float water_level = 2;
-  Vector3 flow_direction = 3;
+  megame.common.Vector3 flow_direction = 3;
   float flow_speed = 4;
-  Color deep_color = 5;
-  Color shallow_color = 6;
+  megame.common.Color deep_color = 5;
+  megame.common.Color shallow_color = 6;
   float wave_scale = 7;
   float wave_speed = 8;
   bool has_foam = 9;
@@ -560,7 +560,7 @@ message WaterDefinition {
   bool has_caustics = 11;
   string caustics_texture = 12;
   bool underwater_fog = 13;
-  Color underwater_fog_color = 14;
+  megame.common.Color underwater_fog_color = 14;
   float underwater_fog_density = 15;
 }
 
@@ -568,13 +568,13 @@ message SkyDefinition {
   string skybox_material = 1;
   string sun_disk_texture = 2;
   string moon_texture = 3;
-  Color sun_color = 4;
+  megame.common.Color sun_color = 4;
   float sun_intensity = 5;
-  Color moon_color = 6;
+  megame.common.Color moon_color = 6;
   float moon_intensity = 7;
-  Color ambient_sky_color = 8;
-  Color ambient_equator_color = 9;
-  Color ambient_ground_color = 10;
+  megame.common.Color ambient_sky_color = 8;
+  megame.common.Color ambient_equator_color = 9;
+  megame.common.Color ambient_ground_color = 10;
   repeated CloudLayer clouds = 11;
   repeated StarLayer stars = 12;
   float exposure = 13;
@@ -587,8 +587,8 @@ message CloudLayer {
   float thickness = 4;
   float coverage = 5;                    // 0-1
   float speed = 6;
-  Vector2 direction = 7;
-  Color color = 8;
+  megame.common.Vector2 direction = 7;
+  megame.common.Color megame.common.Color = 8;
   float density = 9;
 }
 
@@ -599,3 +599,4 @@ message StarLayer {
   float twinkle_speed = 4;
   float rotation_speed = 5;              // degrees per hour
 }
+
