@@ -170,7 +170,7 @@ func (s *VehicleSystem) getVehicleSpecs(modelID string) *VehicleSpecs {
 		Mass:            1500.0,
 		WheelBase:       2.8,
 		TrackWidth:      1.6,
-		CenterOfMass:    components.Vector3{0, -0.3, 0},
+		CenterOfMass:    components.Vector3{X: 0, Y: -0.3, Z: 0},
 	}
 }
 
@@ -263,7 +263,7 @@ func (s *VehicleSystem) applyHandbrake(p *components.PhysicsComponent, v *compon
 	speed := p.Velocity.Length()
 	if speed > 0.5 {
 		// Apply lateral friction to simulate slide
-		right := components.Vector3{p.Velocity.Z, 0, -p.Velocity.X}.Normalized()
+		right := components.Vector3{X: p.Velocity.Z, Y: 0, Z: -p.Velocity.X}.Normalized()
 		lateralSpeed := p.Velocity.Dot(right)
 		if lateralSpeed != 0 {
 			friction := right.Mul(-lateralSpeed * 5.0 * dt)

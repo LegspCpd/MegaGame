@@ -209,9 +209,9 @@ func (s *WeaponSystem) applySpread(baseDir components.Vector3, spread float32, d
 	radius := spread * float32(math.Sqrt(s.rng.Float64()))
 	
 	// Create orthogonal basis
-	up := components.Vector3{0, 1, 0}
+	up := components.Vector3{X: 0, Y: 1, Z: 0}
 	if math.Abs(float64(baseDir.Dot(up))) > 0.99 {
-		up = components.Vector3{1, 0, 0}
+		up = components.Vector3{X: 1, Y: 0, Z: 0}
 	}
 	right := baseDir.Cross(up).Normalized()
 	up = right.Cross(baseDir).Normalized()

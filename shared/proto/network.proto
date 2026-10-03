@@ -232,3 +232,30 @@ message TriggerMissionRequest {
   map<string, string> parameters = 2;
 }
 
+// ============================================================================
+// Streaming transport
+//
+// The client and server exchange envelopes over a single bidirectional stream.
+// A oneof keeps exactly one payload live per envelope, so the reader can switch
+// on the concrete type without re-parsing.
+// ============================================================================
+
+message ClientMessage {
+  oneof payload {
+    ClientInput input = 1;
+    RPCRequest rpc = 2;
+  }
+}
+
+message ServerMessage {
+  oneof payload {
+    ServerSnapshot snapshot = 1;
+    RPCResponse rpc = 2;
+  }
+}
+
+service GameService {
+  // GameStream carries client input and server snapshots for one session.
+  rpc GameStream(stream ClientMessage) returns (stream ServerMessage);
+}
+

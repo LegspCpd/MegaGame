@@ -4,6 +4,7 @@ import (
 	"context"
 	"expvar"
 	"net/http"
+	nethttppprof "net/http/pprof"
 	"os"
 	"runtime"
 	"runtime/pprof"
@@ -161,7 +162,7 @@ func (p *Profiler) runPprofServer() {
 	defer p.wg.Done()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/", nethttppprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
