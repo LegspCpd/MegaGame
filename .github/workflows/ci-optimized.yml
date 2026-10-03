@@ -64,13 +64,17 @@ jobs:
         working-directory: shared/proto
         run: |
           echo "=== Starting buf generate ==="
-          buf generate --debug -v
+          buf generate --debug -v 2>&1
           echo "=== Generated Go files ==="
           find ../server/internal/proto -name "*.pb.go" -o -name "*.pb.grpc.go" | head -20
           echo "=== Generated C# files ==="
           find ../../client/Assets/Scripts/Generated/Proto -name "*.cs" | head -20
           echo "=== All files in server/internal/proto ==="
           ls -la ../server/internal/proto/
+          echo "=== Current directory ==="
+          pwd
+          echo "=== server/internal/proto exists ==="
+          ls -la ../server/internal/
 
       - name: Verify generated files
         run: |
