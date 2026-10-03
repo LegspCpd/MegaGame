@@ -1,4 +1,4 @@
-﻿module github.com/megame/server
+module github.com/megame/server
 
 go 1.23
 
