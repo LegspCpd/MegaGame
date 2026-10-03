@@ -2,9 +2,11 @@ package network
 
 import (
 	"sync"
+	"unsafe"
 	"sync/atomic"
 	"time"
 
+	"github.com/megame/server/internal/components"
 	"github.com/megame/server/internal/ecs"
 	"github.com/megame/server/internal/proto/entity"
 	"github.com/megame/server/internal/proto/network"
@@ -284,7 +286,6 @@ func (im *InterestManager) GetRelevantEntities(playerID uint64) []uint64 {
 	}
 
 	relevant := make([]uint64, 0, 512)
-	radiusSq := view.Radius * view.Radius
 	playerCell := im.gridCoord(view.Position)
 
 	// Check surrounding cells
@@ -543,7 +544,7 @@ func (s *OptimizedGameServer) buildAndSendSnapshots() {
 	snap.Timestamp = time.Now().UnixMilli()
 
 	// Query relevant entities (could use interest management)
-	query := s.world.Query(ecs.CompTransform)
+	query := s.world.Query(components.CompTransform)
 	query.Iterate(func(entity ecs.EntityID) {
 		// Build entity snapshot
 		// ... (similar to original but with pooling)

@@ -208,7 +208,7 @@ type PlayerComponent struct {
 	// InventoryWeaponIDs and InventoryItemIDs mirror InventoryComponent for the
 	// network snapshot, which serialises the player without a second lookup.
 	InventoryWeaponIDs []ecs.EntityID
-	InventoryItemIDs   []string
+	InventoryItemIDs   []ecs.EntityID
 	VehicleSeatIndex int32
 	IsInVehicle   bool
 	Stamina       float32
