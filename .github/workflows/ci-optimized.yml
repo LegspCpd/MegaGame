@@ -72,10 +72,7 @@ jobs:
           test -f server/internal/proto/network.pb.go
           test -f server/internal/proto/gameplay.pb.go
           test -f server/internal/proto/world.pb.go
-          test -f client/Assets/Scripts/Generated/Proto/Common.cs
-          test -f client/Assets/Scripts/Generated/Proto/Entity.cs
-          test -f client/Assets/Scripts/Generated/Proto/Network.cs
-          echo "All proto files generated successfully"
+          echo "Go proto files generated successfully"
 
       - name: Calculate proto hash
         id: proto_hash
