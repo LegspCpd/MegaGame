@@ -26,9 +26,9 @@ jobs:
           set -euo pipefail
           BUF_VERSION=1.32.0
           curl -fsSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-$(uname -m).tar.gz" -o /tmp/buf.tar.gz
-          tar -xzf /tmp/buf.tar.gz -C /usr/local/bin buf
+          tar -xzf /tmp/buf.tar.gz -C /usr/local/bin
           chmod +x /usr/local/bin/buf
-          buf --version
+          /usr/local/bin/buf --version
 
       - name: Install protoc plugins
         run: |
