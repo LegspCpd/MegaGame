@@ -96,7 +96,9 @@ jobs:
       - name: Generate Protobuf via buf
         working-directory: shared/proto
         run: |
-          buf generate
+          buf generate --dry-run
+          echo "=== Actual generation ==="
+          buf generate -v
           echo "=== Generated Go files ==="
           find ../server/internal/proto -name "*.pb.go" -o -name "*.pb.grpc.go" | head -20
           echo "=== Generated C# files ==="
