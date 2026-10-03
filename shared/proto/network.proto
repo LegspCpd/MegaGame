@@ -11,8 +11,8 @@ option csharp_namespace = "Megame.Network";
 message ClientInput {
   uint64 tick = 1;
   uint64 timestamp_ms = 2;
-  megame.common.Vector2 move = 3;                 // x: forward/back, y: left/right
-  megame.common.Vector2 look = 4;                 // mouse delta or stick
+  megame.common.Vector2 move = 3;
+  megame.common.Vector2 look = 4;
   bool jump = 5;
   bool sprint = 6;
   bool crouch = 7;
@@ -22,20 +22,20 @@ message ClientInput {
   bool aim = 11;
   bool reload = 12;
   bool weapon_wheel = 13;
-  int32 weapon_slot = 14;           // 0-7
+  int32 weapon_slot = 14;
   bool enter_vehicle = 15;
   bool exit_vehicle = 16;
-  megame.common.Vector2 vehicle_control = 17;     // x: throttle/brake, y: steer
+  megame.common.Vector2 vehicle_control = 17;
   bool vehicle_handbrake = 18;
   bool vehicle_horn = 19;
   bool vehicle_lights = 20;
-  bool vehicle_siren = 21;
+  bool vehicle_siren = 20;
   bool vehicle_next_seat = 22;
   bool vehicle_prev_seat = 23;
   bool pause_menu = 24;
   bool map = 25;
   bool phone = 26;
-  repeated int32 custom_actions = 27;  // moddable actions
+  repeated int32 custom_actions = 27;
 }
 
 message ServerSnapshot {
@@ -77,8 +77,8 @@ message VehicleStateUpdate {
   bool engine_on = 8;
   bool lights_on = 9;
   bool siren_on = 10;
-  repeated VehicleDoorState doors = 11;
-  repeated VehicleWheelState wheels = 12;
+  repeated megame.entity.VehicleDoorState doors = 11;
+  repeated megame.entity.VehicleWheelState wheels = 12;
   repeated uint64 occupant_ids = 13;
 }
 
@@ -100,9 +100,9 @@ message NPCStateUpdate {
 }
 
 message WorldState {
-  uint32 time_of_day = 1;           // 0-2359 (hour*100 + minute)
-  float weather_blend = 2;          // 0.0 = clear, 1.0 = storm
-  string current_weather = 3;       // "clear", "clouds", "rain", "thunder", "fog", "snow", "halloween"
+  uint32 time_of_day = 1;
+  float weather_blend = 2;
+  string current_weather = 3;
   float wind_speed = 4;
   megame.common.Vector2 wind_direction = 5;
   uint32 wanted_level_multiplier = 6;
@@ -130,7 +130,6 @@ message RPCResponse {
 
 enum RPCMethod {
   RPC_UNSPECIFIED = 0;
-  // Player
   RPC_SPAWN_PLAYER = 100;
   RPC_RESPAWN = 101;
   RPC_TELEPORT = 102;
@@ -146,7 +145,6 @@ enum RPCMethod {
   RPC_SET_CHARACTER_APPEARANCE = 112;
   RPC_APPLY_CLOTHING = 113;
   RPC_REMOVE_CLOTHING = 114;
-  // Vehicle
   RPC_SPAWN_VEHICLE = 200;
   RPC_DESTROY_VEHICLE = 201;
   RPC_REPAIR_VEHICLE = 202;
@@ -161,7 +159,6 @@ enum RPCMethod {
   RPC_TOGGLE_VEHICLE_SIREN = 211;
   RPC_WARP_INTO_VEHICLE = 212;
   RPC_WARP_OUT_OF_VEHICLE = 213;
-  // World
   RPC_SET_TIME_OF_DAY = 300;
   RPC_SET_WEATHER = 301;
   RPC_TRIGGER_MISSION = 302;
@@ -169,11 +166,9 @@ enum RPCMethod {
   RPC_FAIL_MISSION = 204;
   RPC_START_CUTSCENE = 305;
   RPC_SKIP_CUTSCENE = 306;
-  // Social
   RPC_SEND_CHAT = 400;
   RPC_INVITE_TO_GROUP = 401;
   RPC_KICK_FROM_GROUP = 402;
-  // Admin
   RPC_KICK_PLAYER = 500;
   RPC_BAN_PLAYER = 501;
   RPC_SPECTATE = 502;
@@ -214,7 +209,7 @@ message SetVehicleModsRequest {
 
 message ApplyVehicleModRequest {
   uint64 vehicle_id = 1;
-  string mod_slot = 2;              // e.g., "engine", "spoiler", "wheels"
+  string mod_slot = 2;
   int32 mod_value = 3;
 }
 
@@ -229,7 +224,7 @@ message SetVehicleColorsRequest {
 
 message SetWeatherRequest {
   string weather = 1;
-  float transition_time = 2;        // seconds
+  float transition_time = 2;
 }
 
 message TriggerMissionRequest {
