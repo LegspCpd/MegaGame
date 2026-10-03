@@ -1,0 +1,364 @@
+syntax = "proto3";
+
+package megame.entity;
+
+import "common.proto";
+
+option go_package = "github.com/megame/shared/proto;entity";
+option csharp_namespace = "Megame.Entity";
+
+enum EntityType {
+  ENTITY_TYPE_UNSPECIFIED = 0;
+  ENTITY_TYPE_PLAYER = 1;
+  ENTITY_TYPE_VEHICLE = 2;
+  ENTITY_TYPE_WEAPON = 3;
+  ENTITY_TYPE_NPC = 4;
+  ENTITY_TYPE_PROP = 5;
+  ENTITY_TYPE_PICKUP = 6;
+}
+
+enum CameraMode {
+  CAMERA_MODE_THIRD_PERSON = 0;
+  CAMERA_MODE_FIRST_PERSON = 1;
+  CAMERA_MODE_VEHICLE_THIRD = 2;
+  CAMERA_MODE_VEHICLE_FIRST = 3;
+  CAMERA_MODE_AIM = 4;
+}
+
+message EntityRef {
+  uint64 id = 1;
+  EntityType type = 2;
+}
+
+message EntityState {
+  EntityRef ref = 1;
+  megame.common.Transform transform = 2;
+  Vector3 velocity = 3;
+  Vector3 angular_velocity = 4;
+  uint64 timestamp = 5;  // server tick
+  bool is_local_player = 6;
+}
+
+message PlayerState {
+  EntityState base = 1;
+  float health = 2;
+  float max_health = 3;
+  float armor = 4;
+  float max_armor = 5;
+  float stamina = 6;
+  float max_stamina = 7;
+  CameraMode camera_mode = 8;
+  uint64 current_weapon_id = 9;
+  uint64 current_vehicle_id = 10;
+  bool is_in_vehicle = 11;
+  int32 vehicle_seat_index = 12;
+  repeated uint64 inventory_weapon_ids = 13;
+  repeated uint64 inventory_item_ids = 14;
+  uint32 money = 15;
+  uint32 wanted_level = 16;
+  string character_name = 17;
+  CharacterAppearance appearance = 18;
+}
+
+message CharacterAppearance {
+  string body_type = 1;           // "male_avg", "female_avg", "male_muscular", etc.
+  string head_model = 2;
+  string hair_style = 3;
+  string hair_color = 4;          // hex color
+  string skin_tone = 5;           // hex color
+  string eye_color = 6;           // hex color
+  repeated ClothingItem clothing = 7;
+  repeated AccessoryItem accessories = 8;
+  repeated TattooItem tattoos = 9;
+}
+
+message ClothingItem {
+  enum Slot {
+    SLOT_UNSPECIFIED = 0;
+    SLOT_HEAD = 1;        // hats, helmets, masks
+    SLOT_FACE = 2;        // glasses, masks
+    SLOT_TORSO = 3;       // shirts, jackets, vests
+    SLOT_LEGS = 4;        // pants, shorts
+    SLOT_FEET = 5;        // shoes, boots
+    SLOT_HANDS = 6;       // gloves
+    SLOT_OUTER = 7;       // coats, capes
+    SLOT_UNDER = 8;       // undershirts
+    SLOT_FULL_BODY = 9;   // suits, dresses
+  }
+  Slot slot = 1;
+  string item_id = 2;           // e.g., "cloth_tshirt_01", "cloth_jacket_leather_03"
+  string variant = 3;           // texture variant
+  Color tint = 4;
+  bool is_dirty = 5;
+  float wear = 6;               // 0.0 - 1.0
+}
+
+message AccessoryItem {
+  enum Slot {
+    SLOT_UNSPECIFIED = 0;
+    SLOT_EAR = 1;
+    SLOT_NECK = 2;
+    SLOT_WRIST = 3;
+    SLOT_FINGER = 4;
+    SLOT_BACK = 5;      // backpacks
+    SLOT_BELT = 6;
+    SLOT_POCKET = 7;
+  }
+  Slot slot = 1;
+  string item_id = 2;
+  Color tint = 3;
+}
+
+message TattooItem {
+  string tattoo_id = 1;         // e.g., "tattoo_dragon_back", "tattoo_skull_arm"
+  Vector3 position = 2;         // UV position on body
+  float scale = 3;
+  float rotation = 4;
+  Color tint = 5;
+}
+
+message VehicleState {
+  EntityState base = 1;
+  VehicleDefinition definition = 2;
+  float engine_health = 3;
+  float body_health = 4;
+  float fuel = 5;
+  float max_fuel = 6;
+  int32 current_gear = 7;
+  float rpm = 8;
+  float speed_kph = 9;
+  bool engine_on = 10;
+  bool lights_on = 11;
+  bool siren_on = 12;
+  repeated VehicleDoorState doors = 13;
+  repeated VehicleWheelState wheels = 14;
+  repeated uint64 occupant_ids = 15;  // entity IDs of occupants
+  VehicleModifications mods = 16;
+}
+
+message VehicleDoorState {
+  int32 index = 1;
+  float angle = 2;        // 0.0 = closed, 1.0 = fully open
+  bool is_broken = 3;
+}
+
+message VehicleWheelState {
+  int32 index = 1;
+  float rotation = 2;
+  float steer_angle = 3;
+  bool is_burst = 4;
+  float suspension_compression = 5;
+  float brake_force = 6;
+}
+
+message VehicleDefinition {
+  string model_id = 1;            // e.g., "vehicle_sultan_rs", "vehicle_fbi"
+  string display_name = 2;
+  string manufacturer = 3;        // "Karin", "Dewbauchee", "Vapid", etc.
+  string vehicle_class = 4;       // "sports", "sedan", "suv", "muscle", "super", "motorcycle", "heli", "plane", "boat"
+  VehiclePerformanceSpecs performance = 5;
+  VehicleDimensions dimensions = 6;
+  repeated SeatDefinition seats = 7;
+  string engine_audio_profile = 8;
+  string horn_audio_profile = 9;
+}
+
+message VehiclePerformanceSpecs {
+  float max_speed_kph = 1;
+  float acceleration_0_100 = 2;   // seconds
+  float brake_force = 3;
+  float traction = 4;
+  float suspension_stiffness = 5;
+  float suspension_travel = 6;
+  float center_of_mass_offset_y = 7;
+  float drive_bias_front = 8;     // 0.0 = RWD, 0.5 = AWD, 1.0 = FWD
+  int32 max_gears = 9;
+  float final_drive_ratio = 10;
+}
+
+message VehicleDimensions {
+  Vector3 size = 1;
+  Vector3 wheel_base = 2;
+  float ground_clearance = 3;
+}
+
+message SeatDefinition {
+  int32 index = 1;
+  Vector3 position = 2;
+  bool is_driver = 3;
+  bool can_shoot = 4;
+  string anim_set = 5;            // "driver_low", "driver_high", "passenger", "bike_driver"
+}
+
+message VehicleModifications {
+  // Engine
+  int32 engine_level = 1;         // 0-4 (stock, level 1-4)
+  int32 turbo_level = 2;          // 0-1
+  int32 transmission_level = 3;   // 0-3
+  // Suspension
+  int32 suspension_level = 4;     // 0-4
+  float suspension_height = 5;    // -1.0 to 1.0
+  // Brakes
+  int32 brakes_level = 6;         // 0-3
+  // Body
+  int32 armor_level = 7;          // 0-4
+  int32 body_kit = 8;             // 0 = stock, 1+ = body kit variants
+  int32 spoiler = 9;              // 0 = none, 1+ = variants
+  int32 hood = 10;
+  int32 roof = 11;
+  int32 grille = 12;
+  int32 exhaust = 13;
+  int32 skirt = 14;
+  int32 fender = 15;
+  // Wheels
+  int32 wheel_type = 16;          // 0-7 (sport, muscle, lowrider, suv, offroad, tuner, bike, highend)
+  int32 wheel_variant = 17;       // 0-23
+  int32 tire_smoke_color_r = 18;
+  int32 tire_smoke_color_g = 19;
+  int32 tire_smoke_color_b = 20;
+  bool bulletproof_tires = 21;
+  bool custom_tires = 22;
+  // Appearance
+  string primary_color = 23;      // hex
+  string secondary_color = 24;    // hex
+  string pearlescent_color = 25;  // hex
+  string wheel_color = 26;        // hex
+  int32 paint_type = 27;          // 0=normal, 1=metallic, 2=pearl, 3=matte, 4=metal, 5=chrome
+  string livery = 28;             // livery texture name
+  int32 window_tint = 29;         // 0-5
+  // Performance
+  bool xenon_lights = 30;
+  int32 xenon_color = 31;         // 0-12
+  bool neon_enabled = 32;
+  int32 neon_color_r = 33;
+  int32 neon_color_g = 34;
+  int32 neon_color_b = 35;
+  // Plates
+  string plate_text = 36;
+  int32 plate_style = 37;         // 0-5
+}
+
+message WeaponState {
+  EntityState base = 1;
+  WeaponDefinition definition = 2;
+  int32 ammo_in_clip = 3;
+  int32 ammo_reserve = 4;
+  int32 max_clip_size = 5;
+  int32 max_reserve = 6;
+  float next_fire_time = 7;       // server timestamp
+  float heat = 8;                 // 0.0 - 1.0 (overheat mechanic)
+  bool is_reloading = 9;
+  float reload_progress = 10;     // 0.0 - 1.0
+  WeaponAttachments attachments = 11;
+  WeaponCondition condition = 12;
+}
+
+message WeaponDefinition {
+  string model_id = 1;            // e.g., "weapon_pistol_glock17", "weapon_rifle_ak47"
+  string display_name = 2;
+  string manufacturer = 3;        // "Glock", "Kalashnikov", "Colt", "Heckler & Koch"
+  string weapon_class = 4;        // "pistol", "smg", "rifle", "shotgun", "sniper", "heavy", "throwable", "melee"
+  WeaponPerformanceSpecs performance = 5;
+  FirstPersonData first_person = 6;
+  repeated AttachmentSlot attachment_slots = 7;
+  string fire_audio_profile = 8;
+  string dry_fire_audio_profile = 9;
+  string reload_audio_profile = 10;
+}
+
+message WeaponPerformanceSpecs {
+  float damage = 1;
+  float damage_falloff_start = 2;     // meters
+  float damage_falloff_end = 3;       // meters
+  float fire_rate_rpm = 4;            // rounds per minute
+  float muzzle_velocity = 5;          // m/s
+  float range = 6;                    // effective range in meters
+  float accuracy_hip = 7;             // 0.0 - 1.0 (spread angle multiplier)
+  float accuracy_ads = 8;             // 0.0 - 1.0
+  float recoil_vertical = 9;          // degrees per shot
+  float recoil_horizontal = 10;       // degrees per shot
+  float recoil_recovery = 11;         // degrees per second
+  int32 clip_capacity = 12;
+  int32 max_reserve_ammo = 13;
+  float reload_time_tactical = 14;    // seconds (mag in gun)
+  float reload_time_empty = 15;       // seconds (empty mag)
+  float equip_time = 16;              // seconds
+  float aim_time = 17;                // seconds to ADS
+  float movement_speed_multiplier = 18;
+  enum FireMode {
+    FIRE_MODE_SEMI = 0;
+    FIRE_MODE_AUTO = 1;
+    FIRE_MODE_BURST = 2;
+    FIRE_MODE_BOLT = 3;
+    FIRE_MODE_PUMP = 4;
+  }
+  repeated FireMode fire_modes = 19;
+  bool has_bolt_action = 20;
+}
+
+message FirstPersonData {
+  string view_model = 1;            // first-person model path
+  Vector3 position_offset = 2;      // relative to camera
+  Quaternion rotation_offset = 3;
+  Vector3 aim_position_offset = 4;  // ADS position
+  Quaternion aim_rotation_offset = 5;
+  Vector3 inspect_position_offset = 6;
+  Quaternion inspect_rotation_offset = 7;
+  repeated AnimationReference animations = 8;
+}
+
+message AnimationReference {
+  string name = 1;                  // "idle", "fire", "reload_tactical", "reload_empty", "equip", "aim_in", "aim_out", "inspect"
+  string clip_path = 2;
+  float speed = 3;
+  bool loop = 4;
+}
+
+message AttachmentSlot {
+  enum SlotType {
+    SLOT_TYPE_UNSPECIFIED = 0;
+    SLOT_TYPE_OPTIC = 1;            // scopes, red dots
+    SLOT_TYPE_MUZZLE = 2;           // suppressors, compensators, flash hiders
+    SLOT_TYPE_BARREL = 3;           // extended, heavy, threaded
+    SLOT_TYPE_UNDERBARREL = 4;      // grips, bipods, lasers, flashlights
+    SLOT_TYPE_MAGAZINE = 5;         // extended, drum, fast mag
+    SLOT_TYPE_STOCK = 6;            // folding, collapsible, precision
+    SLOT_TYPE_RECEIVER = 7;         // upper/lower receiver variants
+    SLOT_TYPE_AMMO = 8;             // hollow point, armor piercing, tracer, subsonic
+    SLOT_TYPE_PERK = 9;             // weapon perks
+    SLOT_TYPE_COSMETIC = 10;        // skins, charms, wraps
+  }
+  SlotType type = 1;
+  string slot_id = 2;               // unique identifier
+  string default_attachment = 3;    // default attachment item_id
+  Vector3 position_offset = 4;
+  Quaternion rotation_offset = 5;
+}
+
+message WeaponAttachments {
+  map<string, string> equipped = 1;  // slot_id -> attachment_item_id
+}
+
+message WeaponCondition {
+  float durability = 1;             // 0.0 - 1.0
+  float dirt = 2;                   // 0.0 - 1.0
+  float carbon = 3;                 // 0.0 - 1.0
+  bool is_jammed = 4;
+  uint32 rounds_fired = 5;
+}
+
+message NPCState {
+  EntityState base = 1;
+  string npc_type = 2;              // "ped_civilian", "ped_gang", "ped_police", "ped_medic", "ped_firefighter"
+  string behavior_tree = 3;         // behavior tree asset name
+  float health = 4;
+  float max_health = 5;
+  uint64 target_entity_id = 6;
+  int32 relationship_group = 7;     // hash of relationship group
+  repeated uint64 weapon_ids = 8;
+  int32 current_weapon_index = 9;
+  bool is_fleeing = 10;
+  bool is_in_combat = 11;
+  Vector3 home_position = 12;
+  float wander_radius = 13;
+}

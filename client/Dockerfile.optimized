@@ -1,0 +1,149 @@
+# ============================================================================
+# UNITY CLIENT DOCKERFILE - Multi-stage optimized build
+# ============================================================================
+
+# ---- Builder Stage ----
+FROM unityci/editor:ubuntu-2022.3.20f1-base-1 AS builder
+
+# Install additional dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    git-lfs \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Unity modules we need
+RUN /opt/unity/Editor/Unity -batchmode -nographics \
+    -quit \
+    -logFile - \
+    -executeMethod UnityEditor.PackageManager.Client.AddAndRemove \
+    -packageNames "com.unity.textmeshpro@3.0.6,com.unity.inputsystem@1.7.0,com.unity.cinemachine@2.9.7,com.unity.addressables@1.23.19,com.unity.netcode.gameobjects@1.5.2"
+
+WORKDIR /project
+
+# Copy package files first (for cache)
+COPY client/Packages/ ./Packages/
+COPY client/Packages/manifest.json ./Packages/manifest.json
+
+# Copy project settings
+COPY client/ProjectSettings/ ./ProjectSettings/
+
+# Resolve packages
+RUN /opt/unity/Editor/Unity -batchmode -nographics \
+    -projectPath /project \
+    -quit \
+    -logFile - \
+    -executeMethod UnityEditor.PackageManager.Client.Resolve
+
+# Copy all source
+COPY client/ ./
+
+# Generate protos
+COPY shared/proto/ ./shared/proto/
+RUN cd shared/proto && ./build_proto.sh
+
+# Build Linux Headless Server
+RUN /opt/unity/Editor/Unity -batchmode -nographics \
+    -projectPath /project \
+    -buildTarget StandaloneLinux64 \
+    -executeMethod Megame.Client.BuildScript.PerformBuild \
+    -buildVersion ${VERSION:-dev} \
+    -outputPath /build/linux \
+    -logFile - \
+    -quit
+
+# Build Windows Client
+RUN /opt/unity/Editor/Unity -batchmode -nographics \
+    -projectPath /project \
+    -buildTarget StandaloneWindows64 \
+    -executeMethod Megame.Client.BuildScript.PerformBuild \
+    -buildVersion ${VERSION:-dev} \
+    -outputPath /build/windows \
+    -logFile - \
+    -quit
+
+# ---- Runtime Stage (Linux Headless) ----
+FROM ubuntu:22.04 AS runtime-linux
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglib2.0-0 \
+    libnss3 \
+    libnspr4 \
+    libdbus-1-3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libpulse0 \
+    libvulkan1 \
+    mesa-vulkan-drivers \
+    vulkan-tools \
+    ca-certificates \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -r -u 1000 -g root appuser
+
+WORKDIR /app
+
+# Copy build output
+COPY --from=builder /build/linux/MegaGame_Data ./MegaGame_Data
+COPY --from=builder /build/linux/MegaGame ./MegaGame
+
+RUN chmod +x ./MegaGame && chown -R appuser:root /app
+
+USER appuser
+
+# Vulkan config for headless
+ENV VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+ENV MESA_LOADER_DRIVER_OVERRIDE=lvp
+ENV GALLIUM_DRIVER=llvmpipe
+
+EXPOSE 7777 7778
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD pgrep -x MegaGame || exit 1
+
+ENTRYPOINT ["./MegaGame"]
+CMD ["-batchmode", "-nographics", "-logFile", "-", "-dedicated-server"]
+
+# ---- Runtime Stage (Windows) ----
+FROM mcr.microsoft.com/windows/servercore:ltsc2022 AS runtime-windows
+
+WORKDIR /app
+
+COPY --from=builder /build/windows/MegaGame_Data ./MegaGame_Data
+COPY --from=builder /build/windows/MegaGame.exe ./MegaGame.exe
+
+EXPOSE 7777 7778
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD powershell -command "Get-Process MegaGame -ErrorAction SilentlyContinue | Select-Object -First 1" || exit 1
+
+ENTRYPOINT ["MegaGame.exe"]
+CMD ["-batchmode", "-nographics", "-logFile", "-", "-dedicated-server"]
+
+# ---- Development Stage ----
+FROM unityci/editor:ubuntu-2022.3.20f1-base-1 AS development
+
+WORKDIR /project
+COPY client/ ./
+COPY shared/proto/ ./shared/proto/
+
+RUN cd shared/proto && ./build_proto.sh
+
+# Install development tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    vim \
+    htop \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+CMD ["/opt/unity/Editor/Unity", "-projectPath", "/project"]

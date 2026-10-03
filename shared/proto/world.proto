@@ -1,0 +1,601 @@
+syntax = "proto3";
+
+package megame.world;
+
+import "common.proto";
+
+option go_package = "github.com/megame/shared/proto;world";
+option csharp_namespace = "Megame.World";
+
+message WorldDefinition {
+  string world_id = 1;
+  string display_name = 2;
+  string description = 3;
+  Vector3 world_origin = 4;             // world space origin
+  Vector3 world_size = 5;               // total world bounds
+  repeated RegionDefinition regions = 6;
+  repeated POIDefinition pois = 7;
+  repeated RoadDefinition roads = 8;
+  repeated NavMeshDefinition nav_meshes = 9;
+  repeated InteriorDefinition interiors = 10;
+  repeated AudioZoneDefinition audio_zones = 11;
+  repeated WeatherRegionDefinition weather_regions = 12;
+  repeated PopulationZoneDefinition population_zones = 13;
+  repeated ScenarioDefinition scenarios = 14;
+  string heightmap_texture = 15;
+  string splatmap_texture = 16;
+  repeated TerrainLayerDefinition terrain_layers = 17;
+  WaterDefinition water = 18;
+  SkyDefinition sky = 19;
+}
+
+message RegionDefinition {
+  string region_id = 1;
+  string display_name = 2;
+  string short_name = 3;                // for HUD
+  Vector3 center = 4;
+  float radius = 5;
+  Vector3 bounds_min = 6;
+  Vector3 bounds_max = 7;
+  RegionType type = 8;
+  int32 population_density = 9;         // 0-100
+  int32 traffic_density = 10;           // 0-100
+  int32 police_patrol_frequency = 11;   // 0-100
+  int32 gang_presence = 12;             // 0-100, which gang controls
+  string gang_faction = 13;
+  repeated string connected_regions = 14;
+  string background_music = 15;
+  bool is_safe_zone = 16;
+  bool is_restricted = 17;              // military base, airport, etc.
+  int32 wanted_level_multiplier = 18;   // 100 = normal
+}
+
+enum RegionType {
+  REGION_TYPE_UNSPECIFIED = 0;
+  REGION_TYPE_DOWNTOWN = 1;
+  REGION_TYPE_RESIDENTIAL = 2;
+  REGION_TYPE_INDUSTRIAL = 3;
+  REGION_TYPE_COMMERCIAL = 4;
+  REGION_TYPE_RURAL = 5;
+  REGION_TYPE_WILDERNESS = 6;
+  REGION_TYPE_BEACH = 7;
+  REGION_TYPE_AIRPORT = 8;
+  REGION_TYPE_PORT = 9;
+  REGION_TYPE_MILITARY = 10;
+  REGION_TYPE_UNIVERSITY = 11;
+  REGION_TYPE_PARK = 12;
+  REGION_TYPE_SUBURBS = 13;
+  REGION_TYPE_SLUMS = 14;
+  REGION_TYPE_RICH = 15;                // Beverly Hills equivalent
+}
+
+message POIDefinition {
+  string poi_id = 1;
+  string display_name = 2;
+  POIType type = 3;
+  Vector3 position = 4;
+  Quaternion rotation = 5;
+  Vector3 scale = 6;
+  string model_path = 7;
+  repeated string tags = 8;             // "enterable", "mission_start", "shop", "safehouse"
+  string interior_id = 9;               // if enterable
+  bool is_landmark = 10;
+  bool show_on_map = 11;
+  int32 unlock_level = 12;              // 0 = always visible
+  repeated string required_missions = 13;
+  OpeningHours hours = 14;
+  string blip_sprite = 15;              // map icon
+  Color blip_color = 16;
+}
+
+enum POIType {
+  POI_TYPE_UNSPECIFIED = 0;
+  POI_TYPE_SHOP_CLOTHING = 1;
+  POI_TYPE_SHOP_WEAPONS = 2;
+  POI_TYPE_SHOP_VEHICLES = 3;
+  POI_TYPE_SHOP_MODS = 4;               // Los Santos Customs equivalent
+  POI_TYPE_SHOP_TATTOO = 5;
+  POI_TYPE_SHOP_BARBER = 6;
+  POI_TYPE_SHOP_FOOD = 7;
+  POI_TYPE_SHOP_CONVENIENCE = 8;
+  POI_TYPE_SHOP_LIQUOR = 9;
+  POI_TYPE_SAFEHOUSE = 10;
+  POI_TYPE_HOTEL = 11;
+  POI_TYPE_HOSPITAL = 12;
+  POI_TYPE_POLICE_STATION = 13;
+  POI_TYPE_FIRE_STATION = 14;
+  POI_TYPE_GARAGE = 15;
+  POI_TYPE_HELIPAD = 16;
+  POI_TYPE_DOCK = 17;
+  POI_TYPE_STRIP_CLUB = 18;
+  POI_TYPE_BAR = 19;
+  POI_TYPE_RESTAURANT = 20;
+  POI_TYPE_GYM = 21;
+  POI_TYPE_GOLF = 22;
+  POI_TYPE_TENNIS = 23;
+  POI_TYPE_DARTS = 24;
+  POI_TYPE_ARM_WRESTLING = 25;
+  POI_TYPE_SHOOTING_RANGE = 26;
+  POI_TYPE_FLIGHT_SCHOOL = 27;
+  POI_TYPE_DRIVING_SCHOOL = 28;
+  POI_TYPE_CINEMA = 29;
+  POI_TYPE_COMEDY_CLUB = 30;
+  POI_TYPE_BASE_JUMP = 31;
+  POI_TYPE_PARACHUTE = 32;
+  POI_TYPE_RACE_TRACK = 33;
+  POI_TYPE_STUNT_JUMP = 34;
+  POI_TYPE_COLLECTIBLE = 35;
+  POI_TYPE_HIDDEN_PACKAGE = 36;
+  POI_TYPE_LETTER_SCRAP = 37;
+  POI_TYPE_SPACESHIP_PART = 38;
+  POI_TYPE_SUBMARINE_PART = 39;
+  POI_TYPE_NUCLEAR_WASTE = 40;
+  POI_TYPE_EPSILON_TRACT = 41;
+  POI_TYPE_RAMPAGE = 42;
+  POI_TYPE_ASSASSINATION = 43;
+  POI_TYPE_BOUNTY = 44;
+  POI_TYPE_GANG_ATTACK = 45;
+  POI_TYPE_ARMORED_TRUCK = 46;
+  POI_TYPE_CRATE_DROP = 47;
+  POI_TYPE_DEAD_DROP = 48;
+  POI_TYPE_PLAYER_SPAWN = 49;
+  POI_TYPE_MISSION_START = 50;
+  POI_TYPE_STRANGER = 51;
+  POI_TYPE_RANDOM_EVENT = 52;
+  POI_TYPE_PROPERTY = 53;               // purchasable property
+  POI_TYPE_BUSINESS = 54;               // purchasable business
+}
+
+message OpeningHours {
+  int32 open_hour = 1;      // 0-23
+  int32 open_minute = 2;    // 0-59
+  int32 close_hour = 3;
+  int32 close_minute = 4;
+  bool is_24h = 5;
+  repeated int32 closed_days = 6;   // 0=Sunday, 6=Saturday
+}
+
+message RoadDefinition {
+  string road_id = 1;
+  string name = 2;
+  RoadType type = 3;
+  repeated Vector3 nodes = 4;         // spline points
+  float width = 5;
+  int32 lanes = 6;
+  bool one_way = 7;
+  float speed_limit = 8;              // m/s
+  repeated string connected_roads = 9;
+  repeated TrafficLightDefinition traffic_lights = 10;
+}
+
+enum RoadType {
+  ROAD_TYPE_UNSPECIFIED = 0;
+  ROAD_TYPE_HIGHWAY = 1;
+  ROAD_TYPE_MAJOR = 2;
+  ROAD_TYPE_MINOR = 3;
+  ROAD_TYPE_SERVICE = 4;
+  ROAD_TYPE_ALLEY = 5;
+  ROAD_TYPE_OFFROAD = 6;
+  ROAD_TYPE_RAMP = 7;
+  ROAD_TYPE_BRIDGE = 8;
+  ROAD_TYPE_TUNNEL = 9;
+}
+
+message TrafficLightDefinition {
+  Vector3 position = 1;
+  Quaternion rotation = 2;
+  float cycle_time = 3;               // seconds
+  float green_duration = 4;
+  float yellow_duration = 5;
+  float red_duration = 6;
+  float offset = 7;                   // phase offset
+}
+
+message NavMeshDefinition {
+  string nav_mesh_id = 1;
+  NavMeshType type = 2;
+  Vector3 bounds_min = 3;
+  Vector3 bounds_max = 4;
+  float cell_size = 5;
+  float agent_radius = 6;
+  float agent_height = 7;
+  float max_slope = 8;                // degrees
+  float max_climb = 9;
+  string data_path = 10;              // serialized navmesh data
+}
+
+enum NavMeshType {
+  NAV_MESH_TYPE_UNSPECIFIED = 0;
+  NAV_MESH_TYPE_PEDESTRIAN = 1;
+  NAV_MESH_TYPE_VEHICLE = 2;
+  NAV_MESH_TYPE_BOAT = 3;
+  NAV_MESH_TYPE_AIRCRAFT_LOW = 4;     // helicopters
+  NAV_MESH_TYPE_AIRCRAFT_HIGH = 5;    // planes
+  NAV_MESH_TYPE_ANIMAL = 6;
+}
+
+message InteriorDefinition {
+  string interior_id = 1;
+  string display_name = 2;
+  Vector3 entrance_position = 3;
+  Quaternion entrance_rotation = 4;
+  Vector3 interior_origin = 5;        // position in interior space
+  Vector3 bounds_min = 6;
+  Vector3 bounds_max = 7;
+  string model_path = 8;
+  string nav_mesh_id = 9;
+  repeated InteriorPortal portals = 10;
+  repeated InteriorProp props = 11;
+  LightingDefinition lighting = 12;
+  AudioDefinition audio = 13;
+  bool is_streamed = 14;              // loaded on demand
+  int32 max_occupants = 15;
+}
+
+message InteriorPortal {
+  string portal_id = 1;
+  Vector3 position = 2;
+  Quaternion rotation = 3;
+  Vector3 size = 4;
+  string target_interior = 5;         // empty = exterior
+  Vector3 target_position = 6;
+  Quaternion target_rotation = 7;
+  bool is_locked = 8;
+  string lock_type = 9;               // "key", "keycard", "hack", "mission"
+  string required_item = 10;
+}
+
+message InteriorProp {
+  string prop_id = 1;
+  string model_path = 2;
+  Vector3 position = 3;
+  Quaternion rotation = 4;
+  Vector3 scale = 5;
+  bool is_interactable = 6;
+  string interaction_type = 7;        // "sit", "sleep", "work", "tv", "computer", "safe", "fridge"
+  string required_mission = 8;
+}
+
+message LightingDefinition {
+  string skybox = 1;
+  Color ambient_color = 2;
+  float ambient_intensity = 3;
+  repeated LightSource lights = 4;
+  repeated ReflectionProbe probes = 5;
+  float exposure = 6;
+  Color fog_color = 7;
+  float fog_density = 8;
+  float fog_start = 9;
+  float fog_end = 10;
+}
+
+message LightSource {
+  string light_id = 1;
+  LightType type = 2;
+  Vector3 position = 3;
+  Quaternion rotation = 4;
+  Color color = 5;
+  float intensity = 6;
+  float range = 7;
+  float spot_angle = 8;               // for spot lights
+  float inner_spot_angle = 9;
+  bool casts_shadows = 10;
+  bool is_baked = 11;
+  bool is_dynamic = 12;
+  string cookie_texture = 13;
+  repeated AnimationCue animation = 14;  // flicker, pulse, rotate
+}
+
+enum LightType {
+  LIGHT_TYPE_UNSPECIFIED = 0;
+  LIGHT_TYPE_DIRECTIONAL = 1;
+  LIGHT_TYPE_POINT = 2;
+  LIGHT_TYPE_SPOT = 3;
+  LIGHT_TYPE_AREA = 4;
+  LIGHT_TYPE_TUBE = 5;
+}
+
+message ReflectionProbe {
+  string probe_id = 1;
+  Vector3 position = 2;
+  Vector3 size = 3;
+  int32 resolution = 4;               // 128, 256, 512, 1024
+  float hdr = 5;
+  bool is_realtime = 6;
+  float refresh_rate = 7;             // seconds, 0 = once
+}
+
+message AudioDefinition {
+  string ambient_bus = 1;
+  repeated AudioEmitter emitters = 2;
+  repeated AudioReverbZone reverb_zones = 3;
+}
+
+message AudioEmitter {
+  string emitter_id = 1;
+  string audio_clip = 2;
+  Vector3 position = 3;
+  float volume = 4;
+  float pitch = 5;
+  float spatial_blend = 6;            // 0 = 2D, 1 = 3D
+  float min_distance = 7;
+  float max_distance = 8;
+  bool loop = 9;
+  bool play_on_awake = 10;
+  float random_pitch_min = 11;
+  float random_pitch_max = 12;
+}
+
+message AudioReverbZone {
+  string zone_id = 1;
+  Vector3 bounds_min = 2;
+  Vector3 bounds_max = 3;
+  AudioReverbPreset preset = 4;
+  float decay_time = 5;
+  float room_size = 6;
+  float room_hf = 7;
+  float room_lf = 8;
+  float reflections_delay = 9;
+  float reflections_level = 10;
+  float reverb_delay = 11;
+  float reverb_level = 12;
+  float hf_reference = 13;
+  float lf_reference = 14;
+  float diffusion = 15;
+  float density = 16;
+}
+
+enum AudioReverbPreset {
+  REVERB_PRESET_UNSPECIFIED = 0;
+  REVERB_PRESET_OFF = 1;
+  REVERB_PRESET_GENERIC = 2;
+  REVERB_PRESET_PADDED_CELL = 3;
+  REVERB_PRESET_ROOM = 4;
+  REVERB_PRESET_BATHROOM = 5;
+  REVERB_PRESET_LIVING_ROOM = 6;
+  REVERB_PRESET_STONE_ROOM = 7;
+  REVERB_PRESET_AUDITORIUM = 8;
+  REVERB_PRESET_CONCERT_HALL = 9;
+  REVERB_PRESET_CAVE = 10;
+  REVERB_PRESET_ARENA = 11;
+  REVERB_PRESET_HANGAR = 12;
+  REVERB_PRESET_CARPETED_HALLWAY = 13;
+  REVERB_PRESET_HALLWAY = 14;
+  REVERB_PRESET_STONE_CORRIDOR = 15;
+  REVERB_PRESET_ALLEY = 16;
+  REVERB_PRESET_FOREST = 17;
+  REVERB_PRESET_CITY = 18;
+  REVERB_PRESET_MOUNTAINS = 19;
+  REVERB_PRESET_QUARRY = 20;
+  REVERB_PRESET_PLAIN = 21;
+  REVERB_PRESET_PARKING_LOT = 22;
+  REVERB_PRESET_SEWER_PIPE = 23;
+  REVERB_PRESET_UNDERWATER = 24;
+  REVERB_PRESET_DRUGGED = 25;
+  REVERB_PRESET_DIZZY = 26;
+  REVERB_PRESET_PSYCHOTIC = 27;
+}
+
+message AudioZoneDefinition {
+  string zone_id = 1;
+  Vector3 bounds_min = 2;
+  Vector3 bounds_max = 3;
+  string music_playlist = 4;
+  float music_volume = 5;
+  string ambient_sound = 6;
+  float ambient_volume = 7;
+  int32 priority = 8;
+}
+
+message WeatherRegionDefinition {
+  string region_id = 1;
+  Vector3 bounds_min = 2;
+  Vector3 bounds_max = 3.
+  repeated string allowed_weather = 4;
+  map<string, float> weather_weights = 5;   // weather -> probability
+  float transition_time = 6;               // seconds
+}
+
+message PopulationZoneDefinition {
+  string zone_id = 1;
+  Vector3 bounds_min = 2;
+  Vector3 bounds_max = 3.
+  PedPopulationConfig peds = 4;
+  VehiclePopulationConfig vehicles = 5;
+  int32 max_peds = 6;
+  int32 max_vehicles = 7;
+  float spawn_rate_multiplier = 8;         // time of day multiplier
+}
+
+message PedPopulationConfig {
+  repeated PedModelWeight models = 1;
+  repeated ScenarioWeight scenarios = 2;
+  float group_chance = 3;                  // chance to spawn in groups
+  int32 max_group_size = 4;
+}
+
+message PedModelWeight {
+  string model_id = 1;
+  float weight = 2;
+  repeated string required_tags = 3;       // "business", "casual", "gang", "beach", "hiker"
+  repeated string forbidden_tags = 4;
+  int32 min_level = 5;                     // player level requirement
+}
+
+message ScenarioWeight {
+  string scenario_id = 1;
+  float weight = 2;
+  repeated string time_of_day = 3;         // "morning", "noon", "evening", "night"
+}
+
+message VehiclePopulationConfig {
+  repeated VehicleModelWeight models = 1;
+  float parked_chance = 2;
+  float driving_chance = 3;
+  repeated string forbidden_areas = 4;     // region IDs where this config doesn't apply
+}
+
+message VehicleModelWeight {
+  string model_id = 1;
+  float weight = 2;
+  repeated string colors = 3;              // preferred colors
+  int32 min_level = 4;
+}
+
+message ScenarioDefinition {
+  string scenario_id = 1;
+  string name = 2.
+  ScenarioType type = 3.
+  Vector3 position = 4.
+  Quaternion rotation = 5.
+  string model_path = 6.
+  string animation = 7.
+  repeated string required_props = 8.
+  float duration = 9.                      // 0 = infinite
+  bool loop = 10.
+  repeated string conditions = 11.         // lua conditions
+  int32 max_concurrent = 12.
+  string required_region = 13.
+  repeated string time_of_day = 14.
+}
+
+enum ScenarioType {
+  SCENARIO_TYPE_UNSPECIFIED = 0;
+  SCENARIO_TYPE_STAND = 1;
+  SCENARIO_TYPE_SIT = 2;
+  SCENARIO_TYPE_SIT_CHAIR = 3;
+  SCENARIO_TYPE_SIT_BENCH = 4;
+  SCENARIO_TYPE_SIT_GROUND = 5;
+  SCENARIO_TYPE_LEAN = 6;
+  SCENARIO_TYPE_LEAN_WALL = 7;
+  SCENARIO_TYPE_LEAN_RAILING = 8;
+  SCENARIO_TYPE_WALK = 9;
+  SCENARIO_TYPE_PATROL = 10;
+  SCENARIO_TYPE_WORK = 11;                // construction, cleaning, etc.
+  SCENARIO_TYPE_PHONE = 12;
+  SCENARIO_TYPE_SMOKE = 13;
+  SCENARIO_TYPE_DRINK = 14;
+  SCENARIO_TYPE_EAT = 15;
+  SCENARIO_TYPE_READ = 16;
+  SCENARIO_TYPE_MUSIC = 17;               // street performer
+  SCENARIO_TYPE_DANCE = 18;
+  SCENARIO_TYPE_EXERCISE = 19;            // jogging, yoga, weights
+  SCENARIO_TYPE_FISHING = 20;
+  SCENARIO_TYPE_PICNIC = 21.
+  SCENARIO_TYPE_CAMPING = 22.
+  SCENARIO_TYPE_PROTEST = 23.
+  SCENARIO_TYPE_PARADE = 24.
+  SCENARIO_TYPE_EMERGENCY = 25.
+  SCENARIO_TYPE_CRIME = 26.
+  SCENARIO_TYPE_DEAL = 27.
+  SCENARIO_TYPE_VEHICLE_REPAIR = 28.
+  SCENARIO_TYPE_CAR_WASH = 29.
+  SCENARIO_TYPE_FUEL = 30.
+  SCENARIO_TYPE_PARKING = 31.
+  SCENARIO_TYPE_TAXI_WAIT = 32.
+  SCENARIO_TYPE_BUS_STOP = 33.
+  SCENARIO_TYPE_SUBWAY_WAIT = 34.
+  SCENARIO_TYPE_AIRPORT_WAIT = 35.
+  SCENARIO_TYPE_SHOPPING = 36.
+  SCENARIO_TYPE_WINDOW_SHOP = 37.
+  SCENARIO_TYPE_ATM = 38.
+  SCENARIO_TYPE_VENDING = 39.
+  SCENARIO_TYPE_PHOTO = 40.
+  SCENARIO_TYPE_SELFIE = 41.
+  SCENARIO_TYPE_ARGUE = 42.
+  SCENARIO_TYPE_FIGHT = 43.
+  SCENARIO_TYPE_ROBBERY = 44.
+  SCENARIO_TYPE_CARJACK = 45.
+  SCENARIO_TYPE_PURSE_SNATCH = 46.
+  SCENARIO_TYPE_VANDALISM = 47.
+  SCENARIO_TYPE_GRAFFITI = 48.
+  SCENARIO_TYPE_STREET_RACE = 49.
+  SCENARIO_TYPE_STUNT = 50.
+  SCENARIO_TYPE_PARACHUTE = 51.
+  SCENARIO_TYPE_BASE_JUMP = 52.
+  SCENARIO_TYPE_SKYDIVE = 53.
+  SCENARIO_TYPE_HELI_TOUR = 54.
+  SCENARIO_TYPE_BOAT_TOUR = 55.
+  SCENARIO_TYPE_SUBMARINE = 56.
+  SCENARIO_TYPE_DIVING = 57.
+  SCENARIO_TYPE_SURFING = 58.
+  SCENARIO_TYPE_SWIMMING = 59.
+  SCENARIO_TYPE_SUNBATHING = 60.
+  SCENARIO_TYPE_YOGA = 61.
+  SCENARIO_TYPE_MEDITATION = 62.
+  SCENARIO_TYPE_TAI_CHI = 63.
+  SCENARIO_TYPE_DOG_WALK = 64.
+  SCENARIO_TYPE_CAT_FEED = 65.
+  SCENARIO_TYPE_BIRD_WATCH = 66.
+  SCENARIO_TYPE_PHOTOGRAPHY = 67.
+  SCENARIO_TYPE_PAINTING = 68.
+  SCENARIO_TYPE_BUSKING = 69.
+  SCENARIO_TYPE_FORTUNE_TELLER = 70.
+}
+
+message TerrainLayerDefinition {
+  string layer_name = 1.
+  string diffuse_texture = 2.
+  string normal_texture = 3.
+  string mask_texture = 4.
+  float tile_size = 5.
+  float normal_strength = 6.
+  float metallic = 7.
+  float smoothness = 8.
+  Vector2 texture_offset = 9.
+  Vector2 texture_scale = 10.
+}
+
+message WaterDefinition {
+  string water_material = 1.
+  float water_level = 2.
+  Vector3 flow_direction = 3.
+  float flow_speed = 4.
+  Color deep_color = 5.
+  Color shallow_color = 6.
+  float wave_scale = 7.
+  float wave_speed = 8.
+  bool has_foam = 9.
+  string foam_texture = 10.
+  bool has_caustics = 11.
+  string caustics_texture = 12.
+  bool underwater_fog = 13.
+  Color underwater_fog_color = 14.
+  float underwater_fog_density = 15.
+}
+
+message SkyDefinition {
+  string skybox_material = 1.
+  string sun_disk_texture = 2.
+  string moon_texture = 3.
+  Color sun_color = 4.
+  float sun_intensity = 5.
+  Color moon_color = 6.
+  float moon_intensity = 7.
+  Color ambient_sky_color = 8.
+  Color ambient_equator_color = 9.
+  Color ambient_ground_color = 10.
+  repeated CloudLayer clouds = 11.
+  repeated StarLayer stars = 12.
+  float exposure = 13.
+}
+
+message CloudLayer {
+  string layer_name = 1.
+  string noise_texture = 2.
+  float altitude = 3.                    // km
+  float thickness = 4.
+  float coverage = 5.                    // 0-1
+  float speed = 6.
+  Vector2 direction = 7.
+  Color color = 8.
+  float density = 9.
+}
+
+message StarLayer {
+  string layer_name = 1.
+  string star_texture = 2.
+  float intensity = 3.
+  float twinkle_speed = 4.
+  float rotation_speed = 5.              // degrees per hour
+}

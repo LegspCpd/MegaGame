@@ -1,0 +1,243 @@
+syntax = "proto3";
+
+package megame.network;
+
+import "entity.proto";
+import "common.proto";
+
+option go_package = "github.com/megame/shared/proto;network";
+option csharp_namespace = "Megame.Network";
+
+message ClientInput {
+  uint64 tick = 1;
+  uint64 timestamp_ms = 2;
+  Vector2 move = 3;                 // x: forward/back, y: left/right
+  Vector2 look = 4;                 // mouse delta or stick
+  bool jump = 5;
+  bool sprint = 6;
+  bool crouch = 7;
+  bool prone = 8;
+  bool interact = 9;
+  bool attack = 10;
+  bool aim = 11;
+  bool reload = 12;
+  bool weapon_wheel = 13;
+  int32 weapon_slot = 14;           // 0-7
+  bool enter_vehicle = 15;
+  bool exit_vehicle = 16;
+  Vector2 vehicle_control = 17;     // x: throttle/brake, y: steer
+  bool vehicle_handbrake = 18;
+  bool vehicle_horn = 19;
+  bool vehicle_lights = 20;
+  bool vehicle_siren = 21;
+  bool vehicle_next_seat = 22;
+  bool vehicle_prev_seat = 23;
+  bool pause_menu = 24;
+  bool map = 25;
+  bool phone = 26;
+  repeated int32 custom_actions = 27;  // moddable actions
+}
+
+message Vector2 {
+  float x = 1;
+  float y = 2;
+}
+
+message ServerSnapshot {
+  uint64 tick = 1;
+  uint64 server_time_ms = 2;
+  repeated megame.entity.EntityState entities = 3;
+  repeated uint64 destroyed_entities = 4;
+  repeated PlayerStateUpdate player_updates = 5;
+  repeated VehicleStateUpdate vehicle_updates = 6;
+  repeated WeaponStateUpdate weapon_updates = 7;
+  repeated NPCStateUpdate npc_updates = 8;
+  WorldState world = 9;
+}
+
+message PlayerStateUpdate {
+  uint64 entity_id = 1;
+  float health = 2;
+  float armor = 3;
+  float stamina = 4;
+  megame.entity.CameraMode camera_mode = 5;
+  uint64 current_weapon_id = 6;
+  uint64 current_vehicle_id = 7;
+  bool is_in_vehicle = 8;
+  int32 vehicle_seat_index = 9;
+  uint32 money = 10;
+  uint32 wanted_level = 11;
+  repeated uint64 inventory_weapon_ids = 12;
+  repeated uint64 inventory_item_ids = 13;
+}
+
+message VehicleStateUpdate {
+  uint64 entity_id = 1;
+  float engine_health = 2;
+  float body_health = 3;
+  float fuel = 4;
+  int32 current_gear = 5;
+  float rpm = 6;
+  float speed_kph = 7;
+  bool engine_on = 8;
+  bool lights_on = 9;
+  bool siren_on = 10;
+  repeated VehicleDoorState doors = 11;
+  repeated VehicleWheelState wheels = 12;
+  repeated uint64 occupant_ids = 13;
+}
+
+message WeaponStateUpdate {
+  uint64 entity_id = 1;
+  int32 ammo_in_clip = 2;
+  int32 ammo_reserve = 3;
+  float heat = 4;
+  bool is_reloading = 5;
+  float reload_progress = 6;
+}
+
+message NPCStateUpdate {
+  uint64 entity_id = 1;
+  float health = 2;
+  uint64 target_entity_id = 3;
+  bool is_fleeing = 4;
+  bool is_in_combat = 5;
+}
+
+message WorldState {
+  uint32 time_of_day = 1;           // 0-2359 (hour*100 + minute)
+  float weather_blend = 2;          // 0.0 = clear, 1.0 = storm
+  string current_weather = 3;       // "clear", "clouds", "rain", "thunder", "fog", "snow", "halloween"
+  float wind_speed = 4;
+  Vector2 wind_direction = 5;
+  uint32 wanted_level_multiplier = 6;
+  repeated WantedZone wanted_zones = 7;
+}
+
+message WantedZone {
+  Vector3 center = 1;
+  float radius = 2;
+  uint32 level = 3;
+}
+
+message RPCRequest {
+  string request_id = 1;
+  string method = 2;
+  bytes payload = 3;
+}
+
+message RPCResponse {
+  string request_id = 1;
+  bool success = 2;
+  string error = 3;
+  bytes payload = 4;
+}
+
+enum RPCMethod {
+  RPC_UNSPECIFIED = 0;
+  // Player
+  RPC_SPAWN_PLAYER = 100;
+  RPC_RESPAWN = 101;
+  RPC_TELEPORT = 102;
+  RPC_GIVE_WEAPON = 103;
+  RPC_REMOVE_WEAPON = 104;
+  RPC_SET_WEAPON_AMMO = 105;
+  RPC_GIVE_ITEM = 106;
+  RPC_REMOVE_ITEM = 107;
+  RPC_SET_MONEY = 108;
+  RPC_ADD_MONEY = 109;
+  RPC_SET_WANTED_LEVEL = 110;
+  RPC_CLEAR_WANTED_LEVEL = 111;
+  RPC_SET_CHARACTER_APPEARANCE = 112;
+  RPC_APPLY_CLOTHING = 113;
+  RPC_REMOVE_CLOTHING = 114;
+  // Vehicle
+  RPC_SPAWN_VEHICLE = 200;
+  RPC_DESTROY_VEHICLE = 201;
+  RPC_REPAIR_VEHICLE = 202;
+  RPC_REFUEL_VEHICLE = 203;
+  RPC_SET_VEHICLE_MODS = 204;
+  RPC_APPLY_VEHICLE_MOD = 205;
+  RPC_REMOVE_VEHICLE_MOD = 206;
+  RPC_SET_VEHICLE_COLORS = 207;
+  RPC_SET_VEHICLE_PLATE = 208;
+  RPC_TOGGLE_VEHICLE_ENGINE = 209;
+  RPC_TOGGLE_VEHICLE_LIGHTS = 210;
+  RPC_TOGGLE_VEHICLE_SIREN = 211;
+  RPC_WARP_INTO_VEHICLE = 212;
+  RPC_WARP_OUT_OF_VEHICLE = 213;
+  // World
+  RPC_SET_TIME_OF_DAY = 300;
+  RPC_SET_WEATHER = 301;
+  RPC_TRIGGER_MISSION = 302;
+  RPC_COMPLETE_MISSION = 303;
+  RPC_FAIL_MISSION = 304;
+  RPC_START_CUTSCENE = 305;
+  RPC_SKIP_CUTSCENE = 306;
+  // Social
+  RPC_SEND_CHAT = 400;
+  RPC_INVITE_TO_GROUP = 401;
+  RPC_KICK_FROM_GROUP = 402;
+  // Admin
+  RPC_KICK_PLAYER = 500;
+  RPC_BAN_PLAYER = 501;
+  RPC_SPECTATE = 502;
+  RPC_GOD_MODE = 503;
+  RPC_NOCLIP = 504;
+}
+
+message SpawnPlayerRequest {
+  megame.entity.CharacterAppearance appearance = 1;
+  Vector3 position = 2;
+  Quaternion rotation = 3;
+}
+
+message SpawnVehicleRequest {
+  string model_id = 1;
+  Vector3 position = 2;
+  Quaternion rotation = 3;
+  megame.entity.VehicleModifications mods = 4;
+  bool warp_player = 5;
+}
+
+message TeleportRequest {
+  Vector3 position = 1;
+  Quaternion rotation = 2;
+  bool preserve_momentum = 3;
+}
+
+message GiveWeaponRequest {
+  string weapon_model_id = 1;
+  int32 ammo = 2;
+  bool equip = 3;
+}
+
+message SetVehicleModsRequest {
+  uint64 vehicle_id = 1;
+  megame.entity.VehicleModifications mods = 2;
+}
+
+message ApplyVehicleModRequest {
+  uint64 vehicle_id = 1;
+  string mod_slot = 2;              // e.g., "engine", "spoiler", "wheels"
+  int32 mod_value = 3;
+}
+
+message SetVehicleColorsRequest {
+  uint64 vehicle_id = 1;
+  string primary = 2;
+  string secondary = 3;
+  string pearlescent = 4;
+  string wheel = 5;
+  int32 paint_type = 6;
+}
+
+message SetWeatherRequest {
+  string weather = 1;
+  float transition_time = 2;        // seconds
+}
+
+message TriggerMissionRequest {
+  string mission_id = 1;
+  map<string, string> parameters = 2;
+}

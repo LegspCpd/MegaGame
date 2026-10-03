@@ -1,0 +1,46 @@
+# Go
+server/bin/
+server/*.exe
+server/*.test
+server/coverage.out
+
+# Unity
+client/Library/
+client/Temp/
+client/Obj/
+client/Build/
+client/Builds/
+client/Logs/
+client/UserSettings/
+client/*.csproj
+client/*.sln
+client/*.unitypackage
+
+# Generated protos
+server/internal/proto/*.pb.go
+server/internal/proto/*_grpc.pb.go
+client/Assets/Scripts/Generated/Proto/*.cs
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.tar.gz
+*.zip
+
+# Release artifacts
+release-assets/
+release-package/
+
+# Secrets
+*.env
+*.key
+*.pem

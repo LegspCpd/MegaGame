@@ -1,0 +1,27 @@
+{
+  "dependencies": {
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.inputsystem": "1.7.0",
+    "com.unity.cinemachine": "2.9.7",
+    "com.unity.netcode.gameobjects": "1.5.2",
+    "com.unity.addressables": "1.23.19",
+    "com.unity.recorder": "4.0.1",
+    "com.unity.performance.profile-analyzer": "1.2.0"
+  },
+  "scopedRegistries": [
+    {
+      "name": "Unity Registry",
+      "url": "https://packages.unity.com",
+      "scopes": ["com.unity"]
+    },
+    {
+      "name": "NuGet",
+      "url": "https://api.nuget.org/v3/index.json",
+      "scopes": [
+        "Google.Protobuf",
+        "Grpc.Core",
+        "Grpc.Tools"
+      ]
+    }
+  ]
+}

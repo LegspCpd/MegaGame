@@ -1,0 +1,652 @@
+# ============================================================================
+# OPTIMIZED CI/CD PIPELINE
+# Features: Parallel jobs, intelligent caching, matrix builds, security scanning
+# ============================================================================
+
+name: CI/CD Optimized
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main, develop]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'full'
+        type: choice
+        options: [full, server-only, client-only, proto-only]
+
+env:
+  GO_VERSION: '1.23'
+  UNITY_VERSION: '2022.3.20f1'
+  DOCKER_REGISTRY: 'ghcr.io'
+  IMAGE_NAME: '${{ github.repository }}'
+
+jobs:
+  # ============================================================================
+  # PROTOBUF GENERATION (runs first, cached)
+  # ============================================================================
+  protobuf:
+    name: Generate Protobuf
+    runs-on: ubuntu-latest
+    outputs:
+      proto_hash: ${{ steps.proto_hash.outputs.hash }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: '25.1'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Go protoc plugins
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Calculate proto hash
+        id: proto_hash
+        run: |
+          hash=$(find shared/proto -name "*.proto" -exec cat {} + | sha256sum | cut -d' ' -f1)
+          echo "hash=$hash" >> $GITHUB_OUTPUT
+
+      - name: Cache generated protos
+        id: cache_protos
+        uses: actions/cache@v4
+        with:
+          path: |
+            server/internal/proto
+            client/Assets/Scripts/Generated/Proto
+          key: protos-${{ steps.proto_hash.outputs.hash }}
+          restore-keys: protos-
+
+      - name: Generate Go protos
+        if: steps.cache_protos.outputs.cache-hit != 'true'
+        run: |
+          cd shared/proto
+          protoc --go_out=../../server/internal/proto --go_opt=paths=source_relative \
+            --go-grpc_out=../../server/internal/proto --go-grpc_opt=paths=source_relative \
+            *.proto
+
+      - name: Generate C# protos
+        if: steps.cache_protos.outputs.cache-hit != 'true'
+        run: |
+          cd shared/proto
+          protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto \
+            --csharp_opt=base_namespace=Megame \
+            *.proto
+
+      - name: Verify generated files
+        run: |
+          test -f server/internal/proto/common.pb.go
+          test -f client/Assets/Scripts/Generated/Proto/Common.cs
+
+  # ============================================================================
+  # GO SERVER - Build, Test, Lint, Security
+  # ============================================================================
+  go-lint:
+    name: Go Lint & Vet
+    needs: protobuf
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Download dependencies
+        run: cd server && go mod download
+
+      - name: Run go vet
+        run: cd server && go vet ./...
+
+      - name: Run staticcheck
+        uses: dominikh/staticcheck-action@v1
+        with:
+          version: "latest"
+          install-go: false
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=10m
+
+  go-test:
+    name: Go Test (Race Detector)
+    needs: protobuf
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Download dependencies
+        run: cd server && go mod download
+
+      - name: Run tests with race detector
+        run: |
+          cd server
+          go test -v -race -count=1 -coverprofile=coverage.out -covermode=atomic ./...
+        env:
+          GOFLAGS: "-count=1"
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: server/coverage.out
+          flags: unittests
+          fail_ci_if_error: false
+
+      - name: Check coverage threshold
+        run: |
+          cd server
+          go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//' | xargs -I {} test {} -ge 60
+
+  go-build:
+    name: Go Build (Multi-arch)
+    needs: [protobuf, go-lint, go-test]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows]
+        goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Download dependencies
+        run: cd server && go mod download
+
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: server/internal/proto
+
+      - name: Build
+        run: |
+          cd server
+          CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build \
+            -trimpath \
+            -ldflags="-s -w -buildid= -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            -o megame-server${{ matrix.goos == 'windows' && '.exe' || '' }} ./cmd/server
+
+      - name: Verify binary
+        run: |
+          file megame-server${{ matrix.goos == 'windows' && '.exe' || '' }}
+          ./megame-server${{ matrix.goos == 'windows' && '.exe' || '' }} -version
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: megame-server-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            server/megame-server*
+          retention-days: 7
+
+  go-security:
+    name: Go Security Scan
+    needs: go-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Run gosec
+        uses: securego/gosec@master
+        with:
+          args: '-fmt=json -out=gosec-results.json ./server/...'
+
+      - name: Upload gosec results
+        uses: actions/upload-artifact@v4
+        with:
+          name: gosec-results
+          path: gosec-results.json
+
+      - name: Run Nancy (vulnerability check)
+        run: |
+          go install github.com/sonatype-nexus-community/nancy@latest
+          cd server && go list -json -m all | nancy sleuth
+
+  # ============================================================================
+  # UNITY CLIENT - Build & Test
+  # ============================================================================
+  unity-test:
+    name: Unity Tests
+    needs: protobuf
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: client/Assets/Scripts/Generated/Proto
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: |
+            client/Library
+            client/Temp
+          key: unity-lib-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            unity-lib-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}-
+            unity-lib-${{ runner.os }}-
+
+      - name: Install Unity
+        uses: game-ci/unity-installer@v2
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+          cacheKey: unity-${{ env.UNITY_VERSION }}
+
+      - name: Activate Unity
+        uses: game-ci/unity-activate@v2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+
+      - name: Run EditMode Tests
+        uses: game-ci/unity-test-runner@v2
+        with:
+          projectPath: client
+          testMode: EditMode
+          artifactsPath: test-results/editmode
+          customParameters: -batchmode -nographics
+
+      - name: Run PlayMode Tests
+        uses: game-ci/unity-test-runner@v2
+        with:
+          projectPath: client
+          testMode: PlayMode
+          artifactsPath: test-results/playmode
+          customParameters: -batchmode -nographics
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-test-results
+          path: test-results/
+          retention-days: 7
+
+      - name: Check test results
+        run: |
+          if [ -f test-results/editmode/results.xml ]; then
+            python3 -c "
+import xml.etree.ElementTree as ET
+import sys
+for f in ['test-results/editmode/results.xml', 'test-results/playmode/results.xml']:
+    tree = ET.parse(f)
+    root = tree.getroot()
+    failures = int(root.attrib.get('failures', 0))
+    errors = int(root.attrib.get('errors', 0))
+    if failures + errors > 0:
+        print(f'FAIL: {f} - {failures} failures, {errors} errors')
+        sys.exit(1)
+print('All tests passed')
+"
+          fi
+
+  unity-build-linux:
+    name: Unity Build Linux
+    needs: [protobuf, unity-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: client/Assets/Scripts/Generated/Proto
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: |
+            client/Library
+            client/Temp
+          key: unity-lib-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            unity-lib-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}-
+
+      - name: Install Unity
+        uses: game-ci/unity-installer@v2
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+
+      - name: Activate Unity
+        uses: game-ci/unity-activate@v2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+
+      - name: Build Linux Server (Headless)
+        uses: game-ci/unity-builder@v2
+        with:
+          projectPath: client
+          targetPlatform: StandaloneLinux64
+          buildMethod: Megame.Client.BuildScript.PerformHeadlessBuild
+          customParameters: -buildVersion ${{ github.ref_name }} -outputPath /github/workspace/build/linux
+          compression: lz4hc
+
+      - name: Build Linux Client
+        uses: game-ci/unity-builder@v2
+        with:
+          projectPath: client
+          targetPlatform: StandaloneLinux64
+          buildMethod: Megame.Client.BuildScript.PerformClientBuild
+          customParameters: -buildVersion ${{ github.ref_name }} -outputPath /github/workspace/build/linux-client
+          compression: lz4hc
+
+      - name: Compress artifacts
+        run: |
+          cd build
+          tar -czf megame-linux-server.tar.gz -C linux .
+          tar -czf megame-linux-client.tar.gz -C linux-client .
+
+      - name: Upload Linux builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: megame-linux
+          path: |
+            build/megame-linux-*.tar.gz
+          retention-days: 7
+
+  unity-build-windows:
+    name: Unity Build Windows
+    needs: [protobuf, unity-test]
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Download proto artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-protos
+          path: client/Assets/Scripts/Generated/Proto
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: |
+            client/Library
+            client/Temp
+          key: unity-lib-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            unity-lib-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}-
+
+      - name: Install Unity
+        uses: game-ci/unity-installer@v2
+        with:
+          unityVersion: ${{ env.UNITY_VERSION }}
+
+      - name: Activate Unity
+        uses: game-ci/unity-activate@v2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+
+      - name: Build Windows Client
+        uses: game-ci/unity-builder@v2
+        with:
+          projectPath: client
+          targetPlatform: StandaloneWindows64
+          buildMethod: Megame.Client.BuildScript.PerformClientBuild
+          customParameters: -buildVersion ${{ github.ref_name }} -outputPath C:\github\workspace\build\windows
+          compression: lz4hc
+
+      - name: Compress artifacts
+        run: |
+          cd build
+          Compress-Archive -Path windows\* -DestinationPath megame-windows-client.zip
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: megame-windows
+          path: build/megame-windows-client.zip
+          retention-days: 7
+
+  # ============================================================================
+  # DOCKER IMAGES
+  # ============================================================================
+  docker-build:
+    name: Docker Build & Push
+    needs: [go-build, unity-build-linux, unity-build-windows]
+    if: github.event_name == 'release' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download server artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/server
+          pattern: megame-server-*
+
+      - name: Download client artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/client
+          pattern: megame-*-linux.tar.gz
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract server binary
+        run: |
+          mkdir -p server/build
+          tar -xzf artifacts/server/megame-server-linux-amd64/megame-server -C server/build/
+          chmod +x server/build/megame-server
+
+      - name: Extract client build
+        run: |
+          mkdir -p client/build
+          tar -xzf artifacts/client/megame-linux-server.tar.gz -C client/build/
+          tar -xzf artifacts/client/megame-linux-client.tar.gz -C client/build/
+
+      - name: Build Server Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile.optimized
+          push: true
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-server:latest
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-server:${{ github.ref_name }}
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-server:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            COMMIT=${{ github.sha }}
+            BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+      - name: Build Client Image (Headless)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          file: ./client/Dockerfile.optimized
+          target: runtime-linux
+          push: true
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-client:latest
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-client:${{ github.ref_name }}
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-client:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ github.ref_name }}
+
+      - name: Build Client Image (Windows)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          file: ./client/Dockerfile.optimized
+          target: runtime-windows
+          push: true
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-client-windows:latest
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-client-windows:${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================================
+  # RELEASE
+  # ============================================================================
+  create-release:
+    name: Create GitHub Release
+    needs: [go-build, unity-build-linux, unity-build-windows, docker-build]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Prepare release package
+        run: |
+          mkdir -p release-package
+          # Server binaries
+          for f in release-assets/megame-server-*/megame-server*; do
+            cp "$f" "release-package/$(basename "$f")"
+          done
+          # Client builds
+          for f in release-assets/megame-linux/*.tar.gz; do
+            cp "$f" "release-package/"
+          done
+          for f in release-assets/megame-windows/*.zip; do
+            cp "$f" "release-package/"
+          done
+
+          cd release-package
+          # Generate checksums
+          sha256sum * > checksums.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release-package/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================================
+  # DEPLOY (on main branch)
+  # ============================================================================
+  deploy-staging:
+    name: Deploy to Staging
+    needs: [docker-build]
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "Deploy to staging environment"
+          # kubectl set image deployment/megame-server megame-server=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-server:${{ github.sha }}
+          # kubectl set image deployment/megame-client megame-client=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-client:${{ github.sha }}
+
+  deploy-production:
+    name: Deploy to Production
+    needs: [create-release]
+    if: github.event_name == 'release' && !contains(github.ref_name, '-rc') && !contains(github.ref_name, '-beta') && !contains(github.ref_name, '-alpha')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "Deploy to production environment"
+          # kubectl set image deployment/megame-server megame-server=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-server:${{ github.ref_name }}
+          # kubectl set image deployment/megame-client megame-client=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-client:${{ github.ref_name }}
+
+# ============================================================================
+# PERFORMANCE BENCHMARK (scheduled)
+# ============================================================================
+benchmark:
+  name: Performance Benchmark
+  runs-on: ubuntu-latest
+  if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Run benchmarks
+      run: |
+        cd server
+        go test -bench=. -benchmem -benchtime=10s -run=^$ ./... | tee bench-results.txt
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmarks
+        path: server/bench-results.txt
+        retention-days: 30
+
+    - name: Compare with baseline
+      run: |
+        # Compare with stored baseline
+        echo "Benchmark comparison would run here"

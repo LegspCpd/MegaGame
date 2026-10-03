@@ -1,0 +1,318 @@
+syntax = "proto3";
+
+package megame.gameplay;
+
+import "common.proto";
+import "entity.proto";
+
+option go_package = "github.com/megame/shared/proto;gameplay";
+option csharp_namespace = "Megame.Gameplay";
+
+message Mission {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  MissionType type = 4;
+  MissionStatus status = 5;
+  repeated MissionObjective objectives = 6;
+  repeated string prerequisites = 7;       // mission IDs that must be completed
+  repeated string unlocks = 8;             // mission IDs unlocked by this
+  uint32 reward_money = 9;
+  repeated string reward_items = 10;       // item IDs
+  repeated string reward_vehicles = 11;    // vehicle model IDs
+  repeated string reward_weapons = 12;     // weapon model IDs
+  uint32 reward_xp = 13;
+  string giver_npc_id = 14;                // NPC who gives this mission
+  Vector3 start_position = 15;
+  string start_cutscene = 16;
+  string end_cutscene = 17;
+  bool is_replayable = 18;
+  int32 min_level = 19;
+  string difficulty = 20;                  // "easy", "normal", "hard", "very_hard"
+}
+
+enum MissionType {
+  MISSION_TYPE_UNSPECIFIED = 0;
+  MISSION_TYPE_MAIN = 1;
+  MISSION_TYPE_SIDE = 2;
+  MISSION_TYPE_STRANGERS = 3;      // stranger/freaks missions
+  MISSION_TYPE_RANDOM = 4;         // dynamic/random events
+  MISSION_TYPE_RACE = 5;
+  MISSION_TYPE_DEATHMATCH = 6;
+  MISSION_TYPE_SURVIVAL = 7;
+  MISSION_TYPE_HEIST = 8;
+  MISSION_TYPE_ASSASSINATION = 9;
+  MISSION_TYPE_DELIVERY = 10;
+  MISSION_TYPE_STEALTH = 11;
+  MISSION_TYPE_PHOTO = 12;
+  MISSION_TYPE_COLLECTIBLE = 13;
+}
+
+enum MissionStatus {
+  MISSION_STATUS_UNSPECIFIED = 0;
+  MISSION_STATUS_LOCKED = 1;
+  MISSION_STATUS_AVAILABLE = 2;
+  MISSION_STATUS_ACTIVE = 3;
+  MISSION_STATUS_COMPLETED = 4;
+  MISSION_STATUS_FAILED = 5;
+  MISSION_STATUS_CANCELLED = 6;
+}
+
+message MissionObjective {
+  string id = 1;
+  string description = 2;
+  ObjectiveType type = 3;
+  ObjectiveStatus status = 4;
+  int32 current_progress = 5;
+  int32 target_progress = 6;
+  Vector3 target_position = 7;
+  float target_radius = 8;
+  uint64 target_entity_id = 9;
+  string target_item_id = 10;
+  string target_vehicle_id = 11;
+  repeated string conditions = 12;     // lua condition strings
+  bool is_optional = 13;
+  bool is_hidden = 14;
+  string on_complete_dialogue = 15;
+  string on_fail_dialogue = 16;
+}
+
+enum ObjectiveType {
+  OBJECTIVE_TYPE_UNSPECIFIED = 0;
+  OBJECTIVE_TYPE_GOTO = 1;
+  OBJECTIVE_TYPE_KILL = 2;
+  OBJECTIVE_TYPE_DESTROY = 3;
+  OBJECTIVE_TYPE_COLLECT = 4;
+  OBJECTIVE_TYPE_DELIVER = 5;
+  OBJECTIVE_TYPE_ESCORT = 6;
+  OBJECTIVE_TYPE_DEFEND = 7;
+  OBJECTIVE_TYPE_STEAL = 8;
+  OBJECTIVE_TYPE_HACK = 9;
+  OBJECTIVE_TYPE_PHOTOGRAPH = 10;
+  OBJECTIVE_TYPE_RACE_CHECKPOINT = 11;
+  OBJECTIVE_TYPE_SURVIVE_WAVES = 12;
+  OBJECTIVE_TYPE_FOLLOW = 13;
+  OBJECTIVE_TYPE_LOSE_WANTED = 14;
+  OBJECTIVE_TYPE_BUY = 15;
+  OBJECTIVE_TYPE_CUSTOM = 16;
+}
+
+enum ObjectiveStatus {
+  OBJECTIVE_STATUS_UNSPECIFIED = 0;
+  OBJECTIVE_STATUS_PENDING = 1;
+  OBJECTIVE_STATUS_ACTIVE = 2;
+  OBJECTIVE_STATUS_COMPLETED = 3;
+  OBJECTIVE_STATUS_FAILED = 4;
+}
+
+message DialogueNode {
+  string id = 1;
+  string speaker_id = 2;                // NPC entity ID or "player"
+  string speaker_name = 3;              // display name
+  string text = 4;                      // localized text key or raw text
+  string audio_clip = 5;                // voice line asset
+  float duration = 6;                   // auto-advance after seconds (0 = manual)
+  repeated DialogueChoice choices = 7;
+  string next_node_id = 8;              // if no choices
+  repeated string conditions = 9;       // lua conditions for availability
+  repeated string actions = 10;         // lua actions on enter
+  CameraShot camera_shot = 11;
+  SubtitleData subtitle = 12;
+  repeated AnimationCue animations = 13;
+}
+
+message DialogueChoice {
+  string id = 1;
+  string text = 2;                      // localized
+  string next_node_id = 3;
+  repeated string conditions = 4;       // requirements to show
+  repeated string consequences = 5;     // lua actions on select
+  int32 reputation_change = 6;          // with speaker's faction
+  bool ends_conversation = 7;
+}
+
+message CameraShot {
+  enum ShotType {
+    SHOT_TYPE_UNSPECIFIED = 0;
+    SHOT_TYPE_STATIC = 1;
+    SHOT_TYPE_TRACK = 2;                // follow entity
+    SHOT_TYPE_ORBIT = 3;                // orbit around entity
+    SHOT_TYPE_CRANE = 4;                // crane up/down
+    SHOT_TYPE_HANDHELD = 5;             // shake
+    SHOT_TYPE_DRONE = 6;                // aerial
+    SHOT_TYPE_FIRST_PERSON = 7;         // from speaker's eyes
+    SHOT_TYPE_OVER_SHOULDER = 8;        // over shoulder
+    SHOT_TYPE_CLOSE_UP = 9;             // face close up
+    SHOT_TYPE_WIDE = 10;                // establishing
+    SHOT_TYPE_DUTCH = 11;               // tilted
+  }
+  ShotType type = 1;
+  uint64 target_entity = 2;
+  Vector3 position_offset = 3;
+  Vector3 look_at_offset = 4;
+  float fov = 5;
+  float duration = 6;                   // blend time
+  float shake_intensity = 7;
+}
+
+message SubtitleData {
+  string text = 1;
+  string speaker_name = 2;
+  float display_time = 3;               // override duration
+  SubtitlePosition position = 4;
+  SubtitleStyle style = 5;
+}
+
+enum SubtitlePosition {
+  SUBTITLE_POSITION_BOTTOM = 0;
+  SUBTITLE_POSITION_TOP = 1;
+  SUBTITLE_POSITION_CENTER = 2;
+  SUBTITLE_POSITION_SPEAKER = 3;        // near speaker's head
+}
+
+message SubtitleStyle {
+  int32 font_size = 1;
+  Color color = 2;
+  Color outline_color = 3;
+  float outline_thickness = 4;
+  bool background = 5;
+  Color background_color = 6;
+  bool speaker_name_visible = 7;
+}
+
+message AnimationCue {
+  uint64 entity_id = 1;
+  string animation_name = 2;
+  float blend_in = 3;
+  float blend_out = 4;
+  float speed = 5;
+  bool loop = 6;
+  float start_time = 7;                 // delay before playing
+}
+
+message Cutscene {
+  string id = 1;
+  string name = 2;
+  repeated CutsceneTrack tracks = 3;
+  float duration = 4;
+  bool skippable = 5;
+  bool pause_gameplay = 6;
+  string on_complete_callback = 7;
+}
+
+message CutsceneTrack {
+  enum TrackType {
+    TRACK_TYPE_UNSPECIFIED = 0;
+    TRACK_TYPE_CAMERA = 1;
+    TRACK_TYPE_ENTITY_TRANSFORM = 2;
+    TRACK_TYPE_ENTITY_ANIMATION = 3;
+    TRACK_TYPE_AUDIO = 4;
+    TRACK_TYPE_VISUAL_EFFECT = 5;
+    TRACK_TYPE_TIME_OF_DAY = 6;
+    TRACK_TYPE_WEATHER = 7;
+    TRACK_TYPE_POST_PROCESS = 8;
+    TRACK_TYPE_SUBTITLE = 9;
+    TRACK_TYPE_SCRIPT = 10;             // lua script events
+  }
+  TrackType type = 1;
+  string target_id = 2;                 // entity ID or camera name
+  repeated CutsceneKeyframe keyframes = 3;
+}
+
+message CutsceneKeyframe {
+  float time = 1;                       // seconds from cutscene start
+  bytes value = 2;                      // serialized value based on track type
+  EasingType easing = 3;
+}
+
+enum EasingType {
+  EASING_LINEAR = 0;
+  EASING_IN_QUAD = 1;
+  EASING_OUT_QUAD = 2;
+  EASING_IN_OUT_QUAD = 3;
+  EASING_IN_CUBIC = 4;
+  EASING_OUT_CUBIC = 5;
+  EASING_IN_OUT_CUBIC = 6;
+  EASING_IN_QUART = 7;
+  EASING_OUT_QUART = 8;
+  EASING_IN_OUT_QUART = 9;
+  EASING_IN_SINE = 10;
+  EASING_OUT_SINE = 11;
+  EASING_IN_OUT_SINE = 12;
+  EASING_IN_EXPO = 13;
+  EASING_OUT_EXPO = 14;
+  EASING_IN_OUT_EXPO = 15;
+  EASING_IN_CIRC = 16;
+  EASING_OUT_CIRC = 17;
+  EASING_IN_OUT_CIRC = 18;
+  EASING_IN_BACK = 19;
+  EASING_OUT_BACK = 20;
+  EASING_IN_OUT_BACK = 21;
+  EASING_IN_ELASTIC = 22;
+  EASING_OUT_ELASTIC = 23;
+  EASING_IN_OUT_ELASTIC = 24;
+  EASING_IN_BOUNCE = 25;
+  EASING_OUT_BOUNCE = 26;
+  EASING_IN_OUT_BOUNCE = 27;
+}
+
+message PhoneContact {
+  string id = 1;
+  string name = 2;
+  string number = 3;
+  string avatar = 4;
+  bool is_favorite = 5;
+  bool is_blocked = 6;
+  ContactType type = 7;
+}
+
+enum ContactType {
+  CONTACT_TYPE_UNSPECIFIED = 0;
+  CONTACT_TYPE_STORY = 1;
+  CONTACT_TYPE_FRIEND = 2;
+  CONTACT_TYPE_SERVICE = 3;     // taxi, mechanic, ambulance, etc.
+  CONTACT_TYPE_SHOP = 4;        // gun store, clothing, mod shop
+  CONTACT_TYPE_EMERGENCY = 5;   // 911
+}
+
+message PhoneMessage {
+  string id = 1;
+  string contact_id = 2;
+  string text = 3;
+  bool is_from_player = 4;
+  uint64 timestamp = 5;
+  bool is_read = 6;
+  MessageType type = 7;
+  string media_url = 8;         // image/video/audio
+  string action_button_text = 9; // "Accept Mission", "Join", etc.
+  string action_callback = 10;
+}
+
+enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0;
+  MESSAGE_TYPE_TEXT = 1;
+  MESSAGE_TYPE_MISSION_INVITE = 2;
+  MESSAGE_TYPE_MISSION_UPDATE = 3;
+  MESSAGE_TYPE_SYSTEM = 4;
+  MESSAGE_TYPE_MEDIA = 5;
+  MESSAGE_TYPE_EMAIL = 6;
+}
+
+message GameStats {
+  uint64 playtime_seconds = 1;
+  uint32 missions_completed = 2;
+  uint32 missions_failed = 3;
+  uint32 kills = 4;
+  uint32 deaths = 5;
+  uint32 headshots = 6;
+  uint32 vehicles_destroyed = 7;
+  uint32 distance_traveled_m = 8;
+  uint32 money_earned = 9;
+  uint32 money_spent = 10;
+  uint32 wanted_level_max = 11;
+  uint32 time_at_max_wanted = 12;      // seconds
+  repeated string achievements = 13;
+  map<string, uint32> weapon_kills = 14;     // weapon_id -> count
+  map<string, uint32> vehicle_usage = 15;    // vehicle_id -> seconds driven
+  map<string, uint32> location_visits = 16;  // area_id -> count
+}

@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+ProjectSettings:
+  productName: MegaGame
+  companyName: MegaGame Studios
+  defaultScreenWidth: 1920
+  defaultScreenHeight: 1080
+  defaultScreenWidthWeb: 960
+  defaultScreenHeightWeb: 600
+  runInBackground: 1
+  displayResolutionDialog: 2
+  usePlayerLog: 1
+  resizableWindow: 1
+  fullscreenMode: 1
+  visibleInBackground: 1
+  captureSingleScreen: 0
+  targetFrameRate: -1
+  icon: {fileID: 0}
+  defaultCursor: {fileID: 0}
+  cursorHotspot: {x: 0, y: 0}
+  accelerometerFrequency: 60
+  renderTextureType: 3
+  defaultGraphicsAPIs:
+    - 8
+    - 0
+    - 5
+  activeColorSpace: 1
+  msaa: 4
+  shaderPrecisionModel: 1
+  skinWeights: 4
+  meshIndexFormat: 1
+  streamingMipmapsActive: 1
+  streamingMipmapsAddAllCameras: 1
+  streamingMipmapsMaxLevelReduction: 2
+  streamingMipmapsMaxFileIORequests: 1024
+  lightmapStripping: 1
+  instancingStripping: 1
+  instancingVariantsStripping: 1
+  particleSystemStripping: 1
+  localUserStripping: 1
+  managedStrippingLevel: 1
+  scriptingBackend: 2
+  apiCompatibilityLevel: 6
+  targetFrameRateStandalone: -1
+  targetFrameRateMobile: -1
+  targetFrameRateWeb: -1
+  targetFrameRateXR: -1
+  useHDRDisplay: 0
+  enableDynamicResolution: 0
+  mtRendering: 1
+  gpuSkinning: 1
+  xrSettings: {fileID: 0}
+  graphicsJobs: 1
+  graphicsJobsMode: 1
+  bakedGlobalIllumination: 1
+  lightProbeVolume: 1
+  lightProbeVolumeResolution: 16
+  lightProbeVolumeHysteresis: 0.05
+  lightProbeVolumeMaxSubdivisions: 3
+  lightProbeVolumeMinSubdivisions: 0
+  lightProbeVolumeMaxBounces: 4
+  lightProbeVolumeMaxDistance: 100
+  lightProbeVolumeMinDistance: 0.1
+  lightProbeVolumeNormalOffset: 0.01
+  lightProbeVolumeValidityThreshold: 0.01
+  lightProbeVolumeDebugResolution: 64
+  lightProbeVolumeDebugMin: 0
+  lightProbeVolumeDebugMax: 1
+  useNetcodePackage: 1
+  netcodeThreadPoolSize: 4
+  netcodeLogLevel: 1
+  netcodeMaxPacketSize: 1200
+  netcodeHeartbeatInterval: 1
+  netcodeDisconnectTimeout: 30

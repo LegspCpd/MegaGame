@@ -1,0 +1,15 @@
+{
+  "name": "Megame.Client",
+  "references": [
+    "Google.Protobuf",
+    "Grpc.Core",
+    "Grpc.Core.Api"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": []
+}
