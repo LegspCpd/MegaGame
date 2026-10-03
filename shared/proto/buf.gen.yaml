@@ -1,10 +1,4 @@
 version: v2
-managed:
-  enabled: true
-  go_package_prefix:
-    default: github.com/megame/server/internal/proto
-    except:
-      - buf.build/googleapis/googleapis
 plugins:
   - local: protoc-gen-go
     out: ../server/internal/proto
