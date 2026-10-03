@@ -1,7 +1,3 @@
-# ============================================================================
-# CI/CD PIPELINE - Uses buf for reliable protobuf generation
-# ============================================================================
-
 name: CI/CD Pipeline
 
 on:
@@ -19,7 +15,6 @@ env:
   UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
 jobs:
-  # PROTOBUF GENERATION (via buf for reliability)
   protobuf:
     name: Generate Protobuf
     runs-on: ubuntu-latest
@@ -48,7 +43,6 @@ jobs:
             client/Assets/Scripts/Generated/Proto
           retention-days: 7
 
-  # Go Server Build & Test
   go-build:
     name: Go Server Build
     needs: protobuf
@@ -103,12 +97,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: megame-server
-          path: |
-            server/megame-server
-            server/megame-server.exe
+          path:
+            - server/megame-server
+            - server/megame-server.exe
           retention-days: 7
 
-  # Unity Client Build
   unity-build:
     name: Unity Client Build
     needs: protobuf
@@ -130,9 +123,9 @@ jobs:
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
-          path: |
-            client/Library
-            client/Temp
+          path:
+            - client/Library
+            - client/Temp
           key: unity-library-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}
           restore-keys: |
             unity-library-${{ runner.os }}-
@@ -164,7 +157,6 @@ jobs:
           path: build/
           retention-days: 7
 
-  # Unity Windows Build
   unity-build-windows:
     name: Unity Build Windows
     needs: protobuf
@@ -186,9 +178,9 @@ jobs:
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
-          path: |
-            client/Library
-            client/Temp
+          path:
+            - client/Library
+            - client/Temp
           key: unity-library-${{ runner.os }}-${{ hashFiles('client/Packages/manifest.json') }}
           restore-keys: |
             unity-library-${{ runner.os }}-
