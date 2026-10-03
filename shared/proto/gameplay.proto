@@ -5,7 +5,7 @@ package megame.gameplay;
 import "common.proto";
 import "entity.proto";
 
-option go_package = "github.com/megame/shared/proto;gameplay";
+option go_package = "github.com/megame/server/internal/proto;gameplay";
 option csharp_namespace = "Megame.Gameplay";
 
 message Mission {

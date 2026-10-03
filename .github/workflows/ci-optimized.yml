@@ -115,6 +115,12 @@ jobs:
       - name: Tidy dependencies
         run: cd server && go mod tidy
 
+      - name: Verify go.sum exists
+        run: |
+          cd server
+          test -f go.sum
+          echo "go.sum exists"
+
       - name: Run go vet
         run: cd server && go vet ./...
 

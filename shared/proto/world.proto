@@ -4,7 +4,7 @@ package megame.world;
 
 import "common.proto";
 
-option go_package = "github.com/megame/shared/proto;world";
+option go_package = "github.com/megame/server/internal/proto;world";
 option csharp_namespace = "Megame.World";
 
 message WorldDefinition {

@@ -4,7 +4,7 @@ package megame.entity;
 
 import "common.proto";
 
-option go_package = "github.com/megame/shared/proto;entity";
+option go_package = "github.com/megame/server/internal/proto;entity";
 option csharp_namespace = "Megame.Entity";
 
 enum EntityType {
