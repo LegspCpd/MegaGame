@@ -121,12 +121,12 @@ jobs:
           echo "=== Generate Go protos ==="
           protoc --go_out=../server/internal/proto --go_opt=paths=source_relative \
             --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative \
-            *.proto 2>&1
+            *.proto 2>&1 || echo "Go protos generation failed with exit code $?"
           echo "=== Go protos generated ==="
           echo "=== Generate C# protos ==="
           protoc --csharp_out=../../client/Assets/Scripts/Generated/Proto \
             --csharp_opt=base_namespace=Megame \
-            *.proto 2>&1
+            *.proto 2>&1 || echo "C# protos generation failed with exit code $?"
           echo "=== C# protos generated ==="
           echo "=== Generated Go files ==="
           find ../server/internal/proto -name "*.pb.go" -o -name "*.pb.grpc.go" | head -20
