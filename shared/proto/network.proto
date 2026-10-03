@@ -11,8 +11,8 @@ option csharp_namespace = "Megame.Network";
 message ClientInput {
   uint64 tick = 1;
   uint64 timestamp_ms = 2;
-  Vector2 move = 3;                 // x: forward/back, y: left/right
-  Vector2 look = 4;                 // mouse delta or stick
+  megame.common.Vector2 move = 3;                 // x: forward/back, y: left/right
+  megame.common.Vector2 look = 4;                 // mouse delta or stick
   bool jump = 5;
   bool sprint = 6;
   bool crouch = 7;
@@ -25,7 +25,7 @@ message ClientInput {
   int32 weapon_slot = 14;           // 0-7
   bool enter_vehicle = 15;
   bool exit_vehicle = 16;
-  Vector2 vehicle_control = 17;     // x: throttle/brake, y: steer
+  megame.common.Vector2 vehicle_control = 17;     // x: throttle/brake, y: steer
   bool vehicle_handbrake = 18;
   bool vehicle_horn = 19;
   bool vehicle_lights = 20;
@@ -109,13 +109,13 @@ message WorldState {
   float weather_blend = 2;          // 0.0 = clear, 1.0 = storm
   string current_weather = 3;       // "clear", "clouds", "rain", "thunder", "fog", "snow", "halloween"
   float wind_speed = 4;
-  Vector2 wind_direction = 5;
+  megame.common.Vector2 wind_direction = 5;
   uint32 wanted_level_multiplier = 6;
   repeated WantedZone wanted_zones = 7;
 }
 
 message WantedZone {
-  Vector3 center = 1;
+  megame.common.Vector3 center = 1;
   float radius = 2;
   uint32 level = 3;
 }
