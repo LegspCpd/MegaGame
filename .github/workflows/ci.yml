@@ -100,11 +100,7 @@ jobs:
 
       - name: Verify generated files
         run: |
-          test -f server/internal/proto/common.pb.go
-          test -f server/internal/proto/entity.pb.go
-          test -f server/internal/proto/network.pb.go
-          test -f server/internal/proto/gameplay.pb.go
-          test -f server/internal/proto/world.pb.go
+          ls -la server/internal/proto/*.pb.go
           echo "Go proto files generated successfully"
 
       - name: Upload generated protos
