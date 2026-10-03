@@ -50,7 +50,8 @@ jobs:
           ARCH=$(uname -m)
           if [ "$ARCH" = "x86_64" ]; then ARCH="x86_64"; fi
           if [ "$ARCH" = "aarch64" ]; then ARCH="arm64"; fi
-          curl -fsSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-${OS}-${ARCH}.tar.gz" | tar -xz -C /usr/local/bin
+          curl -fsSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-${OS}-${ARCH}" -o /usr/local/bin/buf
+          chmod +x /usr/local/bin/buf
           buf --version
 
       - name: Generate Protobuf via buf
