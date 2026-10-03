@@ -108,6 +108,9 @@ jobs:
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          echo "=== Create output directories ==="
+          mkdir -p ../server/internal/proto
+          mkdir -p ../../client/Assets/Scripts/Generated/Proto
           echo "=== Generate Go protos ==="
           protoc --go_out=../server/internal/proto --go_opt=paths=source_relative \
             --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative \
