@@ -77,7 +77,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Generate Protobuf via buf
-        uses: bufbuild/buf-action@v1
+        uses: bufbuild/buf-action@v2
         working-directory: shared/proto
         with:
           args: generate
