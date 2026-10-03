@@ -1,4 +1,4 @@
-﻿syntax = "proto3";
+syntax = "proto3";
 
 package megame.world;
 
@@ -267,6 +267,14 @@ message LightingDefinition {
   float fog_density = 8;
   float fog_start = 9;
   float fog_end = 10;
+}
+
+message AnimationCue {
+  string cue_type = 1;              // "flicker", "pulse", "rotate"
+  float speed = 2;                  // cycles per second
+  float amplitude = 3;              // intensity multiplier
+  float phase = 4;                  // initial phase offset
+  megame.common.Vector3 axis = 5;   // rotation axis for "rotate"
 }
 
 message LightSource {
