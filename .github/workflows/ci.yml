@@ -68,7 +68,7 @@ jobs:
             server/megame-server.exe
           retention-days: 7
 
-  # Go Protobuf Generation
+  # Go Protobuf Generation (via buf for reliability)
   protobuf:
     name: Generate Protobuf
     runs-on: ubuntu-latest
@@ -76,37 +76,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install protoc
-        uses: arduino/setup-protoc@v2
-        with:
-          version: '25.1'
-
-      - name: Install Go protoc plugins
+      - name: Install buf
         run: |
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          curl -sSL https://github.com/bufbuild/buf/releases/download/v1.32.0/buf-$(uname -s)-$(uname -m).tar.gz | tar -xz -C /usr/local/bin
+          buf --version
 
-      - name: Generate Go protos
+      - name: Generate Protobuf via buf
+        working-directory: shared/proto
         run: |
-          cd shared/proto
-          protoc --go_out=../server/internal/proto --go_opt=paths=source_relative \
-            --go-grpc_out=../server/internal/proto --go-grpc_opt=paths=source_relative \
-            *.proto
+          buf generate
 
-      - name: Generate C# protos (Unity)
+      - name: Verify generated files
         run: |
-          cd shared/proto
-          protoc --csharp_out=../client/Assets/Scripts/Generated/Proto \
-            --csharp_opt=base_namespace=Megame \
-            *.proto
+          test -f server/internal/proto/common.pb.go
+          test -f server/internal/proto/entity.pb.go
+          test -f server/internal/proto/network.pb.go
+          test -f server/internal/proto/gameplay.pb.go
+          test -f server/internal/proto/world.pb.go
+          test -f client/Assets/Scripts/Generated/Proto/Common.cs
+          test -f client/Assets/Scripts/Generated/Proto/Entity.cs
+          test -f client/Assets/Scripts/Generated/Proto/Network.cs
+          echo "All proto files generated successfully"
 
       - name: Upload generated protos
         uses: actions/upload-artifact@v4
         with:
           name: generated-protos
           path: |
-            server/internal/proto/
-            client/Assets/Scripts/Generated/Proto/
+            server/internal/proto
+            client/Assets/Scripts/Generated/Proto
           retention-days: 7
 
   # Unity Client Build
