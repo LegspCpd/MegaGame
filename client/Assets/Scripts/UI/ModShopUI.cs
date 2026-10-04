@@ -9,7 +9,6 @@ using Megame.Vehicles;
 // Megame.Data and Megame.Vehicles both define ModOption; VehicleModKit lives
 // in Megame.Vehicles, so bind the name to that one.
 using ModOption = Megame.Vehicles.ModOption;
-using Grpc.Net.Client;
 using Megame.Controllers;
 using Megame.Client;
 

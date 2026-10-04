@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Grpc.Net.Client;
 using Megame.Controllers;
 using Megame.Data;
 using Megame.Client;

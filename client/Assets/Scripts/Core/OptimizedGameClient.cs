@@ -15,7 +15,6 @@ using Vector3 = Megame.Common.Vector3;
 using Quaternion = Megame.Common.Quaternion;
 using UnityEngine.UI;
 using TMPro;
-using Grpc.Net.Client;
 using Megame.Controllers;
 using Megame.Data;
 using Megame.Client;
@@ -51,7 +50,7 @@ namespace Megame.Client
 
         // Entity management with pooling
         private EntityPool _entityPool;
-        private NativeParallelHashMap<ulong, NativeEntityView> _entityViews;
+        private NativeHashMap<ulong, NativeEntityView> _entityViews;
         private NativeQueue<EntityUpdate> _updateQueue;
         private JobHandle _updateJobHandle;
 
@@ -95,7 +94,7 @@ namespace Megame.Client
         private void InitializeSystems()
         {
             // Initialize native collections
-            _entityViews = new NativeParallelHashMap<ulong, NativeEntityView>(entityPoolSize, Allocator.Persistent);
+            _entityViews = new NativeHashMap<ulong, NativeEntityView>(entityPoolSize, Allocator.Persistent);
             _updateQueue = new NativeQueue<EntityUpdate>(Allocator.Persistent);
             _predictedStates = new NativeList<PredictedState>(interpolationBufferSize, Allocator.Persistent);
             _snapshotHistory = new NativeList<NativeServerSnapshot>(interpolationBufferSize, Allocator.Persistent);
@@ -175,7 +174,7 @@ namespace Megame.Client
         private struct ProcessSnapshotJob : IJob
         {
             [ReadOnly] public NativeArray<EntitySnapshot> snapshots;
-            public NativeParallelHashMap<ulong, NativeEntityView>.ParallelWriter entityViews;
+            public NativeHashMap<ulong, NativeEntityView>.ParallelWriter entityViews;
             public NativeQueue<EntityUpdate>.ParallelWriter updateQueue;
             public uint localPlayerId;
             public float interpolationTime;
