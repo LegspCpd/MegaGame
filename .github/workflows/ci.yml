@@ -126,6 +126,16 @@ jobs:
           path: .
 
 
+      - name: Check Unity license is configured
+        run: |
+          if [ -z "${UNITY_LICENSE:-}" ]; then
+            echo "::error::UNITY_LICENSE secret is not set on this repository."
+            echo "Add it under Settings -> Secrets so the Unity client can be built."
+            exit 1
+          fi
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+
       - name: Activate Unity License
         uses: game-ci/unity-activate@v2
         env:
