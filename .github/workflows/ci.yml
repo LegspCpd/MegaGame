@@ -219,6 +219,8 @@ jobs:
       # comes from -buildVersion below, not from semantic git versioning.
       - name: Build Unity Project (Linux)
         uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
           projectPath: client
