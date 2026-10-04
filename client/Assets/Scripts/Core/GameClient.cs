@@ -6,6 +6,14 @@ using Megame.Network;
 using Megame.Gameplay;
 using Grpc.Core;
 using System.Threading.Tasks;
+using UnityEngine.UI;
+using TMPro;
+using Grpc.Net.Client;
+using Megame.Controllers;
+using Megame.Data;
+using Megame.Client;
+using Megame.Vehicles;
+using Megame.World;
 
 namespace Megame.Client
 {
@@ -28,7 +36,6 @@ namespace Megame.Client
         public CameraController cameraController;
         public InputManager inputManager;
         public UIManager uiManager;
-        public AudioManager audioManager;
 
         private Channel _channel;
         private GameService.GameServiceClient _client;
@@ -142,7 +149,7 @@ namespace Megame.Client
             }
         }
 
-        private void HandleSnapshot(ServerSnapshot snapshot)
+        private void HandleSnapshot(NativeServerSnapshot snapshot)
         {
             _serverTick = snapshot.Tick;
 

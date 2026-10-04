@@ -37,7 +37,7 @@ namespace Megame.Client
                 progress.Objectives[obj.ObjectiveId] = obj;
 
                 // Check for completion
-                if (obj.Status == ObjectiveStatus.Completed)
+                if (obj.Status == MissionObjectiveStatus.Completed)
                 {
                     OnObjectiveCompleted(missionId, obj);
                 }
@@ -57,7 +57,7 @@ namespace Megame.Client
             bool allDone = true;
             foreach (var o in progress.Objectives.Values)
             {
-                if (o.Status != ObjectiveStatus.Completed && !o.IsOptional)
+                if (o.Status != MissionObjectiveStatus.Completed && !o.IsOptional)
                 {
                     allDone = false;
                     break;
@@ -97,7 +97,7 @@ namespace Megame.Client
             // Find current active objective
             foreach (var obj in progress.Objectives.Values)
             {
-                if (obj.Status == ObjectiveStatus.Active)
+                if (obj.Status == MissionObjectiveStatus.Active)
                 {
                     _client.uiManager.ShowMissionUpdate(missionId, GetObjectiveDescription(obj));
                     break;

@@ -408,7 +408,7 @@ namespace Megame.Vehicles
             return System.Array.Find(options, o => o.modValue == modValue);
         }
 
-        public bool IsCompatible(VehicleDefinition def)
+        public bool IsCompatible(VehicleDefinitionData def)
         {
             if (def == null) return false;
             

@@ -39,21 +39,21 @@ namespace Megame.Client
             {
                 // Parse node data
                 // For now, use placeholder
-                ShowDialogueNode(new DialogueNode
+                ShowDialogueNode(new DialogueNodeData
                 {
                     Id = nodeId,
                     SpeakerName = "NPC",
                     Text = "Hello there! What brings you to our city?",
                     Choices = new[]
                     {
-                        new DialogueChoice { Id = "1", Text = "I'm looking for work.", NextNodeId = "work" },
-                        new DialogueChoice { Id = "2", Text = "Just passing through.", NextNodeId = "leave" }
+                        new DialogueChoiceData { Id = "1", Text = "I'm looking for work.", NextNodeId = "work" },
+                        new DialogueChoiceData { Id = "2", Text = "Just passing through.", NextNodeId = "leave" }
                     }
                 });
             }
         }
 
-        public void ShowDialogueNode(DialogueNode node)
+        public void ShowDialogueNode(DialogueNodeData node)
         {
             _currentDialogue.CurrentNodeId = node.Id;
 
@@ -111,18 +111,20 @@ namespace Megame.Client
             public string CurrentNodeId;
         }
 
-        private class DialogueNode
+        // Public because ShowDialogueNode takes it as a parameter.
+        public class DialogueNodeData
         {
             public string Id;
             public string SpeakerName;
             public string Text;
             public string AudioClip;
             public float Duration;
-            public DialogueChoice[] Choices;
+            public DialogueChoiceData[] Choices;
             public string NextNodeId;
         }
 
-        private class DialogueChoice
+        // Public because DialogueNodeData exposes it publicly.
+        public class DialogueChoiceData
         {
             public string Id;
             public string Text;

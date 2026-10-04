@@ -1,6 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Megame.Gameplay;
+using UnityEngine.UI;
+using TMPro;
+using Grpc.Net.Client;
+using Megame.Controllers;
+using Megame.Data;
+using Megame.Client;
+using Megame.Vehicles;
 
 namespace Megame.Client
 {

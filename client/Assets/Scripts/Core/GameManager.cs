@@ -6,6 +6,8 @@ using Megame.Data;
 using Megame.Vehicles;
 using Megame.Systems;
 using Megame.World;
+using Megame.Client;
+using Megame.UI;
 
 namespace Megame.Core
 {
@@ -506,7 +508,7 @@ namespace Megame.Core
             StartCoroutine(cutsceneManager.PlayCutscene(cutsceneId));
         }
         
-        public void OpenModShop(VehicleDefinition vehicle)
+        public void OpenModShop(VehicleDefinitionData vehicle)
         {
             modShopUI?.OpenShop(vehicle, playerInstance);
         }

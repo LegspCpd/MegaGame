@@ -3,6 +3,13 @@ using Unity.Profiling;
 using Unity.Collections;
 using Unity.Jobs;
 using System.Collections.Generic;
+using UnityEngine.UI;
+using TMPro;
+using Grpc.Net.Client;
+using Megame.Controllers;
+using Megame.Data;
+using Megame.Client;
+using Megame.Vehicles;
 
 namespace Megame.Client
 {
@@ -117,7 +124,7 @@ namespace Megame.Client
         public static readonly ProfilerMarker MemoryGC = new ProfilerMarker("Memory.GC");
 
         // Custom markers with metadata
-        public static ProfilerMarker Create(string name, ProfilerCategory category = ProfilerCategory.Scripts)
+        public static ProfilerMarker Create(string name, ProfilerCategory category = default)
         {
             return new ProfilerMarker(name, category);
         }
@@ -150,7 +157,7 @@ namespace Megame.Client
     {
         private readonly ProfilerMarker _marker;
 
-        public ProfilerScopeCustom(string name, ProfilerCategory category = ProfilerCategory.Scripts)
+        public ProfilerScopeCustom(string name, ProfilerCategory category = default)
         {
             _marker = new ProfilerMarker(name, category);
             _marker.Begin();

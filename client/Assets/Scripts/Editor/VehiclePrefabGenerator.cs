@@ -16,7 +16,7 @@ namespace Megame.Editor
     {
         private string modelsRootPath = "Assets/Imported/Vehicles";
         private VehicleDatabase database;
-        private VehicleDefinition currentDefinition;
+        private VehicleDefinitionData currentDefinition;
         private GameObject currentModelPrefab;
         
         // Wheel detection
@@ -71,7 +71,7 @@ namespace Megame.Editor
             
             if (currentDefinition == null)
             {
-                EditorGUILayout.HelpBox("Select a model directory from the scan results, or drag a VehicleDefinition here.", MessageType.Info);
+                EditorGUILayout.HelpBox("Select a model directory from the scan results, or drag a VehicleDefinitionData here.", MessageType.Info);
             }
             else
             {
@@ -141,7 +141,7 @@ namespace Megame.Editor
             currentDefinition = database?.Get(modelName);
             if (currentDefinition == null && database != null)
             {
-                currentDefinition = ScriptableObject.CreateInstance<VehicleDefinition>();
+                currentDefinition = ScriptableObject.CreateInstance<VehicleDefinitionData>();
                 currentDefinition.modelName = modelName;
                 currentDefinition.displayName = modelName.Replace("_", " ").Replace("-", " ");
                 
@@ -518,7 +518,7 @@ namespace Megame.Editor
             }
         }
         
-        private void ApplyDefinitionToController(OptimizedVehicleController controller, VehicleDefinition def)
+        private void ApplyDefinitionToController(OptimizedVehicleController controller, VehicleDefinitionData def)
         {
             // Physics
             controller.MaxTorque = def.maxTorque;

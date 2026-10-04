@@ -13,6 +13,13 @@ using Grpc.Core;
 // types (Unity.Mathematics uses float3/quaternion), so bind the names.
 using Vector3 = Megame.Common.Vector3;
 using Quaternion = Megame.Common.Quaternion;
+using UnityEngine.UI;
+using TMPro;
+using Grpc.Net.Client;
+using Megame.Controllers;
+using Megame.Data;
+using Megame.Client;
+using Megame.Vehicles;
 
 namespace Megame.Client
 {
@@ -44,13 +51,13 @@ namespace Megame.Client
 
         // Entity management with pooling
         private EntityPool _entityPool;
-        private NativeParallelHashMap<ulong, EntityView> _entityViews;
+        private NativeParallelHashMap<ulong, NativeEntityView> _entityViews;
         private NativeQueue<EntityUpdate> _updateQueue;
         private JobHandle _updateJobHandle;
 
         // Prediction & Interpolation
         private NativeList<PredictedState> _predictedStates;
-        private NativeList<ServerSnapshot> _snapshotHistory;
+        private NativeList<NativeServerSnapshot> _snapshotHistory;
         private uint _localPlayerId;
         private uint _serverTick;
         private float _serverTime;
@@ -88,10 +95,10 @@ namespace Megame.Client
         private void InitializeSystems()
         {
             // Initialize native collections
-            _entityViews = new NativeParallelHashMap<ulong, EntityView>(entityPoolSize, Allocator.Persistent);
+            _entityViews = new NativeParallelHashMap<ulong, NativeEntityView>(entityPoolSize, Allocator.Persistent);
             _updateQueue = new NativeQueue<EntityUpdate>(Allocator.Persistent);
             _predictedStates = new NativeList<PredictedState>(interpolationBufferSize, Allocator.Persistent);
-            _snapshotHistory = new NativeList<ServerSnapshot>(interpolationBufferSize, Allocator.Persistent);
+            _snapshotHistory = new NativeList<NativeServerSnapshot>(interpolationBufferSize, Allocator.Persistent);
 
             _entityPool = new EntityPool(entityPoolSize);
             _projectilePool = new ObjectPool<Projectile>(projectilePoolSize, () => new Projectile());
@@ -158,9 +165,6 @@ namespace Megame.Client
                 case ServerMessage.PayloadOneofCase.Snapshot:
                     ProcessSnapshot(message.Snapshot);
                     break;
-                case ServerMessage.PayloadOneofCase.DeltaSnapshot:
-                    ProcessDeltaSnapshot(message.DeltaSnapshot);
-                    break;
                 case ServerMessage.PayloadOneofCase.Rpc:
                     HandleRPCResponse(message.Rpc);
                     break;
@@ -171,7 +175,7 @@ namespace Megame.Client
         private struct ProcessSnapshotJob : IJob
         {
             [ReadOnly] public NativeArray<EntitySnapshot> snapshots;
-            public NativeParallelHashMap<ulong, EntityView>.ParallelWriter entityViews;
+            public NativeParallelHashMap<ulong, NativeEntityView>.ParallelWriter entityViews;
             public NativeQueue<EntityUpdate>.ParallelWriter updateQueue;
             public uint localPlayerId;
             public float interpolationTime;
@@ -183,7 +187,7 @@ namespace Megame.Client
                     var snap = snapshots[i];
                     if (snap.EntityId == localPlayerId) continue; // Local player predicted
 
-                    if (entityViews.TryGetValue(snap.EntityId, out EntityView view))
+                    if (entityViews.TryGetValue(snap.EntityId, out NativeEntityView view))
                     {
                         // Queue update for interpolation
                         updateQueue.Enqueue(new EntityUpdate
@@ -199,7 +203,7 @@ namespace Megame.Client
                     else
                     {
                         // Create new entity view
-                        var newView = new EntityView
+                        var newView = new NativeEntityView
                         {
                             EntityId = snap.EntityId,
                             EntityType = snap.Type,
@@ -214,7 +218,7 @@ namespace Megame.Client
             }
         }
 
-        private void ProcessSnapshot(ServerSnapshot snapshot)
+        private void ProcessSnapshot(NativeServerSnapshot snapshot)
         {
             _serverTick = snapshot.Tick;
             _serverTime = snapshot.ServerTimeMs * 0.001f;
@@ -257,12 +261,6 @@ namespace Megame.Client
                 VehicleController.Instance.UpdateVehicleState(update);
             foreach (var update in snapshot.WeaponUpdates)
                 WeaponController.Instance.UpdateWeaponState(update);
-        }
-
-        private void ProcessDeltaSnapshot(DeltaSnapshot delta)
-        {
-            // Similar to ProcessSnapshot but only for changed entities
-            // Implementation omitted for brevity
         }
 
         private void Update()
@@ -334,7 +332,7 @@ namespace Megame.Client
         {
             while (_updateQueue.TryDequeue(out EntityUpdate update))
             {
-                if (_entityViews.TryGetValue(update.EntityId, out EntityView view))
+                if (_entityViews.TryGetValue(update.EntityId, out NativeEntityView view))
                 {
                     view.TargetPosition = update.TargetPosition;
                     view.TargetRotation = update.TargetRotation;
@@ -406,7 +404,7 @@ namespace Megame.Client
             var go = _entityPool.Get(type);
             go.name = $"{type}_{entityId}";
 
-            var newView = new EntityView
+            var newView = new NativeEntityView
             {
                 EntityId = entityId,
                 EntityType = type,
@@ -447,10 +445,11 @@ namespace Megame.Client
     }
 
     // ============================================================================
-    // Native Data Structures (Burst-compatible)
+    // Native Data Structures (Burst-compatible). Named NativeEntityView to avoid
+    // colliding with the MonoBehaviour EntityView in EntityManager.cs.
     // ============================================================================
 
-    public struct EntityView
+    public struct NativeEntityView
     {
         public ulong EntityId;
         public EntityType EntityType;
@@ -495,7 +494,7 @@ namespace Megame.Client
         public ClientInput Input;
     }
 
-    public struct ServerSnapshot
+    public struct NativeServerSnapshot
     {
         public uint Tick;
         public float ServerTime;
@@ -649,11 +648,13 @@ namespace Megame.Client
     // Extension Methods
     // ============================================================================
 
-    public static class ProtoExtensions
+    // Bridges megame.common maths and Unity.Mathematics. Kept separate from
+    // ProtoExtensions (Core/EntityManager.cs) so the two classes do not collide.
+    public static class MathTypeExtensions
     {
         public static float3 ToFloat3(this Vector3 v) => new float3(v.X, v.Y, v.Z);
-        public static quaternion ToQuaternion(this Quaternion q) => new quaternion(q.X, q.Y, q.Z, q.W);
+        public static quaternion ToQuaternion(this Vector3 q) => new quaternion(q.X, q.Y, q.Z, q.W);
         public static Vector3 ToVector3(this float3 v) => new Vector3(v.x, v.y, v.z);
-        public static Quaternion ToQuaternion(this quaternion q) => new Quaternion(q.value.x, q.value.y, q.value.z, q.value.w);
+        public static Vector3 ToQuaternion(this quaternion q) => new Vector3(q.value.x, q.value.y, q.value.z, q.value.w);
     }
 }

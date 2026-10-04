@@ -94,9 +94,9 @@ namespace Megame.Client
             }
         }
 
-        private CutsceneKeyframe GetKeyframeAtTime(CutsceneTrack track, float time)
+        private CutsceneKeyframeData GetKeyframeAtTime(CutsceneTrackData track, float time)
         {
-            CutsceneKeyframe prev = null;
+            CutsceneKeyframeData prev = null;
             foreach (var kf in track.Keyframes)
             {
                 if (kf.Time > time) break;
@@ -105,7 +105,7 @@ namespace Megame.Client
             return prev;
         }
 
-        private void ApplyKeyframe(CutsceneTrack track, CutsceneKeyframe keyframe)
+        private void ApplyKeyframe(CutsceneTrackData track, CutsceneKeyframeData keyframe)
         {
             switch (track.Type)
             {
@@ -127,12 +127,12 @@ namespace Megame.Client
             }
         }
 
-        private void ApplyCameraKeyframe(CutsceneKeyframe kf)
+        private void ApplyCameraKeyframe(CutsceneKeyframeData kf)
         {
             // Apply camera position/rotation/FOV
         }
 
-        private void ApplyEntityTransform(CutsceneKeyframe kf)
+        private void ApplyEntityTransform(CutsceneKeyframeData kf)
         {
             if (_actors.TryGetValue(kf.TargetId, out var actor))
             {
@@ -140,7 +140,7 @@ namespace Megame.Client
             }
         }
 
-        private void ApplyEntityAnimation(CutsceneKeyframe kf)
+        private void ApplyEntityAnimation(CutsceneKeyframeData kf)
         {
             if (_actors.TryGetValue(kf.TargetId, out var actor))
             {
@@ -152,12 +152,12 @@ namespace Megame.Client
             }
         }
 
-        private void ApplyAudio(CutsceneKeyframe kf)
+        private void ApplyAudio(CutsceneKeyframeData kf)
         {
             // Play audio clip
         }
 
-        private void ApplySubtitle(CutsceneKeyframe kf)
+        private void ApplySubtitle(CutsceneKeyframeData kf)
         {
             GameClient.Instance.uiManager.ShowSubtitle(new SubtitleData
             {
@@ -179,7 +179,7 @@ namespace Megame.Client
             {
                 Id = id,
                 Duration = 10f,
-                Tracks = new List<CutsceneTrack>()
+                Tracks = new List<CutsceneTrackData>()
             };
         }
     }
@@ -188,14 +188,14 @@ namespace Megame.Client
     {
         public string Id;
         public float Duration;
-        public List<CutsceneTrack> Tracks;
+        public List<CutsceneTrackData> Tracks;
     }
 
-    public class CutsceneTrack
+    public class CutsceneTrackData
     {
         public CutsceneTrackType Type;
         public string TargetId;
-        public List<CutsceneKeyframe> Keyframes;
+        public List<CutsceneKeyframeData> Keyframes;
     }
 
     public enum CutsceneTrackType
@@ -212,10 +212,10 @@ namespace Megame.Client
         Script
     }
 
-    public class CutsceneKeyframe
+    public class CutsceneKeyframeData
     {
         public float Time;
-        public EasingType Easing;
+        public EasingKind Easing;
         public Vector3 Position;
         public Quaternion Rotation;
         public float FOV;
@@ -226,7 +226,7 @@ namespace Megame.Client
         public float Duration;
     }
 
-    public enum EasingType
+    public enum EasingKind
     {
         Linear,
         InQuad,

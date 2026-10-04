@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using Megame.Gameplay;
+using Megame.Client;
 
 namespace Megame.Client
 {
@@ -24,7 +25,7 @@ namespace Megame.Client
         public GameObject subtitleRoot;
         public TextMeshProUGUI subtitleText;
         public TextMeshProUGUI speakerNameText;
-        public SubtitleStyle subtitleStyle;
+        public SubtitleStyleKind subtitleStyle;
 
         [Header("Dialogue")]
         public GameObject dialogueRoot;
@@ -197,7 +198,7 @@ namespace Megame.Client
         }
 
         // Dialogue
-        public void ShowDialogue(string speaker, string text, DialogueChoice[] choices)
+        public void ShowDialogue(string speaker, string text, DialogueManager.DialogueChoiceData[] choices)
         {
             dialogueRoot.SetActive(true);
             dialogueSpeaker.text = speaker;
@@ -260,11 +261,11 @@ namespace Megame.Client
         public string Speaker;
         public float Duration;
         public SubtitlePosition Position;
-        public SubtitleStyle Style;
+        public SubtitleStyleKind Style;
     }
 
     [System.Serializable]
-    public class SubtitleStyle
+    public class SubtitleStyleKind
     {
         public int FontSize = 24;
         public string Color = "#FFFFFF";

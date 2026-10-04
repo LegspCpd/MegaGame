@@ -4,6 +4,14 @@ using Unity.Jobs;
 using Unity.Burst;
 using Unity.Mathematics;
 using System.Collections.Generic;
+using UnityEngine.UI;
+using TMPro;
+using Grpc.Net.Client;
+using Megame.Controllers;
+using Megame.Data;
+using Megame.Client;
+using Megame.Vehicles;
+using Megame.Network;
 
 namespace Megame.Client
 {
@@ -109,7 +117,7 @@ namespace Megame.Client
     public class OptimizedWeaponController : MonoBehaviour
     {
         [Header("Weapon Definition")]
-        public WeaponDefinition Definition;
+        public WeaponDefinitionData Definition;
 
         [Header("References")]
         public Transform MuzzlePoint;
@@ -145,7 +153,7 @@ namespace Megame.Client
         public float JamChanceAtMaxHeat = 0.1f;
 
         [Header("Attachments")]
-        public AttachmentSlot[] AttachmentSlots;
+        public WeaponAttachmentSlot[] AttachmentSlots;
         public Dictionary<string, AttachmentData> EquippedAttachments = new Dictionary<string, AttachmentData>();
 
         // State
@@ -298,13 +306,13 @@ namespace Megame.Client
             bool fireInput = false;
             switch (Definition.FireMode)
             {
-                case FireMode.Semi:
+                case WeaponFireMode.Semi:
                     fireInput = Input.GetMouseButtonDown(0);
                     break;
-                case FireMode.Auto:
+                case WeaponFireMode.Auto:
                     fireInput = Input.GetMouseButton(0);
                     break;
-                case FireMode.Burst:
+                case WeaponFireMode.Burst:
                     fireInput = Input.GetMouseButtonDown(0); // Burst handled internally
                     break;
             }
@@ -609,13 +617,20 @@ namespace Megame.Client
     // ============================================================================
 
     [System.Serializable]
-    public class WeaponDefinition
+    public class WeaponDefinitionData
     {
         public string ModelId;
         public string DisplayName;
         public string WeaponClass; // pistol, smg, rifle, shotgun, sniper, heavy
         public GameObject WorldModel;
         public GameObject FirstPersonModel;
+
+        // WeaponController.cs refers to the same prefab under this name.
+        public GameObject FirstPersonViewModel
+        {
+            get => FirstPersonModel;
+            set => FirstPersonModel = value;
+        }
 
         public Vector3 FirstPersonOffset;
         public Quaternion FirstPersonRotation;
@@ -632,7 +647,7 @@ namespace Megame.Client
         public int MaxClipSize;
         public int MaxReserveAmmo;
 
-        public FireMode FireMode;
+        public WeaponFireMode WeaponFireMode;
         public float RecoilVertical;
         public float RecoilHorizontal;
         public float RecoilRecovery;
@@ -657,10 +672,10 @@ namespace Megame.Client
         public float SpreadRecoveryRate = 10f;
     }
 
-    public enum FireMode { Semi, Auto, Burst, Bolt, Pump }
+    public enum WeaponFireMode { Semi, Auto, Burst, Bolt, Pump }
 
     [System.Serializable]
-    public struct AttachmentSlot
+    public struct WeaponAttachmentSlot
     {
         public string SlotId;
         public AttachmentType Type;

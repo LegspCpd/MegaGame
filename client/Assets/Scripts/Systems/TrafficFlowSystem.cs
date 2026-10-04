@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Megame.Data;
 using Megame.World;
+using UnityEngine.UI;
+using TMPro;
+using Grpc.Net.Client;
+using Megame.Controllers;
+using Megame.Client;
+using Megame.Vehicles;
 
 namespace Megame.Systems
 {
@@ -158,9 +164,9 @@ namespace Megame.Systems
                 Debug.Log($"Spawned traffic: {def.displayName} at {request.position}");
         }
         
-        private VehicleDefinition GetVehicleDefinition(VehicleSpawnRequest request)
+        private VehicleDefinitionData GetVehicleDefinition(VehicleSpawnRequest request)
         {
-            VehicleDefinition[] candidates = null;
+            VehicleDefinitionData[] candidates = null;
             
             if (request.vehicleClass != VehicleClass.None)
             {
@@ -400,7 +406,7 @@ namespace Megame.Systems
     
     public class TrafficVehicle : MonoBehaviour
     {
-        public VehicleDefinition definition;
+        public VehicleDefinitionData definition;
         public VehicleSpawnRequest spawnRequest;
         public OptimizedVehicleController controller;
         public TrafficAIState currentState = TrafficAIState.Driving;
@@ -413,7 +419,7 @@ namespace Megame.Systems
         private float laneChangeTimer;
         private int laneChangeDirection = 0;
         
-        public void Initialize(VehicleDefinition def, VehicleSpawnRequest request)
+        public void Initialize(VehicleDefinitionData def, VehicleSpawnRequest request)
         {
             definition = def;
             spawnRequest = request;
@@ -637,104 +643,10 @@ namespace Megame.Systems
     // Supporting Types
     // ============================================================================
     
-    public class RoadNetwork : MonoBehaviour
-    {
-        public RoadSegment[] segments;
-        public RoadIntersection[] intersections;
-        
-        public RoadSpawnPoint GetRandomSpawnPoint()
-        {
-            if (segments == null || segments.Length == 0) return null;
-            
-            var segment = segments[Random.Range(0, segments.Length)];
-            return segment.GetRandomSpawnPoint();
-        }
-    }
     
-    public class RoadSegment : MonoBehaviour
-    {
-        public string segmentId;
-        public string region;
-        public Transform[] laneTransforms;
-        public float speedLimit = 50f;
-        public bool isHighway = false;
-        
-        public RoadSpawnPoint GetRandomSpawnPoint()
-        {
-            if (laneTransforms == null || laneTransforms.Length == 0) return null;
-            
-            var lane = laneTransforms[Random.Range(0, laneTransforms.Length)];
-            float t = Random.value;
-            
-            return new RoadSpawnPoint
-            {
-                position = lane.position,
-                rotation = lane.rotation,
-                roadSegment = this,
-                lane = System.Array.IndexOf(laneTransforms, lane),
-                region = region,
-            };
-        }
-        
-        public Vector3 GetClosestPointOnRoad(Vector3 position)
-        {
-            // Find closest point on spline
-            return transform.position; // Simplified
-        }
-        
-        public Vector3 GetDirectionAt(Vector3 position)
-        {
-            return transform.forward; // Simplified
-        }
-    }
     
-    public class RoadIntersection : MonoBehaviour
-    {
-        public string intersectionId;
-        public RoadSegment[] connectedSegments;
-        public TrafficLightController trafficLight;
-    }
     
-    public struct RoadSpawnPoint
-    {
-        public Vector3 position;
-        public Quaternion rotation;
-        public RoadSegment roadSegment;
-        public int lane;
-        public string region;
-    }
     
-    public class TrafficLightController : MonoBehaviour
-    {
-        public Light[] lights;
-        public float cycleTime = 60f;
-        public float greenTime = 25f;
-        public float yellowTime = 5f;
-        
-        private float timer;
-        private int currentPhase = 0; // 0=green, 1=yellow, 2=red
-        
-        private void Update()
-        {
-            timer += Time.deltaTime;
-            
-            float phaseTime = currentPhase == 0 ? greenTime : 
-                             currentPhase == 1 ? yellowTime : 
-                             cycleTime - greenTime - yellowTime;
-            
-            if (timer > phaseTime)
-            {
-                timer = 0;
-                currentPhase = (currentPhase + 1) % 3;
-                UpdateLights();
-            }
-        }
-        
-        private void UpdateLights()
-        {
-            // Update light colors based on phase
-        }
-    }
     
     [System.Serializable]
     public class PedestrianDefinition

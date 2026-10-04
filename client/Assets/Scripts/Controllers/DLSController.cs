@@ -1,6 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Megame.Controllers;
 using Megame.Systems;
+using UnityEngine.UI;
+using TMPro;
+using Grpc.Net.Client;
+using Megame.Data;
+using Megame.Client;
+using Megame.Vehicles;
 
 namespace Megame.Vehicles
 {
@@ -408,7 +415,7 @@ namespace Megame.Vehicles
     
     public static class DLSControllerExtensions
     {
-        public static void SetupFromVehicleDefinition(this DLSController controller, VehicleDefinition def)
+        public static void SetupFromVehicleDefinition(this DLSController controller, VehicleDefinitionData def)
         {
             if (def == null) return;
             

@@ -313,7 +313,7 @@ namespace Megame.World
         public string regionId;
         public string displayName;
         public string shortName;
-        public RegionType type;
+        public RegionKind type;
         public Bounds bounds;
         public int populationDensity = 50;
         public int trafficDensity = 50;
@@ -331,7 +331,7 @@ namespace Megame.World
         }
     }
     
-    public enum RegionType
+    public enum RegionKind
     {
         Downtown,
         Residential,
@@ -373,14 +373,14 @@ namespace Megame.World
             }
         }
         
-        public POI GetNearestPOI(Vector3 position, POIType type = POIType.None, float maxDistance = 1000f)
+        public POI GetNearestPOI(Vector3 position, POIPointType type = POIPointType.None, float maxDistance = 1000f)
         {
             POI nearest = null;
             float nearestDist = maxDistance;
             
             foreach (var poi in pois)
             {
-                if (type != POIType.None && poi.type != type) continue;
+                if (type != POIPointType.None && poi.type != type) continue;
                 
                 float dist = Vector3.Distance(position, poi.position);
                 if (dist < nearestDist)
@@ -393,12 +393,12 @@ namespace Megame.World
             return nearest;
         }
         
-        public List<POI> GetPOIsInRadius(Vector3 position, float radius, POIType type = POIType.None)
+        public List<POI> GetPOIsInRadius(Vector3 position, float radius, POIPointType type = POIPointType.None)
         {
             var result = new List<POI>();
             foreach (var poi in pois)
             {
-                if (type != POIType.None && poi.type != type) continue;
+                if (type != POIPointType.None && poi.type != type) continue;
                 
                 if (Vector3.Distance(position, poi.position) <= radius)
                 {
@@ -414,7 +414,7 @@ namespace Megame.World
     {
         public string poiId;
         public string displayName;
-        public POIType type;
+        public POIPointType type;
         public Vector3 position;
         public Quaternion rotation;
         public Vector3 scale = Vector3.one;
@@ -426,10 +426,10 @@ namespace Megame.World
         public int unlockLevel = 0;
         public string blipSprite = "";
         public Color blipColor = Color.white;
-        public OpeningHours hours = new OpeningHours();
+        public WorldOpeningHours hours = new WorldOpeningHours();
     }
     
-    public enum POIType
+    public enum POIPointType
     {
         None,
         ShopClothing,
@@ -489,7 +489,7 @@ namespace Megame.World
     }
     
     [System.Serializable]
-    public class OpeningHours
+    public class WorldOpeningHours
     {
         public int openHour = 0;
         public int openMinute = 0;

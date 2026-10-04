@@ -8,7 +8,7 @@ namespace Megame.Vehicles
     /// Vehicle modifications - runtime mutable state
     /// </summary>
     [System.Serializable]
-    public class VehicleModifications
+    public class VehicleModificationsData
     {
         // ============================================================================
         // PERFORMANCE MODS (0 = stock, higher = better)
@@ -83,12 +83,12 @@ namespace Megame.Vehicles
         // CLONE / COPY / EQUALITY
         // ============================================================================
 
-        public VehicleModifications Clone()
+        public VehicleModificationsData Clone()
         {
-            return (VehicleModifications)MemberwiseClone();
+            return (VehicleModificationsData)MemberwiseClone();
         }
 
-        public void CopyFrom(VehicleModifications other)
+        public void CopyFrom(VehicleModificationsData other)
         {
             if (other == null) return;
             
@@ -135,7 +135,7 @@ namespace Megame.Vehicles
             hasSpotlights = other.hasSpotlights;
         }
 
-        public bool Equals(VehicleModifications other)
+        public bool Equals(VehicleModificationsData other)
         {
             if (other == null) return false;
             return engineLevel == other.engineLevel &&
@@ -173,16 +173,16 @@ namespace Megame.Vehicles
                    plateStyle == other.plateStyle;
         }
 
-        public override bool Equals(object obj) => obj is VehicleModifications other && Equals(other);
+        public override bool Equals(object obj) => obj is VehicleModificationsData other && Equals(other);
         public override int GetHashCode() => base.GetHashCode();
 
         // ============================================================================
         // PRESETS
         // ============================================================================
 
-        public static VehicleModifications Stock => new VehicleModifications();
+        public static VehicleModificationsData Stock => new VehicleModificationsData();
 
-        public static VehicleModifications MaxPerformance => new VehicleModifications
+        public static VehicleModificationsData MaxPerformance => new VehicleModificationsData
         {
             engineLevel = 4,
             turboLevel = 1,
@@ -192,7 +192,7 @@ namespace Megame.Vehicles
             armorLevel = 4,
         };
 
-        public static VehicleModifications PolicePatrol => new VehicleModifications
+        public static VehicleModificationsData PolicePatrol => new VehicleModificationsData
         {
             engineLevel = 2,
             transmissionLevel = 2,
@@ -209,7 +209,7 @@ namespace Megame.Vehicles
             lightPattern = "lspd",
         };
 
-        public static VehicleModifications Undercover => new VehicleModifications
+        public static VehicleModificationsData Undercover => new VehicleModificationsData
         {
             engineLevel = 3,
             transmissionLevel = 2,
@@ -219,7 +219,7 @@ namespace Megame.Vehicles
             hasLaptop = true,
         };
 
-        public static VehicleModifications Offroad => new VehicleModifications
+        public static VehicleModificationsData Offroad => new VehicleModificationsData
         {
             engineLevel = 2,
             suspensionLevel = 4,
@@ -231,7 +231,7 @@ namespace Megame.Vehicles
             armorLevel = 2,
         };
 
-        public static VehicleModifications StreetRacer => new VehicleModifications
+        public static VehicleModificationsData StreetRacer => new VehicleModificationsData
         {
             engineLevel = 4,
             turboLevel = 1,

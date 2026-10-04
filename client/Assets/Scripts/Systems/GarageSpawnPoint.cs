@@ -1,4 +1,11 @@
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using Grpc.Net.Client;
+using Megame.Controllers;
+using Megame.Data;
+using Megame.Client;
+using Megame.Vehicles;
 
 namespace Megame.Systems
 {
@@ -57,7 +64,7 @@ namespace Megame.Systems
             }
         }
         
-        public bool CanSpawn(VehicleDefinition def)
+        public bool CanSpawn(VehicleDefinitionData def)
         {
             if (isOccupied) return false;
             
@@ -75,7 +82,7 @@ namespace Megame.Systems
             return true;
         }
         
-        public GameObject SpawnVehicle(VehicleDefinition def, VehicleModifications mods, VehicleCondition condition, string plateText, int plateStyle)
+        public GameObject SpawnVehicle(VehicleDefinitionData def, VehicleModificationsData mods, VehicleCondition condition, string plateText, int plateStyle)
         {
             if (!CanSpawn(def) || def.modelPrefab == null) return null;
             

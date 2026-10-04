@@ -16,7 +16,7 @@ namespace Megame.Client
 
         // State
         private WeaponStateUpdate _serverState;
-        private WeaponDefinition _definition;
+        private WeaponDefinitionData _definition;
         private WeaponAttachments _attachments;
 
         // Firing
@@ -48,7 +48,7 @@ namespace Megame.Client
             _reloadProgress = state.ReloadProgress;
         }
 
-        public void EquipWeapon(GameObject weaponPrefab, WeaponDefinition definition)
+        public void EquipWeapon(GameObject weaponPrefab, WeaponDefinitionData definition)
         {
             // Destroy current
             if (_currentWeapon != null)
@@ -185,13 +185,13 @@ namespace Megame.Client
             bool canFire = false;
             switch (_definition.FireMode)
             {
-                case FireMode.Semi:
+                case WeaponFireMode.Semi:
                     canFire = Input.GetButtonDown("Fire1");
                     break;
-                case FireMode.Auto:
+                case WeaponFireMode.Auto:
                     canFire = Input.GetButton("Fire1");
                     break;
-                case FireMode.Burst:
+                case WeaponFireMode.Burst:
                     // Handle burst logic
                     canFire = Input.GetButtonDown("Fire1");
                     break;
@@ -294,46 +294,5 @@ namespace Megame.Client
         public float ReloadProgress => _reloadProgress;
     }
 
-    public class WeaponDefinition
-    {
-        public string ModelId;
-        public string DisplayName;
-        public string WeaponClass;
-        public GameObject WorldModel;
-        public GameObject FirstPersonViewModel;
-        public Vector3 FirstPersonOffset;
-        public Quaternion FirstPersonRotation;
-        public Vector3 AimOffset;
-        public Quaternion AimRotation;
 
-        public float Damage;
-        public int Pellets;
-        public float Range;
-        public float AccuracyHip;
-        public float AccuracyADS;
-        public float FireRateRPM;
-        public float MuzzleVelocity;
-        public int MaxClipSize;
-        public int MaxReserve;
-
-        public FireMode FireMode;
-        public float RecoilVertical;
-        public float RecoilHorizontal;
-        public float RecoilRecovery;
-        public float ReloadTimeTactical;
-        public float ReloadTimeEmpty;
-
-        public AudioClip FireSound;
-        public AudioClip DryFireSound;
-        public AudioClip ReloadSound;
-    }
-
-    public enum FireMode
-    {
-        Semi,
-        Auto,
-        Burst,
-        Bolt,
-        Pump
-    }
 }

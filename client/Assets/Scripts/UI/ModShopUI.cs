@@ -6,6 +6,13 @@ using System.Linq;
 using Megame.Data;
 using Megame.Vehicles;
 
+// Megame.Data and Megame.Vehicles both define ModOption; VehicleModKit lives
+// in Megame.Vehicles, so bind the name to that one.
+using ModOption = Megame.Vehicles.ModOption;
+using Grpc.Net.Client;
+using Megame.Controllers;
+using Megame.Client;
+
 namespace Megame.UI
 {
     /// <summary>
@@ -59,11 +66,11 @@ namespace Megame.UI
         public Button cancelBuyButton;
         
         // State
-        private VehicleDefinition currentVehicleDef;
+        private VehicleDefinitionData currentVehicleDef;
         private GameObject currentPreviewVehicle;
         private OptimizedVehicleController previewController;
-        private VehicleModifications pendingMods = new VehicleModifications();
-        private VehicleModifications originalMods = new VehicleModifications();
+        private VehicleModificationsData pendingMods = new VehicleModificationsData();
+        private VehicleModificationsData originalMods = new VehicleModificationsData();
         private ModCategoryTab currentCategory;
         private int pendingTotalCost = 0;
         private System.Action<Color> onColorSelected;
@@ -113,7 +120,7 @@ namespace Megame.UI
             colorValueSlider.onValueChanged.AddListener(OnColorHSVChanged);
         }
         
-        public void OpenShop(VehicleDefinition vehicleDef, GameObject playerVehicle)
+        public void OpenShop(VehicleDefinitionData vehicleDef, GameObject playerVehicle)
         {
             currentVehicleDef = vehicleDef;
             
@@ -163,7 +170,7 @@ namespace Megame.UI
             currentVehicleDef = null;
         }
         
-        private void SetupPreview(VehicleDefinition def)
+        private void SetupPreview(VehicleDefinitionData def)
         {
             if (currentPreviewVehicle != null)
             {
@@ -255,7 +262,7 @@ namespace Megame.UI
             
             if (modKit == null) return;
             
-            List<VehicleModKit.ModOption> options = GetOptionsForCategory(modKit, category);
+            List<ModOption> options = GetOptionsForCategory(modKit, category);
             
             foreach (var option in options)
             {
@@ -268,17 +275,17 @@ namespace Megame.UI
             }
         }
         
-        private List<VehicleModKit.ModOption> GetOptionsForCategory(VehicleModKit kit, ShopCategory category)
+        private List<ModOption> GetOptionsForCategory(VehicleModKit kit, ShopCategory category)
         {
             switch (category)
             {
-                case ShopCategory.Engine: return kit.engineOptions?.ToList() ?? new List<VehicleModKit.ModOption>();
-                case ShopCategory.Transmission: return kit.transmissionOptions?.ToList() ?? new List<VehicleModKit.ModOption>();
-                case ShopCategory.Suspension: return kit.suspensionOptions?.ToList() ?? new List<VehicleModKit.ModOption>();
-                case ShopCategory.Brakes: return kit.brakeOptions?.ToList() ?? new List<VehicleModKit.ModOption>();
-                case ShopCategory.Turbo: return kit.turboOptions?.ToList() ?? new List<VehicleModKit.ModOption>();
+                case ShopCategory.Engine: return kit.engineOptions?.ToList() ?? new List<ModOption>();
+                case ShopCategory.Transmission: return kit.transmissionOptions?.ToList() ?? new List<ModOption>();
+                case ShopCategory.Suspension: return kit.suspensionOptions?.ToList() ?? new List<ModOption>();
+                case ShopCategory.Brakes: return kit.brakeOptions?.ToList() ?? new List<ModOption>();
+                case ShopCategory.Turbo: return kit.turboOptions?.ToList() ?? new List<ModOption>();
                 case ShopCategory.Body: 
-                    var body = new List<VehicleModKit.ModOption>();
+                    var body = new List<ModOption>();
                     if (kit.bodyKitOptions != null) body.AddRange(kit.bodyKitOptions);
                     if (kit.spoilerOptions != null) body.AddRange(kit.spoilerOptions);
                     if (kit.hoodOptions != null) body.AddRange(kit.hoodOptions);
@@ -288,23 +295,23 @@ namespace Megame.UI
                     if (kit.fenderOptions != null) body.AddRange(kit.fenderOptions);
                     if (kit.roofOptions != null) body.AddRange(kit.roofOptions);
                     return body;
-                case ShopCategory.Wheels: return kit.wheelTypeOptions?.ToList() ?? new List<VehicleModKit.ModOption>();
-                case ShopCategory.Paint: return kit.paintTypes?.Select(p => new VehicleModKit.ModOption 
+                case ShopCategory.Wheels: return kit.wheelTypeOptions?.ToList() ?? new List<ModOption>();
+                case ShopCategory.Paint: return kit.paintTypes?.Select(p => new ModOption 
                     { name = p.name, modValue = p.typeId, priceMultiplier = p.priceMultiplier }).ToList() 
-                    ?? new List<VehicleModKit.ModOption>();
-                case ShopCategory.Interior: return new List<VehicleModKit.ModOption>(); // TODO
+                    ?? new List<ModOption>();
+                case ShopCategory.Interior: return new List<ModOption>(); // TODO
                 case ShopCategory.Lighting: 
-                    var lights = new List<VehicleModKit.ModOption>();
+                    var lights = new List<ModOption>();
                     if (kit.xenonOptions != null) lights.AddRange(kit.xenonOptions);
                     if (kit.neonOptions != null) lights.AddRange(kit.neonOptions);
                     return lights;
-                case ShopCategory.Plates: return kit.plateStyleOptions?.ToList() ?? new List<VehicleModKit.ModOption>();
-                case ShopCategory.Emergency: return new List<VehicleModKit.ModOption>(); // TODO
-                default: return new List<VehicleModKit.ModOption>();
+                case ShopCategory.Plates: return kit.plateStyleOptions?.ToList() ?? new List<ModOption>();
+                case ShopCategory.Emergency: return new List<ModOption>(); // TODO
+                default: return new List<ModOption>();
             }
         }
         
-        public void OnModSelected(VehicleModKit.ModOption option, ShopCategory category)
+        public void OnModSelected(ModOption option, ShopCategory category)
         {
             // Apply mod to preview
             ApplyModToPreview(option, category);
@@ -318,7 +325,7 @@ namespace Megame.UI
             ShowModDetail(option, category);
         }
         
-        private void ApplyModToPreview(VehicleModKit.ModOption option, ShopCategory category)
+        private void ApplyModToPreview(ModOption option, ShopCategory category)
         {
             if (previewController == null) return;
             
@@ -372,7 +379,7 @@ namespace Megame.UI
             return 0; // Simplified
         }
         
-        private int CalculateModCost(VehicleModKit.ModOption option, ShopCategory category)
+        private int CalculateModCost(ModOption option, ShopCategory category)
         {
             int baseCost = GetBaseCostForCategory(category);
             return Mathf.RoundToInt(baseCost * option.priceMultiplier);
@@ -396,7 +403,7 @@ namespace Megame.UI
             }
         }
         
-        private void ShowModDetail(VehicleModKit.ModOption option, ShopCategory category)
+        private void ShowModDetail(ModOption option, ShopCategory category)
         {
             // Clear
             foreach (Transform child in modDetailContainer)
@@ -594,12 +601,8 @@ namespace Megame.UI
         {
             // Deduct from player
         }
-        
-        private void CancelPurchase()
-        {
-            // Handled above
-        }
     }
+        
     
     // ============================================================================
     // UI Components
@@ -632,11 +635,11 @@ namespace Megame.UI
         public GameObject ownedIndicator;
         public GameObject installedIndicator;
         
-        private VehicleModKit.ModOption option;
+        private ModOption option;
         private ModShopUI shop;
         private ModShopUI.ShopCategory category;
         
-        public void Setup(VehicleModKit.ModOption opt, ModShopUI shopUI, ModShopUI.ShopCategory cat)
+        public void Setup(ModOption opt, ModShopUI shopUI, ModShopUI.ShopCategory cat)
         {
             option = opt;
             shop = shopUI;

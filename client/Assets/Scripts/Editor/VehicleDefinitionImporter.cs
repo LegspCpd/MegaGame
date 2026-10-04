@@ -108,7 +108,7 @@ namespace Megame.Editor
             var jsonFiles = Directory.GetFiles(fullPath, "*.json");
             Log($"Found {jsonFiles.Length} JSON files");
             
-            var definitions = new List<VehicleDefinition>();
+            var definitions = new List<VehicleDefinitionData>();
             int imported = 0;
             int skipped = 0;
             int errors = 0;
@@ -160,7 +160,7 @@ namespace Megame.Editor
             // Update database
             if (definitions.Count > 0)
             {
-                var allDefs = new List<VehicleDefinition>();
+                var allDefs = new List<VehicleDefinitionData>();
                 if (database.vehicles != null)
                     allDefs.AddRange(database.vehicles.Where(v => v != null));
                 allDefs.AddRange(definitions);
@@ -177,9 +177,9 @@ namespace Megame.Editor
             AssetDatabase.Refresh();
         }
         
-        private VehicleDefinition CreateDefinition(VehicleDefinitionJson data)
+        private VehicleDefinitionData CreateDefinition(VehicleDefinitionJson data)
         {
-            var def = CreateInstance<VehicleDefinition>();
+            var def = CreateInstance<VehicleDefinitionData>();
             def.modelName = data.modelName;
             def.displayName = data.displayName;
             def.manufacturer = data.manufacturer;
@@ -239,7 +239,7 @@ namespace Megame.Editor
             return def;
         }
         
-        private void UpdateDefinition(VehicleDefinition def, VehicleDefinitionJson data)
+        private void UpdateDefinition(VehicleDefinitionData def, VehicleDefinitionJson data)
         {
             def.displayName = data.displayName;
             def.manufacturer = data.manufacturer;

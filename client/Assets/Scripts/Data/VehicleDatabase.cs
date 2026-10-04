@@ -7,8 +7,8 @@ namespace Megame.Data
     /// <summary>
     /// Vehicle definition ScriptableObject - matches pipeline JSON output
     /// </summary>
-    [CreateAssetMenu(fileName = "VehicleDefinition", menuName = "MegaGame/Vehicle Definition")]
-    public class VehicleDefinition : ScriptableObject
+    [CreateAssetMenu(fileName = "VehicleDefinitionData", menuName = "MegaGame/Vehicle Definition")]
+    public class VehicleDefinitionData : ScriptableObject
     {
         [Header("Identity")]
         public string modelName;
@@ -90,6 +90,7 @@ namespace Megame.Data
 
     public enum VehicleClass
     {
+        None,
         Compact,
         Sedan,
         SUV,
@@ -138,9 +139,9 @@ namespace Megame.Data
     {
         public static VehicleDatabase Instance { get; private set; }
         
-        public VehicleDefinition[] vehicles;
+        public VehicleDefinitionData[] vehicles;
         
-        private Dictionary<string, VehicleDefinition> _lookup;
+        private Dictionary<string, VehicleDefinitionData> _lookup;
         
         private void OnEnable()
         {
@@ -153,38 +154,38 @@ namespace Megame.Data
             _lookup = vehicles.ToDictionary(v => v.modelName, v => v);
         }
         
-        public VehicleDefinition Get(string modelName)
+        public VehicleDefinitionData Get(string modelName)
         {
             if (_lookup == null) Initialize();
             _lookup.TryGetValue(modelName, out var def);
             return def;
         }
         
-        public VehicleDefinition[] GetByClass(VehicleClass cls)
+        public VehicleDefinitionData[] GetByClass(VehicleClass cls)
         {
             if (_lookup == null) Initialize();
             return vehicles.Where(v => v.vehicleClass == cls).ToArray();
         }
         
-        public VehicleDefinition[] GetByType(VehicleType type)
+        public VehicleDefinitionData[] GetByType(VehicleType type)
         {
             if (_lookup == null) Initialize();
             return vehicles.Where(v => v.vehicleType == type).ToArray();
         }
         
-        public VehicleDefinition[] GetEmergencyVehicles()
+        public VehicleDefinitionData[] GetEmergencyVehicles()
         {
             if (_lookup == null) Initialize();
             return vehicles.Where(v => v.vehicleType != VehicleType.Civilian).ToArray();
         }
         
-        public VehicleDefinition[] GetCivilianVehicles()
+        public VehicleDefinitionData[] GetCivilianVehicles()
         {
             if (_lookup == null) Initialize();
             return vehicles.Where(v => v.vehicleType == VehicleType.Civilian).ToArray();
         }
         
-        public VehicleDefinition[] GetModdableVehicles()
+        public VehicleDefinitionData[] GetModdableVehicles()
         {
             if (_lookup == null) Initialize();
             return vehicles.Where(v => v.modKitId > 0).ToArray();
@@ -283,7 +284,7 @@ namespace Megame.Data
     public class VehicleInstance
     {
         public string modelName;
-        public VehicleDefinition definition;
+        public VehicleDefinitionData definition;
         public VehicleModificationsDefinition mods = new VehicleModificationsDefinition();
         public VehicleConditionDefinition condition = new VehicleConditionDefinition();
         public int fuel = 100;

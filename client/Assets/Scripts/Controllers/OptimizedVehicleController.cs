@@ -16,10 +16,10 @@ namespace Megame.Controllers
         // ============================================================================
         
         [Header("Definition")]
-        public VehicleDefinition definition;
+        public VehicleDefinitionData definition;
         
         [Header("Runtime State")]
-        public VehicleModifications currentMods = new VehicleModifications();
+        public VehicleModificationsData currentMods = new VehicleModificationsData();
         public VehicleCondition currentCondition = VehicleConditionPresets.Pristine;
         
         [Header("Vitals")]
@@ -151,7 +151,7 @@ namespace Megame.Controllers
             }
         }
         
-        public void Initialize(VehicleDefinition def)
+        public void Initialize(VehicleDefinitionData def)
         {
             definition = def;
             ApplyDefinitionSpecs();
@@ -185,7 +185,7 @@ namespace Megame.Controllers
         // MOD APPLICATION
         // ============================================================================
         
-        public void ApplyMods(VehicleModifications mods)
+        public void ApplyMods(VehicleModificationsData mods)
         {
             currentMods = mods.Clone();
             
@@ -259,7 +259,7 @@ namespace Megame.Controllers
             }
         }
         
-        private void ApplyVisualMods(VehicleModifications mods)
+        private void ApplyVisualMods(VehicleModificationsData mods)
         {
             // Body kits
             ToggleRenderer("BodyKit", mods.bodyKit > 0);
@@ -296,7 +296,7 @@ namespace Megame.Controllers
             }
         }
         
-        private void ApplyPaint(VehicleModifications mods)
+        private void ApplyPaint(VehicleModificationsData mods)
         {
             var rends = GetComponentsInChildren<Renderer>();
             foreach (var r in rends)
@@ -358,7 +358,7 @@ namespace Megame.Controllers
             // This is a placeholder for the actual wheel swap logic
         }
         
-        private void ApplyLightMods(VehicleModifications mods)
+        private void ApplyLightMods(VehicleModificationsData mods)
         {
             var lights = GetComponentsInChildren<Light>();
             foreach (var light in lights)

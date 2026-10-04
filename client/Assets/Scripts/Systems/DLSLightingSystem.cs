@@ -389,7 +389,6 @@ namespace Megame.Systems
         private AudioSource sirenAudio;
         private int currentPatternIndex = 0;
         private int currentStepIndex = 0;
-        private float stepTimer = 0f;
         private bool isPlaying = false;
         
         public void Initialize(ELSVehicleConfig vehicleConfig)

@@ -1,5 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.UI;
+using TMPro;
+using Grpc.Net.Client;
+using Megame.Controllers;
+using Megame.Data;
+using Megame.Client;
+using Megame.Vehicles;
 
 namespace Megame.Systems
 {
@@ -158,7 +165,7 @@ namespace Megame.Systems
         [Header("Identity")]
         public string segmentId = "";
         public string region = "";
-        public RoadType roadType = RoadType.Major;
+        public RoadKind roadType = RoadKind.Major;
         
         [Header("Geometry")]
         public Transform[] laneTransforms = new Transform[0]; // Lane centerlines
@@ -590,7 +597,7 @@ namespace Megame.Systems
     // ROAD TYPES
     // ============================================================================
     
-    public enum RoadType
+    public enum RoadKind
     {
         Highway,
         Major,
