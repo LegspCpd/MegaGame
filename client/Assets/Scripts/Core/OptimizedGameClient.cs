@@ -9,6 +9,11 @@ using Megame.Entity;
 using Megame.Network;
 using Grpc.Core;
 
+// Megame.Common also defines Vector3/Quaternion. Here they mean the protobuf
+// types (Unity.Mathematics uses float3/quaternion), so bind the names.
+using Vector3 = Megame.Common.Vector3;
+using Quaternion = Megame.Common.Quaternion;
+
 namespace Megame.Client
 {
     /// <summary>

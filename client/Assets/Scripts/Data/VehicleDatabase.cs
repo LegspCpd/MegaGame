@@ -194,8 +194,8 @@ namespace Megame.Data
     /// <summary>
     /// Vehicle mod kit definition
     /// </summary>
-    [CreateAssetMenu(fileName = "VehicleModKit", menuName = "MegaGame/Vehicle Mod Kit")]
-    public class VehicleModKit : ScriptableObject
+    [CreateAssetMenu(fileName = "VehicleModKitDefinition", menuName = "MegaGame/Vehicle Mod Kit (Data)")]
+    public class VehicleModKitDefinition : ScriptableObject
     {
         public string modKitName;
         public int modKitId;
@@ -284,15 +284,15 @@ namespace Megame.Data
     {
         public string modelName;
         public VehicleDefinition definition;
-        public VehicleModifications mods = new VehicleModifications();
-        public VehicleCondition condition = new VehicleCondition();
+        public VehicleModificationsDefinition mods = new VehicleModificationsDefinition();
+        public VehicleConditionDefinition condition = new VehicleConditionDefinition();
         public int fuel = 100;
         public int engineHealth = 1000;
         public int bodyHealth = 1000;
         public string plateText = "";
         public int plateStyle = 0;
         
-        public void ApplyMods(VehicleModKit kit)
+        public void ApplyMods(VehicleModKitDefinition kit)
         {
             // Apply modifications to vehicle controller
         }
@@ -322,7 +322,7 @@ namespace Megame.Data
     }
     
     [System.Serializable]
-    public class VehicleModifications
+    public class VehicleModificationsDefinition
     {
         // Performance
         public int engineLevel = 0;      // 0-4
@@ -370,7 +370,7 @@ namespace Megame.Data
     }
     
     [System.Serializable]
-    public class VehicleCondition
+    public class VehicleConditionDefinition
     {
         public float durability = 1f;
         public float dirt = 0f;
