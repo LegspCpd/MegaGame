@@ -363,7 +363,7 @@ func (s *GameServer) handleRPC(session *ClientSession, rpc *network.RPCRequest) 
 	// Send response via stream
 	if session.Stream != nil {
 		session.Stream.Send(&network.ServerMessage{
-			Payload: &network.ServerMessage_Rpc{response},
+			Payload: &network.ServerMessage_Rpc{Rpc: response},
 		})
 	}
 }
@@ -374,9 +374,9 @@ func (s *GameServer) rpcSpawnPlayer(session *ClientSession, rpc *network.RPCRequ
 	playerEntity := s.world.CreateEntity()
 
 	transform := &components.TransformComponent{
-		Position: components.Vector3{0, 50, 0},
-		Rotation: components.Quaternion{0, 0, 0, 1},
-		Scale:    components.Vector3{1, 1, 1},
+		Position: components.Vector3{X: 0, Y: 50, Z: 0},
+		Rotation: components.Quaternion{W: 1},
+		Scale:    components.Vector3{X: 1, Y: 1, Z: 1},
 	}
 	s.world.AddComponent(playerEntity, transform)
 
@@ -465,9 +465,9 @@ func (s *GameServer) rpcSpawnVehicle(session *ClientSession, rpc *network.RPCReq
 	vehicleEntity := s.world.CreateEntity()
 
 	transform := &components.TransformComponent{
-		Position: components.Vector3{0, 51, 0},
-		Rotation: components.Quaternion{0, 0, 0, 1},
-		Scale:    components.Vector3{1, 1, 1},
+		Position: components.Vector3{X: 0, Y: 51, Z: 0},
+		Rotation: components.Quaternion{W: 1},
+		Scale:    components.Vector3{X: 1, Y: 1, Z: 1},
 	}
 	s.world.AddComponent(vehicleEntity, transform)
 

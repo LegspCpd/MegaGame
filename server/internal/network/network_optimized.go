@@ -680,9 +680,9 @@ func (r *BinaryReader) ReadFloat32() float32 {
 }
 
 func (r *BinaryReader) ReadVector3() ecs.Vector3 {
-	return ecs.Vector3{r.ReadFloat32(), r.ReadFloat32(), r.ReadFloat32()}
+	return ecs.Vector3{X: r.ReadFloat32(), Y: r.ReadFloat32(), Z: r.ReadFloat32()}
 }
 
 func (r *BinaryReader) ReadQuaternion() ecs.Quaternion {
-	return ecs.Quaternion{r.ReadFloat32(), r.ReadFloat32(), r.ReadFloat32(), r.ReadFloat32()}
+	return ecs.Quaternion{X: r.ReadFloat32(), Y: r.ReadFloat32(), Z: r.ReadFloat32(), W: r.ReadFloat32()}
 }
