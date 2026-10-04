@@ -9,6 +9,8 @@ namespace Megame.Client
     /// </summary>
     public class InputManager : MonoBehaviour
     {
+        public static InputManager Instance { get; private set; }
+
         [Header("Settings")]
         public float sendRate = 60f; // Times per second to send input
         public bool useNewInputSystem = true;
@@ -43,6 +45,8 @@ namespace Megame.Client
         private bool _vehicleLightsPressed;
         private bool _vehicleSirenPressed;
 
+        private void Awake() => Instance = this;
+
         public void Initialize(GameClient client)
         {
             _client = client;
@@ -50,7 +54,14 @@ namespace Megame.Client
             _playerController = new PlayerController(client);
             _vehicleController = new VehicleController(client);
             _weaponController = new WeaponController(client);
+            PlayerController.Instance = _playerController;
+            VehicleController.Instance = _vehicleController;
+            WeaponController.Instance = _weaponController;
         }
+
+        /// <summary>The input frame assembled for the current tick, shared
+        /// with the optimized client's send path.</summary>
+        public ClientInput GetCurrentInput() => _currentInput;
 
         private void Update()
         {
@@ -66,7 +77,7 @@ namespace Megame.Client
             }
         }
 
-        private void GatherInput()
+        public void GatherInput()
         {
             if (useNewInputSystem)
             {

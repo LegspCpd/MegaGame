@@ -236,7 +236,7 @@ namespace Megame.Client
         private byte[] SerializePayload(object payload)
         {
             // Serialize using protobuf
-            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(payload);
+            return System.Text.Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(payload));
         }
 
         public T GetEntity<T>(ulong entityId) where T : Component

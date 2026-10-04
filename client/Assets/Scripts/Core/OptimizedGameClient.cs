@@ -106,10 +106,9 @@ namespace Megame.Client
             _inputBuffer = new InputBuffer(interpolationBufferSize);
             _metrics = new ClientMetrics();
 
-            // Initialize managers
-            CameraController.Instance.Initialize(this);
-            InputManager.Instance.Initialize(this);
-            UIManager.Instance.Initialize(this);
+            // Camera/input/UI managers belong to the GameClient architecture and
+            // initialize through that path; the optimized client drives the
+            // existing singletons directly instead.
         }
 
         private async void Start()
@@ -217,9 +216,9 @@ namespace Megame.Client
             }
         }
 
-        private void ProcessSnapshot(NativeServerSnapshot snapshot)
+        private void ProcessSnapshot(ServerSnapshot snapshot)
         {
-            _serverTick = snapshot.Tick;
+            _serverTick = (uint)snapshot.Tick;
             _serverTime = snapshot.ServerTimeMs * 0.001f;
 
             // Convert to native array for job
@@ -232,9 +231,13 @@ namespace Megame.Client
                     EntityId = e.Ref.Id,
                     Type = e.Ref.Type,
                     Position = e.Transform.Position.ToFloat3(),
-                    Rotation = e.Transform.Rotation.ToQuaternion(),
+                    Rotation = new quaternion(
+                        e.Transform.Rotation.X,
+                        e.Transform.Rotation.Y,
+                        e.Transform.Rotation.Z,
+                        e.Transform.Rotation.W),
                     Velocity = e.Velocity.ToFloat3(),
-                    Tick = e.Timestamp
+                    Tick = (uint)e.Timestamp
                 };
             }
 
@@ -296,7 +299,7 @@ namespace Megame.Client
             public float dt;
             public float maxPredictionTime;
             public NativeList<PredictedState> predictedStates;
-            public NativeQueue<ClientInput> inputBuffer;
+            public NativeQueue<InputSample> inputBuffer;
             public uint serverTick;
             public float serverTime;
 
@@ -383,7 +386,7 @@ namespace Megame.Client
         public async System.Threading.Tasks.Task SendRPCAsync(string method, object payload)
         {
             var requestId = System.Guid.NewGuid().ToString();
-            var bytes = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(payload);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(payload));
 
             var request = new RPCRequest
             {
@@ -408,8 +411,8 @@ namespace Megame.Client
                 EntityId = entityId,
                 EntityType = type,
                 GameObject = go,
-                CurrentPosition = go.transform.position.ToFloat3(),
-                CurrentRotation = go.transform.rotation.ToQuaternion()
+                CurrentPosition = new float3(go.transform.position.x, go.transform.position.y, go.transform.position.z),
+                CurrentRotation = new quaternion(go.transform.rotation.x, go.transform.rotation.y, go.transform.rotation.z, go.transform.rotation.w)
             };
             _entityViews.TryAdd(entityId, newView);
 
@@ -490,7 +493,7 @@ namespace Megame.Client
         public float3 Position;
         public quaternion Rotation;
         public float3 Velocity;
-        public ClientInput Input;
+        public InputSample Input;
     }
 
     public struct NativeServerSnapshot

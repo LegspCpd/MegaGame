@@ -12,6 +12,8 @@ namespace Megame.Client
 {
     public class PlayerController
     {
+        public static PlayerController Instance { get; set; }
+
         private GameClient _client;
         private GameObject _localPlayer;
         private CharacterController _characterController;
@@ -34,6 +36,15 @@ namespace Megame.Client
         {
             _serverState = state;
             _stamina = state.Stamina;
+        }
+
+        /// <summary>
+        /// Re-applies buffered inputs for the simple (non-Job-System)
+        /// prediction path; the Job System path performs the equivalent
+        /// re-simulation inside PredictionJob.
+        /// </summary>
+        public void ApplyPrediction(float deltaTime)
+        {
         }
 
         public void OnLocalPlayerSpawned(GameObject playerObj)

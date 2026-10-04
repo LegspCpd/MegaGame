@@ -6,6 +6,8 @@ namespace Megame.Client
 {
     public class WeaponController
     {
+        public static WeaponController Instance { get; set; }
+
         private GameClient _client;
         private GameObject _currentWeapon;
         private GameObject _viewModel;

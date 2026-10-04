@@ -1,4 +1,5 @@
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 using Megame.Network;
 
@@ -65,25 +66,55 @@ namespace Megame.Client
     }
 
     /// <summary>
+    /// Blittable mirror of the protobuf ClientInput message, used by the
+    /// Burst prediction job and the native input queue. The generated
+    /// ClientInput is a reference type and cannot live in native containers.
+    /// </summary>
+    public struct InputSample
+    {
+        public ulong Tick;
+        public ulong TimestampMs;
+        public float2 Move;
+        public float2 Look;
+        public bool Jump;
+        public bool Sprint;
+        public bool Crouch;
+        public bool Prone;
+        public bool Interact;
+        public bool Attack;
+        public bool Aim;
+        public bool Reload;
+        public bool WeaponWheel;
+        public int WeaponSlot;
+        public bool EnterVehicle;
+        public bool ExitVehicle;
+        public float2 VehicleControl;
+        public bool VehicleHandbrake;
+        public bool VehicleHorn;
+        public bool VehicleLights;
+        public bool VehicleSiren;
+    }
+
+    /// <summary>
     /// Bounded buffer of client inputs handed to the simulation job, which
     /// drains it each frame.
     /// </summary>
     public class InputBuffer
     {
-        private readonly NativeQueue<ClientInput> _queue;
+        private readonly NativeQueue<InputSample> _queue;
         private readonly int _capacity;
 
         public InputBuffer(int capacity)
         {
             _capacity = Mathf.Max(1, capacity);
-            _queue = new NativeQueue<ClientInput>(Allocator.Persistent);
+            _queue = new NativeQueue<InputSample>(Allocator.Persistent);
         }
 
         public int Capacity => _capacity;
-        public NativeQueue<ClientInput> NativeQueue => _queue;
+        public NativeQueue<InputSample> NativeQueue => _queue;
 
         /// <summary>Queues an input, discarding the oldest when full.</summary>
-        public void Enqueue(ClientInput input)
+        public void Enqueue(InputSample input)
         {
             if (_queue.Count >= _capacity)
             {
@@ -92,7 +123,7 @@ namespace Megame.Client
             _queue.Enqueue(input);
         }
 
-        public bool TryDequeue(out ClientInput input) => _queue.TryDequeue(out input);
+        public bool TryDequeue(out InputSample input) => _queue.TryDequeue(out input);
 
         public int Count => _queue.Count;
 

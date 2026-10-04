@@ -6,6 +6,8 @@ namespace Megame.Client
 {
     public class VehicleController
     {
+        public static VehicleController Instance { get; set; }
+
         private GameClient _client;
         private GameObject _currentVehicle;
         private Rigidbody _vehicleRigidbody;
