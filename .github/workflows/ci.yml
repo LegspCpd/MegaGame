@@ -88,13 +88,15 @@ jobs:
           ls -la server/internal/proto/*/*.pb.go
           ls -la client/Assets/Scripts/Generated/Proto/*.cs
           # The Unity client binds to GameService.GameServiceClient, so the gRPC
-          # stubs must be present, not just the message classes.
-          if [ ! -f client/Assets/Scripts/Generated/Proto/GameServiceGrpc.cs ]; then
-            echo "::error::GameServiceGrpc.cs missing - gRPC stubs were not generated"
+          # stubs must be present, not just the message classes. The plugin
+          # names the file after the .proto that declares the service
+          # (network.proto -> NetworkGrpc.cs).
+          if [ ! -f client/Assets/Scripts/Generated/Proto/NetworkGrpc.cs ]; then
+            echo "::error::NetworkGrpc.cs missing - gRPC stubs were not generated"
             ls client/Assets/Scripts/Generated/Proto/ || true
             exit 1
           fi
-          grep -q "class GameServiceClient" client/Assets/Scripts/Generated/Proto/GameServiceGrpc.cs
+          grep -q "class GameServiceClient" client/Assets/Scripts/Generated/Proto/NetworkGrpc.cs
 
       - name: Upload generated protos
         uses: actions/upload-artifact@v4
