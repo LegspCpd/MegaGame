@@ -90,7 +90,7 @@ func main() {
 	gameServer.Start()
 
 	// Handle shutdown
-	ctx, cancel := context.WithCancel(context.Background())
+	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	go func() {
