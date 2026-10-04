@@ -340,14 +340,32 @@ func (s *GameServer) processInput(session *ClientSession, input *network.ClientI
 // rpcMethodFromName maps the wire name of an RPC onto the enum. The client
 // sends human-readable names ("SpawnPlayer"), while the enum spells them
 // "RPC_SPAWN_PLAYER", so this normalises case and the RPC_ prefix.
+// rpcMethodFromName maps the wire name of an RPC onto the enum. The client
+// sends human-readable names ("SpawnPlayer"), while the enum spells them
+// "RPC_SPAWN_PLAYER", so this converts to SNAKE_CASE and applies the prefix.
+// Names already in enum form are passed through unchanged.
 func rpcMethodFromName(name string) network.RPCMethod {
-	normalised := strings.ReplaceAll(name, "_", "")
-	normalised = strings.TrimPrefix(normalised, "rpc")
-	if normalised == "" {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
 		return network.RPCMethod_RPC_UNSPECIFIED
 	}
-	upper := strings.ToUpper(normalised)
-	if value, ok := network.RPCMethod_value[upper]; ok {
+	// Already in enum form (RPC_SPAWN_PLAYER or RPC_UNSPECIFIED).
+	if value, ok := network.RPCMethod_value[strings.ToUpper(trimmed)]; ok {
+		return network.RPCMethod(value)
+	}
+
+	var snake strings.Builder
+	for i, r := range trimmed {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			snake.WriteByte('_')
+		}
+		snake.WriteRune(r)
+	}
+	candidate := strings.ToUpper(snake.String())
+	if !strings.HasPrefix(candidate, "RPC_") {
+		candidate = "RPC_" + candidate
+	}
+	if value, ok := network.RPCMethod_value[candidate]; ok {
 		return network.RPCMethod(value)
 	}
 	return network.RPCMethod_RPC_UNSPECIFIED
