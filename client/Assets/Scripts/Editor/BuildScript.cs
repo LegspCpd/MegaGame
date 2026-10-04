@@ -4,6 +4,7 @@ using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace Megame.Client
 {

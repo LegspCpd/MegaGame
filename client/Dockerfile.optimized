@@ -18,7 +18,7 @@ RUN /opt/unity/Editor/Unity -batchmode -nographics \
     -quit \
     -logFile - \
     -executeMethod UnityEditor.PackageManager.Client.AddAndRemove \
-    -packageNames "com.unity.textmeshpro@3.0.6,com.unity.inputsystem@1.7.0,com.unity.cinemachine@2.9.7,com.unity.addressables@1.23.19,com.unity.netcode.gameobjects@1.5.2"
+    -packageNames "com.unity.textmeshpro@3.0.6,com.unity.inputsystem@1.7.0,com.unity.cinemachine@2.9.7,com.unity.addressables@1.21.21,com.unity.netcode.gameobjects@1.5.2"
 
 WORKDIR /project
 
