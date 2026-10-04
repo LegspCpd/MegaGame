@@ -2,6 +2,7 @@ package network
 
 import (
 	"sync"
+	"strings"
 	"time"
 
 	"github.com/megame/server/internal/components"
@@ -336,10 +337,26 @@ func (s *GameServer) processInput(session *ClientSession, input *network.ClientI
 	// For now, just store for systems to use
 }
 
+// rpcMethodFromName maps the wire name of an RPC onto the enum. The client
+// sends human-readable names ("SpawnPlayer"), while the enum spells them
+// "RPC_SPAWN_PLAYER", so this normalises case and the RPC_ prefix.
+func rpcMethodFromName(name string) network.RPCMethod {
+	normalised := strings.ReplaceAll(name, "_", "")
+	normalised = strings.TrimPrefix(normalised, "rpc")
+	if normalised == "" {
+		return network.RPCMethod_RPC_UNSPECIFIED
+	}
+	upper := strings.ToUpper(normalised)
+	if value, ok := network.RPCMethod_value[upper]; ok {
+		return network.RPCMethod(value)
+	}
+	return network.RPCMethod_RPC_UNSPECIFIED
+}
+
 func (s *GameServer) handleRPC(session *ClientSession, rpc *network.RPCRequest) {
 	var response *network.RPCResponse
 
-	switch network.RPCMethod(rpc.Method) {
+	switch rpcMethodFromName(rpc.Method) {
 	case network.RPCMethod_RPC_SPAWN_PLAYER:
 		response = s.rpcSpawnPlayer(session, rpc)
 	case network.RPCMethod_RPC_SPAWN_VEHICLE:

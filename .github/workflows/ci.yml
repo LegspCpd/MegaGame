@@ -95,17 +95,39 @@ jobs:
         working-directory: server
         run: |
           go vet ./...
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o megame-server ./cmd/server
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+            -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }}" \
+            -o megame-server ./cmd/server
 
       - name: Run tests
         working-directory: server
         run: go test ./...
 
+      - name: Build Windows server
+        working-directory: server
+        run: |
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build \
+            -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }}" \
+            -o megame-server.exe ./cmd/server
+
+      - name: Package server artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp server/megame-server dist/
+          cp server/megame-server.exe dist/
+          cp README.md dist/ 2>/dev/null || true
+          tar -czf dist/megame-server-${{ github.ref_name }}-linux-amd64.tar.gz -C dist megame-server
+          zip -q dist/megame-server-${{ github.ref_name }}-windows-amd64.zip megame-server.exe
+          ls -la dist/
+
       - name: Upload server artifacts
         uses: actions/upload-artifact@v4
         with:
           name: megame-server
-          path: server/megame-server
+          path: |
+            dist/megame-server-${{ github.ref_name }}-linux-amd64.tar.gz
+            dist/megame-server-${{ github.ref_name }}-windows-amd64.zip
           retention-days: 7
 
   unity-build:
@@ -160,8 +182,8 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: [go-build, unity-build]
-    if: github.event_name == 'release'
+    needs: [go-build]
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -175,8 +197,12 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.ref_name }}
           files: |
-            release-assets/**
+            release-assets/*.tar.gz
+            release-assets/*.zip
+            release-assets/*.exe
+          fail_on_unmatched_files: false
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
