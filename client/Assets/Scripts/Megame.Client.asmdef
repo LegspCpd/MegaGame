@@ -1,9 +1,11 @@
 {
   "name": "Megame.Client",
   "references": [
-    "Google.Protobuf",
-    "Grpc.Core",
-    "Grpc.Core.Api"
+    "UnityEngine.UI",
+    "Unity.TextMeshPro",
+    "Unity.InputSystem",
+    "Unity.Mathematics",
+    "Unity.Burst"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
