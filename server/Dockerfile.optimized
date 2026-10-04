@@ -32,10 +32,11 @@ RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.35.1 \
 COPY --chown=appbuilder:appbuilder server/ ./server/
 COPY --chown=appbuilder:appbuilder shared/ ./shared/
 
-# Generate protos
+# Generate protos. go.sum is not committed (CI regenerates it), so materialise
+# it from the module cache before building.
 RUN apk add --no-cache bash \
     && sh shared/proto/build_proto.sh \
-    && cp server/go.sum ./go.sum
+    && cd server && go mod tidy && cp go.sum ../go.sum
 
 # Build with optimizations
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
