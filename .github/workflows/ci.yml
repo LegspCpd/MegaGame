@@ -13,8 +13,8 @@ env:
   GO_VERSION: '1.23'
   UNITY_VERSION: '2022.3.20f1'
   DOCKER_REGISTRY: ghcr.io
-  # GHCR requires a lowercase repository path.
-  IMAGE_NAME: megame
+  # GHCR requires a lowercase path of the form <owner>/<image>.
+  IMAGE_NAME: legspcpd/megame
 
 jobs:
   protobuf:
