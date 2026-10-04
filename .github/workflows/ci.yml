@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup buf
-        uses: bufbuild/buf-setup-action@v1
+        uses: bufbuild/buf-setup-action@v1.50.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           version: 1.32.0
@@ -173,7 +173,7 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
       - name: Activate Unity License
-        uses: game-ci/unity-activate@v3
+        uses: game-ci/unity-activate@v2
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
