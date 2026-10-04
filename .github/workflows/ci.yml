@@ -118,7 +118,7 @@ jobs:
           cp server/megame-server.exe dist/
           cp README.md dist/ 2>/dev/null || true
           tar -czf dist/megame-server-${{ github.ref_name }}-linux-amd64.tar.gz -C dist megame-server
-          zip -q dist/megame-server-${{ github.ref_name }}-windows-amd64.zip megame-server.exe
+          (cd dist && zip -q megame-server-${{ github.ref_name }}-windows-amd64.zip megame-server.exe)
           ls -la dist/
 
       - name: Upload server artifacts
