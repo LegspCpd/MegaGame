@@ -2,6 +2,11 @@ using UnityEngine;
 using System.Collections.Generic;
 using Megame.Entity;
 
+// Megame.Entity also defines Vector3/Quaternion, so the Unity types are
+// aliased here to keep unqualified uses unambiguous.
+using UnityVector3 = UnityEngine.Vector3;
+using UnityQuaternion = UnityEngine.Quaternion;
+
 namespace Megame.Client
 {
     public class EntityManager
@@ -117,25 +122,20 @@ namespace Megame.Client
 
         private struct TransformState
         {
-            public Vector3 Position;
-            public Quaternion Rotation;
-            public Vector3 Scale;
-            public Vector3 Velocity;
+            public UnityVector3 Position;
+            public UnityQuaternion Rotation;
+            public UnityVector3 Scale;
+            public UnityVector3 Velocity;
         }
     }
 
     // Extension methods for protobuf conversion
     public static class ProtoExtensions
     {
-        // megame.common types (client input payloads, shared maths).
-        public static Vector3 ToVector3(this Common.Vector3 v) => new Vector3(v.X, v.Y, v.Z);
-        public static Quaternion ToQuaternion(this Common.Quaternion q) => new Quaternion(q.X, q.Y, q.Z, q.W);
-        public static Common.Vector3 ToProto(this Vector3 v) => new Common.Vector3 { X = v.x, Y = v.y, Z = v.z };
-        public static Common.Quaternion ToProto(this Quaternion q) => new Common.Quaternion { X = q.x, Y = q.y, Z = q.z, W = q.w };
-
-        // megame.entity types. EntityState carries these, so the converters
-        // above do not apply to them.
-        public static Vector3 ToVector3(this Entity.Vector3 v) => new Vector3(v.X, v.Y, v.Z);
-        public static Quaternion ToQuaternion(this Entity.Quaternion q) => new Quaternion(q.X, q.Y, q.Z, q.W);
+        // megame.common carries the spatial types on EntityState.
+        public static UnityVector3 ToVector3(this Common.Vector3 v) => new UnityVector3(v.X, v.Y, v.Z);
+        public static UnityQuaternion ToQuaternion(this Common.Quaternion q) => new UnityQuaternion(q.X, q.Y, q.Z, q.W);
+        public static Common.Vector3 ToProto(this UnityVector3 v) => new Common.Vector3 { X = v.x, Y = v.y, Z = v.z };
+        public static Common.Quaternion ToProto(this UnityQuaternion q) => new Common.Quaternion { X = q.x, Y = q.y, Z = q.z, W = q.w };
     }
 }

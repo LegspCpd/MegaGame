@@ -7,6 +7,7 @@ import (
 
 	"github.com/megame/server/internal/components"
 	"github.com/megame/server/internal/ecs"
+	"github.com/megame/server/internal/proto/common"
 	"github.com/megame/server/internal/proto/entity"
 	"github.com/megame/server/internal/proto/network"
 	"google.golang.org/grpc"
@@ -136,12 +137,12 @@ func (s *GameServer) buildSnapshot() *network.ServerSnapshot {
 				Id:   uint64(e),
 				Type: entType,
 			},
-			Transform: &entity.Transform{
-				Position: &entity.Vector3{X: t.Position.X, Y: t.Position.Y, Z: t.Position.Z},
-				Rotation: &entity.Quaternion{X: t.Rotation.X, Y: t.Rotation.Y, Z: t.Rotation.Z, W: t.Rotation.W},
-				Scale:    &entity.Vector3{X: t.Scale.X, Y: t.Scale.Y, Z: t.Scale.Z},
+			Transform: &common.Transform{
+				Position: &common.Vector3{X: t.Position.X, Y: t.Position.Y, Z: t.Position.Z},
+				Rotation: &common.Quaternion{X: t.Rotation.X, Y: t.Rotation.Y, Z: t.Rotation.Z, W: t.Rotation.W},
+				Scale:    &common.Vector3{X: t.Scale.X, Y: t.Scale.Y, Z: t.Scale.Z},
 			},
-			Velocity:  &entity.Vector3{},
+			Velocity:  &common.Vector3{},
 			Timestamp: uint64(time.Now().UnixMilli()),
 		})
 

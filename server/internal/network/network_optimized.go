@@ -8,6 +8,7 @@ import (
 
 	"github.com/megame/server/internal/components"
 	"github.com/megame/server/internal/ecs"
+	"github.com/megame/server/internal/proto/common"
 	"github.com/megame/server/internal/proto/entity"
 	"github.com/megame/server/internal/proto/network"
 	"google.golang.org/protobuf/proto"
@@ -30,8 +31,8 @@ const (
 type EntitySnapshot struct {
 	EntityID   uint64
 	Type       entity.EntityType
-	Transform  *entity.Transform
-	Velocity   *entity.Vector3
+	Transform  *common.Transform
+	Velocity   *common.Vector3
 	Timestamp  uint64
 	Components map[uint16][]byte // componentID -> serialized data
 }
@@ -421,7 +422,7 @@ func (dc *DeltaCompressor) entityChanged(a, b *EntitySnapshot) bool {
 	return false
 }
 
-func transformEqual(a, b *entity.Transform) bool {
+func transformEqual(a, b *common.Transform) bool {
 	if a.Position != nil && b.Position != nil {
 		if a.Position.X != b.Position.X || a.Position.Y != b.Position.Y || a.Position.Z != b.Position.Z {
 			return false

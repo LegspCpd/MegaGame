@@ -32,33 +32,14 @@ message EntityRef {
 
 message EntityState {
   EntityRef ref = 1;
-  Transform transform = 2;
-  Vector3 velocity = 3;
-  Vector3 angular_velocity = 4;
+  // Spatial maths lives in megame.common. Keeping it there avoids colliding
+  // with UnityEngine.Vector3/Quaternion/Transform in the C# client, which
+  // imports both Megame.Entity and UnityEngine.
+  megame.common.Transform transform = 2;
+  megame.common.Vector3 velocity = 3;
+  megame.common.Vector3 angular_velocity = 4;
   uint64 timestamp = 5;  // server tick
   bool is_local_player = 6;
-}
-
-// Vector3 is a position, direction or scale.
-message Vector3 {
-  float x = 1;
-  float y = 2;
-  float z = 3;
-}
-
-// Quaternion is a rotation.
-message Quaternion {
-  float x = 1;
-  float y = 2;
-  float z = 3;
-  float w = 4;
-}
-
-// Transform places an entity in the world.
-message Transform {
-  Vector3 position = 1;
-  Quaternion rotation = 2;
-  Vector3 scale = 3;
 }
 
 message PlayerState {
