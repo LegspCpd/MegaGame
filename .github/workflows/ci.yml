@@ -225,7 +225,7 @@ jobs:
           targetPlatform: StandaloneLinux64
           buildMethod: Megame.Client.BuildScript.PerformClientBuild
           customParameters: -buildVersion ${{ github.ref_name }} -outputPath /github/workspace/build/linux
-          versioning: none
+          versioning: None
           allowDirtyBuild: true
 
       - name: Verify player was produced
