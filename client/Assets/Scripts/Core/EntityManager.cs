@@ -127,9 +127,15 @@ namespace Megame.Client
     // Extension methods for protobuf conversion
     public static class ProtoExtensions
     {
+        // megame.common types (client input payloads, shared maths).
         public static Vector3 ToVector3(this Common.Vector3 v) => new Vector3(v.X, v.Y, v.Z);
         public static Quaternion ToQuaternion(this Common.Quaternion q) => new Quaternion(q.X, q.Y, q.Z, q.W);
         public static Common.Vector3 ToProto(this Vector3 v) => new Common.Vector3 { X = v.x, Y = v.y, Z = v.z };
         public static Common.Quaternion ToProto(this Quaternion q) => new Common.Quaternion { X = q.x, Y = q.y, Z = q.z, W = q.w };
+
+        // megame.entity types. EntityState carries these, so the converters
+        // above do not apply to them.
+        public static Vector3 ToVector3(this Entity.Vector3 v) => new Vector3(v.X, v.Y, v.Z);
+        public static Quaternion ToQuaternion(this Entity.Quaternion q) => new Quaternion(q.X, q.Y, q.Z, q.W);
     }
 }
