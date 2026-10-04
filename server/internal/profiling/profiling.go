@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -202,11 +203,11 @@ func (p *Profiler) collectRuntimeMetrics() {
 			GoroutineCount.Set(float64(runtime.NumGoroutine()))
 			MemoryAlloc.Set(float64(memStats.Alloc))
 
-			// Update expvar
-			expvarEntityCount.Set(int64(EntityCount))
-			expvarPlayerCount.Set(int64(PlayerCount))
-			expvarBytesSent.Set(int64(NetworkBytesSent))
-			expvarBytesRecv.Set(int64(NetworkBytesReceived))
+			// Prometheus metrics are collectors; read their value before republishing.
+			expvarEntityCount.Set(gaugeValue(EntityCount))
+			expvarPlayerCount.Set(gaugeValue(PlayerCount))
+			expvarBytesSent.Set(counterValue(NetworkBytesSent))
+			expvarBytesRecv.Set(counterValue(NetworkBytesReceived))
 
 			// GC count
 			gcDelta := memStats.NumGC - lastGC
@@ -420,4 +421,30 @@ func (m *ServerMetrics) RecordRPC(method string, success bool, err error) {
 
 func (m *ServerMetrics) Stop() {
 	m.profiler.Stop()
+}
+
+// gaugeValue reads the current value of a Prometheus gauge.
+func gaugeValue(g prometheus.Gauge) int64 {
+	var m prometheus.Metric
+	if err := g.Write(&m); err != nil {
+		return 0
+	}
+	var pb dto.Metric
+	if err := m.Write(&pb); err != nil || pb.Gauge == nil {
+		return 0
+	}
+	return int64(pb.Gauge.GetValue())
+}
+
+// counterValue reads the current value of a Prometheus counter.
+func counterValue(c prometheus.Counter) int64 {
+	var m prometheus.Metric
+	if err := c.Write(&m); err != nil {
+		return 0
+	}
+	var pb dto.Metric
+	if err := m.Write(&pb); err != nil || pb.Counter == nil {
+		return 0
+	}
+	return int64(pb.Counter.GetValue())
 }
