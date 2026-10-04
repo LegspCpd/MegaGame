@@ -47,10 +47,30 @@ jobs:
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq protobuf-compiler
+
+          # protoc's C# generator emits message classes only. The gRPC client
+          # and server stubs GameClient.cs depends on come from Grpc.Tools.
+          if ! command -v grpc_csharp_plugin >/dev/null; then
+            dotnet tool install --global Grpc.Tools
+            echo "$(dotnet tool list --global | awk '/Grpc.Tools/{print $NF}')" || true
+            export PATH="$PATH:$(dotnet tool list --global -f plain 2>/dev/null | head -1 || echo '')"
+            GRPC_PLUGIN="$(find / -name grpc_csharp_plugin -type f 2>/dev/null | head -1)"
+            if [ -z "$GRPC_PLUGIN" ]; then
+              echo "::error::grpc_csharp_plugin not found after installing Grpc.Tools"
+              exit 1
+            fi
+          else
+            GRPC_PLUGIN="$(command -v grpc_csharp_plugin)"
+          fi
+
           OUT=../../client/Assets/Scripts/Generated/Proto
           rm -rf "$OUT"
           mkdir -p "$OUT"
-          protoc --csharp_out="$OUT" --csharp_opt=base_namespace=Megame *.proto
+          protoc \
+            --csharp_out="$OUT" --csharp_opt=base_namespace=Megame \
+            --grpc_out="$OUT" --grpc_opt=base_namespace=Megame \
+            --plugin=protoc-gen-grpc="$GRPC_PLUGIN" \
+            *.proto
           # protoc emits one subdirectory per proto package; Unity needs them flat.
           find "$OUT" -mindepth 2 -name '*.cs' -exec mv -t "$OUT" {} +
           find "$OUT" -mindepth 1 -type d -empty -delete
@@ -60,6 +80,14 @@ jobs:
           set -euo pipefail
           ls -la server/internal/proto/*/*.pb.go
           ls -la client/Assets/Scripts/Generated/Proto/*.cs
+          # The Unity client binds to GameService.GameServiceClient, so the gRPC
+          # stubs must be present, not just the message classes.
+          if [ ! -f client/Assets/Scripts/Generated/Proto/GameServiceGrpc.cs ]; then
+            echo "::error::GameServiceGrpc.cs missing - gRPC stubs were not generated"
+            ls client/Assets/Scripts/Generated/Proto/ || true
+            exit 1
+          fi
+          grep -q "class GameServiceClient" client/Assets/Scripts/Generated/Proto/GameServiceGrpc.cs
 
       - name: Upload generated protos
         uses: actions/upload-artifact@v4

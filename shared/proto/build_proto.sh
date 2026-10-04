@@ -36,6 +36,24 @@ protoc \
   --csharp_out="${OUT_CS}" \
   --csharp_opt=base_namespace=Megame \
   "${PROTO_DIR}"/*.proto
+
+# The Unity client binds to GameService.GameServiceClient, which protoc's
+# built-in C# generator does not emit. Generate it with Grpc.Tools when
+# available.
+GRPC_PLUGIN="$(command -v grpc_csharp_plugin || true)"
+if [ -n "${GRPC_PLUGIN}" ]; then
+  echo "Building C# gRPC stubs..."
+  protoc \
+    --proto_path="${PROTO_DIR}" \
+    --grpc_out="${OUT_CS}" \
+    --grpc_opt=base_namespace=Megame \
+    --plugin=protoc-gen-grpc="${GRPC_PLUGIN}" \
+    "${PROTO_DIR}"/*.proto
+else
+  echo "WARNING: grpc_csharp_plugin not found; gRPC stubs were not generated." >&2
+  echo "         Install Grpc.Tools, or the Unity client will not compile." >&2
+fi
+
 # protoc emits one directory per proto package; Unity expects them flat.
 find "${OUT_CS}" -mindepth 2 -name '*.cs' -exec mv -t "${OUT_CS}" {} +
 find "${OUT_CS}" -mindepth 1 -type d -empty -delete
