@@ -187,16 +187,6 @@ jobs:
           customParameters: -buildVersion ${{ github.ref_name }} -outputPath /github/workspace/build/linux
           compression: lz4hc
 
-      # Personal licences are floating: returning them lets the next run
-      # activate cleanly instead of hitting the activation limit.
-      - name: Return Unity License
-        if: always()
-        uses: game-ci/unity-license-activate@0.1.0
-        with:
-          returnLicense: true
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-
       - name: Verify player was produced
         run: |
           set -euo pipefail
