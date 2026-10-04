@@ -105,7 +105,14 @@ namespace Megame.Client
 
             // Rendering
             PlayerSettings.SetUseDefaultGraphicsAPIs(target, false);
-            PlayerSettings.SetGraphicsAPIs(target, new[] { UnityEngine.Rendering.GraphicsDeviceType.Direct3D11, UnityEngine.Rendering.GraphicsDeviceType.Vulkan, UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+            if (target == BuildTarget.StandaloneLinux64)
+            {
+                PlayerSettings.SetGraphicsAPIs(target, new[] { UnityEngine.Rendering.GraphicsDeviceType.Vulkan, UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+            }
+            else
+            {
+                PlayerSettings.SetGraphicsAPIs(target, new[] { UnityEngine.Rendering.GraphicsDeviceType.Direct3D11, UnityEngine.Rendering.GraphicsDeviceType.Vulkan, UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+            }
         }
 
         [MenuItem("MegaGame/Build/Linux")]
