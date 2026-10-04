@@ -214,6 +214,9 @@ jobs:
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
+      # Downloading the generated-protos artifact overwrites files in the
+      # checkout, so the workspace is intentionally dirty. The build version
+      # comes from -buildVersion below, not from semantic git versioning.
       - name: Build Unity Project (Linux)
         uses: game-ci/unity-builder@v4
         with:
@@ -222,7 +225,8 @@ jobs:
           targetPlatform: StandaloneLinux64
           buildMethod: Megame.Client.BuildScript.PerformClientBuild
           customParameters: -buildVersion ${{ github.ref_name }} -outputPath /github/workspace/build/linux
-          compression: lz4hc
+          versioning: none
+          allowDirtyBuild: true
 
       - name: Verify player was produced
         run: |
