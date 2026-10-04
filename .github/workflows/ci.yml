@@ -49,18 +49,25 @@ jobs:
           sudo apt-get install -y -qq protobuf-compiler
 
           # protoc's C# generator emits message classes only. The gRPC client
-          # and server stubs GameClient.cs depends on come from Grpc.Tools.
-          if ! command -v grpc_csharp_plugin >/dev/null; then
-            dotnet tool install --global Grpc.Tools
-            echo "$(dotnet tool list --global | awk '/Grpc.Tools/{print $NF}')" || true
-            export PATH="$PATH:$(dotnet tool list --global -f plain 2>/dev/null | head -1 || echo '')"
-            GRPC_PLUGIN="$(find / -name grpc_csharp_plugin -type f 2>/dev/null | head -1)"
+          # and server stubs GameClient.cs depends on come from Grpc.Tools,
+          # which ships the native grpc_csharp_plugin inside its NuGet package
+          # (it is not installable with `dotnet tool install`).
+          GRPC_TOOLS_VERSION=2.71.0
+          if command -v grpc_csharp_plugin >/dev/null; then
+            GRPC_PLUGIN="$(command -v grpc_csharp_plugin)"
+          else
+            NUPKG=/tmp/grpc.tools.nupkg
+            curl -fsSL "https://www.nuget.org/api/v2/package/Grpc.Tools/${GRPC_TOOLS_VERSION}" -o "$NUPKG"
+            rm -rf /tmp/grpc.tools && mkdir -p /tmp/grpc.tools
+            unzip -q "$NUPKG" -d /tmp/grpc.tools
+            GRPC_PLUGIN="$(find /tmp/grpc.tools -type f -name 'grpc_csharp_plugin*' | head -1)"
             if [ -z "$GRPC_PLUGIN" ]; then
-              echo "::error::grpc_csharp_plugin not found after installing Grpc.Tools"
+              echo "::error::grpc_csharp_plugin not present in Grpc.Tools ${GRPC_TOOLS_VERSION}"
+              find /tmp/grpc.tools -maxdepth 3 -type d | head -20
               exit 1
             fi
-          else
-            GRPC_PLUGIN="$(command -v grpc_csharp_plugin)"
+            chmod +x "$GRPC_PLUGIN"
+            echo "Using $GRPC_PLUGIN"
           fi
 
           OUT=../../client/Assets/Scripts/Generated/Proto
