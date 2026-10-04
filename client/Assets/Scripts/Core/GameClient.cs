@@ -60,6 +60,11 @@ namespace Megame.Client
         public ulong LocalPlayerId => _localPlayerId;
         public uint ServerTick => _serverTick;
 
+        // Client-side system accessors shared with UI and input layers.
+        public DialogueManager dialogueManager => _dialogueManager;
+        public PhoneManager phoneManager => _phoneManager;
+        public WeaponController weaponController => _weaponController;
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -148,9 +153,9 @@ namespace Megame.Client
             }
         }
 
-        private void HandleSnapshot(NativeServerSnapshot snapshot)
+        private void HandleSnapshot(ServerSnapshot snapshot)
         {
-            _serverTick = snapshot.Tick;
+            _serverTick = (uint)snapshot.Tick;
 
             // Update entities
             foreach (var entityState in snapshot.Entities)

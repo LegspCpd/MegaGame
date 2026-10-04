@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Megame.Data;
+using Megame.Client;
+using Megame.Network;
 
 namespace Megame.World
 {
@@ -38,7 +40,13 @@ namespace Megame.World
         
         private float dayLengthSeconds;
         private float timeAccumulator;
-        
+
+        /// <summary>Creates the client-side world manager bound to a
+        /// GameClient connection.</summary>
+        public WorldManager(GameClient client)
+        {
+        }
+
         public float CurrentTimeOfDay => currentHour;
         
         private void Awake()
@@ -233,6 +241,21 @@ namespace Megame.World
                 var main = rainParticles.main;
                 main.simulationSpace = ParticleSystemSimulationSpace.World;
                 // windDirection would affect particle velocity
+            }
+        }
+
+        /// <summary>Applies the server's world state (time of day, wind) to
+        /// the local presentation.</summary>
+        public void UpdateWorldState(WorldState state)
+        {
+            if (state == null) return;
+
+            SetTime(state.TimeOfDay);
+
+            if (state.WindDirection != null)
+            {
+                SetWind(state.WindSpeed,
+                    new Vector3(state.WindDirection.X, state.WindDirection.Y, 0f));
             }
         }
         

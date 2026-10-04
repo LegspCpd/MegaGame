@@ -43,6 +43,7 @@ namespace Megame.Client
         [Header("Phone")]
         public GameObject phoneRoot;
         public PhoneUI phoneUI;
+        public PhoneManager phoneManager;
 
         [Header("Vehicle")]
         public GameObject vehicleHUD;
