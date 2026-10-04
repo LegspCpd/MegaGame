@@ -1,0 +1,79 @@
+<linker>
+  <!-- Preserve all types in Megame assemblies -->
+  <assembly fullname="Megame.Client" preserve="all"/>
+  <assembly fullname="Megame.Server" preserve="all"/>
+  <assembly fullname="Megame.Entity" preserve="all"/>
+  <assembly fullname="Megame.Network" preserve="all"/>
+  <assembly fullname="Megame.Common" preserve="all"/>
+  <assembly fullname="Megame.Gameplay" preserve="all"/>
+  <assembly fullname="Megame.Vehicles" preserve="all"/>
+  <assembly fullname="Megame.Data" preserve="all"/>
+  <assembly fullname="Megame.World" preserve="all"/>
+  <assembly fullname="Megame.Controllers" preserve="all"/>
+  <assembly fullname="Megame.UI" preserve="all"/>
+  <assembly fullname="Megame.Systems" preserve="all"/>
+  <assembly fullname="Megame.Editor" preserve="all"/>
+
+  <!-- Preserve Unity engine types commonly accessed via reflection -->
+  <assembly fullname="UnityEngine">
+    <type fullname="UnityEngine.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="UnityEngine.CoreModule">
+    <type fullname="UnityEngine.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="UnityEngine.PhysicsModule">
+    <type fullname="UnityEngine.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="UnityEngine.AIModule">
+    <type fullname="UnityEngine.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="UnityEngine.AudioModule">
+    <type fullname="UnityEngine.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="UnityEngine.InputLegacyModule">
+    <type fullname="UnityEngine.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="UnityEngine.InputSystemModule">
+    <type fullname="UnityEngine.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="UnityEngine.UI">
+    <type fullname="UnityEngine.UI.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="TMPro">
+    <type fullname="TMPro.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="Unity.Netcode.Runtime">
+    <type fullname="Unity.Netcode.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="Unity.Collections">
+    <type fullname="Unity.Collections.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="Unity.Mathematics">
+    <type fullname="Unity.Mathematics.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="Unity.Burst">
+    <type fullname="Unity.Burst.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="Unity.Jobs">
+    <type fullname="Unity.Jobs.*" preserve="all"/>
+  </assembly>
+
+  <!-- Preserve protobuf generated types -->
+  <assembly fullname="Google.Protobuf">
+    <type fullname="Google.Protobuf.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="Grpc.Core">
+    <type fullname="Grpc.Core.*" preserve="all"/>
+  </assembly>
+
+  <!-- Preserve System types used for reflection/serialization -->
+  <assembly fullname="System.Core">
+    <type fullname="System.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="System.Private.CoreLib">
+    <type fullname="System.*" preserve="all"/>
+  </assembly>
+  <assembly fullname="mscorlib">
+    <type fullname="System.*" preserve="all"/>
+  </assembly>
+</linker>
