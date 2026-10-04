@@ -173,7 +173,7 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
       - name: Activate Unity License
-        uses: game-ci/unity-activate@v2
+        uses: game-ci/unity-activate@v3
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
@@ -191,7 +191,7 @@ jobs:
       # activate cleanly instead of hitting the activation limit.
       - name: Return Unity License
         if: always()
-        uses: game-ci/unity-license-activate@v1
+        uses: game-ci/unity-license-activate@0.1.0
         with:
           returnLicense: true
         env:
