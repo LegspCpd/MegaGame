@@ -369,26 +369,26 @@ func (s *MissionSystem) GetMissionProgress(world *ecs.World, playerEntity ecs.En
 
 // MissionDefinition represents a mission from data
 type MissionDefinition struct {
-	ID              string
-	Title           string
-	Description     string
-	Type            MissionType
-	Prerequisites   []string
-	Unlocks         []string
-	RewardMoney     uint32
-	RewardItems     []string
-	RewardVehicles  []string
-	RewardWeapons   []string
-	RewardXP        uint32
-	GiverNPCID      string
-	StartPosition   components.Vector3
-	StartCutscene   string
-	EndCutscene     string
-	IsReplayable    bool
-	MinLevel        int32
-	Difficulty      string
-	TimeLimit       int32 // seconds, 0 = no limit
-	Objectives      []*MissionObjective
+	ID             string
+	Title          string
+	Description    string
+	Type           MissionType
+	Prerequisites  []string
+	Unlocks        []string
+	RewardMoney    uint32
+	RewardItems    []string
+	RewardVehicles []string
+	RewardWeapons  []string
+	RewardXP       uint32
+	GiverNPCID     string
+	StartPosition  components.Vector3
+	StartCutscene  string
+	EndCutscene    string
+	IsReplayable   bool
+	MinLevel       int32
+	Difficulty     string
+	TimeLimit      int32 // seconds, 0 = no limit
+	Objectives     []*MissionObjective
 }
 
 type MissionType int
@@ -410,20 +410,20 @@ const (
 )
 
 type MissionObjective struct {
-	ID              string
-	Description     string
-	Type            ObjectiveType
-	TargetProgress  int32
-	TargetPosition  components.Vector3
-	TargetRadius    float32
-	TargetEntityID  ecs.EntityID
-	TargetItemID    string
-	TargetVehicleID string
-	Conditions      []string
-	IsOptional      bool
-	IsHidden        bool
+	ID                 string
+	Description        string
+	Type               ObjectiveType
+	TargetProgress     int32
+	TargetPosition     components.Vector3
+	TargetRadius       float32
+	TargetEntityID     ecs.EntityID
+	TargetItemID       string
+	TargetVehicleID    string
+	Conditions         []string
+	IsOptional         bool
+	IsHidden           bool
 	OnCompleteDialogue string
-	OnFailDialogue  string
+	OnFailDialogue     string
 }
 
 type ObjectiveType int
@@ -468,7 +468,7 @@ func removeString(slice []string, item string) []string {
 
 // DialogueSystem handles conversations
 type DialogueSystem struct {
-	Priority_       int
+	Priority_        int
 	dialogueDatabase map[string]*DialogueDefinition
 }
 
@@ -640,45 +640,45 @@ func (s *DialogueSystem) executeAction(world *ecs.World, action string, speaker 
 }
 
 type DialogueDefinition struct {
-	ID       string
+	ID        string
 	StartNode string
-	Nodes    map[string]*DialogueNode
+	Nodes     map[string]*DialogueNode
 }
 
 type DialogueNode struct {
-	ID           string
-	SpeakerID    string
-	SpeakerName  string
-	Text         string
-	AudioClip    string
-	Duration     float32
-	Choices      []*DialogueChoice
-	NextNodeID   string
-	Conditions   []string
-	Actions      []string
-	CameraShot   *CameraShot
-	Subtitle     components.SubtitleEntry
-	Animations   []components.AnimationCue
+	ID          string
+	SpeakerID   string
+	SpeakerName string
+	Text        string
+	AudioClip   string
+	Duration    float32
+	Choices     []*DialogueChoice
+	NextNodeID  string
+	Conditions  []string
+	Actions     []string
+	CameraShot  *CameraShot
+	Subtitle    components.SubtitleEntry
+	Animations  []components.AnimationCue
 }
 
 type DialogueChoice struct {
-	ID             string
-	Text           string
-	NextNodeID     string
-	Conditions     []string
-	Consequences   []string
+	ID               string
+	Text             string
+	NextNodeID       string
+	Conditions       []string
+	Consequences     []string
 	ReputationChange int32
 	EndsConversation bool
 }
 
 type CameraShot struct {
-	Type            CameraShotType
-	TargetEntity    ecs.EntityID
-	PositionOffset  components.Vector3
-	LookAtOffset    components.Vector3
-	FOV             float32
-	Duration        float32
-	ShakeIntensity  float32
+	Type           CameraShotType
+	TargetEntity   ecs.EntityID
+	PositionOffset components.Vector3
+	LookAtOffset   components.Vector3
+	FOV            float32
+	Duration       float32
+	ShakeIntensity float32
 }
 
 type CameraShotType int

@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -20,15 +21,27 @@ import (
 )
 
 var (
-	port       = flag.Int("port", 50051, "gRPC server port")
-	httpPort   = flag.Int("http-port", 8080, "HTTP metrics port")
-	saveDir    = flag.String("save-dir", "./saves", "Save directory")
-	tickRate   = flag.Int("tick-rate", 60, "Server tick rate")
-	logLevel   = flag.String("log-level", "info", "Log level (debug, info, warn, error)")
+	port      = flag.Int("port", 50051, "gRPC server port")
+	httpPort  = flag.Int("http-port", 8080, "HTTP metrics port")
+	saveDir   = flag.String("save-dir", "./saves", "Save directory")
+	tickRate  = flag.Int("tick-rate", 60, "Server tick rate")
+	logLevel  = flag.String("log-level", "info", "Log level (debug, info, warn, error)")
+	healthChk = flag.Bool("health-check", false, "Run a self health check and exit")
 )
 
 func main() {
 	flag.Parse()
+
+	// The container HEALTHCHECK invokes the binary with -health-check. Exit
+	// before any server setup so the probe stays cheap.
+	if *healthChk {
+		if err := healthCheck(*saveDir); err != nil {
+			fmt.Fprintf(os.Stderr, "health check failed: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("ok")
+		return
+	}
 
 	// Initialize logger
 	logger, err := newLogger(*logLevel)
@@ -74,8 +87,8 @@ func main() {
 
 	// Create gRPC server
 	grpcServer := grpc.NewServer(
-		grpc.MaxRecvMsgSize(1024 * 1024 * 10), // 10MB
-		grpc.MaxSendMsgSize(1024 * 1024 * 10),
+		grpc.MaxRecvMsgSize(1024*1024*10), // 10MB
+		grpc.MaxSendMsgSize(1024*1024*10),
 	)
 
 	network.RegisterGRPC(grpcServer, gameServer)
@@ -134,4 +147,20 @@ func newLogger(level string) (*zap.Logger, error) {
 	}
 
 	return cfg.Build()
+}
+
+// healthCheck verifies the process can still do its job: it must be able to
+// create and write to the save directory. Run by the container HEALTHCHECK.
+func healthCheck(dir string) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("save dir %q is not usable: %w", dir, err)
+	}
+	probe := filepath.Join(dir, ".healthcheck")
+	if err := os.WriteFile(probe, []byte("ok"), 0o644); err != nil {
+		return fmt.Errorf("save dir %q is not writable: %w", dir, err)
+	}
+	if err := os.Remove(probe); err != nil {
+		return fmt.Errorf("save dir %q is not writable: %w", dir, err)
+	}
+	return nil
 }

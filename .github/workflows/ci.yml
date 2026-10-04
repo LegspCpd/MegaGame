@@ -94,6 +94,17 @@ jobs:
         working-directory: server
         run: go mod tidy && go mod verify
 
+      - name: Check formatting
+        working-directory: server
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::These files are not gofmt-clean:"
+            echo "$unformatted"
+            gofmt -w .
+            exit 1
+          fi
+
       - name: Build and vet
         working-directory: server
         run: |

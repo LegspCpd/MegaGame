@@ -28,11 +28,11 @@ func NewSaveManager(saveDir string, world *ecs.World) *SaveManager {
 // SaveGame saves the entire world state to a file
 func (sm *SaveManager) SaveGame(slot string) error {
 	saveData := &SaveData{
-		Version:     1,
-		Timestamp:   time.Now().Unix(),
-		Slot:        slot,
-		Entities:    make([]EntitySaveData, 0),
-		WorldState:  sm.captureWorldState(),
+		Version:    1,
+		Timestamp:  time.Now().Unix(),
+		Slot:       slot,
+		Entities:   make([]EntitySaveData, 0),
+		WorldState: sm.captureWorldState(),
 	}
 
 	// Iterate all entities
@@ -170,11 +170,11 @@ func (sm *SaveManager) deserializeEntity(entity ecs.EntityID, data *EntitySaveDa
 
 func (sm *SaveManager) captureWorldState() WorldState {
 	return WorldState{
-		TimeOfDay:      1200,
-		Weather:        "clear",
-		WeatherBlend:   0,
-		WindSpeed:      2.0,
-		WindDirection:  components.Vector2{X: 1, Y: 0},
+		TimeOfDay:        1200,
+		Weather:          "clear",
+		WeatherBlend:     0,
+		WindSpeed:        2.0,
+		WindDirection:    components.Vector2{X: 1, Y: 0},
 		WantedMultiplier: 100,
 	}
 }
@@ -195,25 +195,25 @@ func (sm *SaveManager) clearWorld() {
 
 // SaveData represents a complete game save
 type SaveData struct {
-	Version     int               `json:"version"`
-	Timestamp   int64             `json:"timestamp"`
-	Slot        string            `json:"slot"`
-	Entities    []EntitySaveData  `json:"entities"`
-	WorldState  WorldState        `json:"world_state"`
+	Version    int              `json:"version"`
+	Timestamp  int64            `json:"timestamp"`
+	Slot       string           `json:"slot"`
+	Entities   []EntitySaveData `json:"entities"`
+	WorldState WorldState       `json:"world_state"`
 }
 
 type EntitySaveData struct {
-	ID         uint64                 `json:"id"`
+	ID         uint64                     `json:"id"`
 	Components map[string]json.RawMessage `json:"components"`
 }
 
 type WorldState struct {
-	TimeOfDay        int32                `json:"time_of_day"`
-	Weather          string               `json:"weather"`
-	WeatherBlend     float32              `json:"weather_blend"`
-	WindSpeed        float32              `json:"wind_speed"`
-	WindDirection    components.Vector2   `json:"wind_direction"`
-	WantedMultiplier int32                `json:"wanted_multiplier"`
+	TimeOfDay        int32              `json:"time_of_day"`
+	Weather          string             `json:"weather"`
+	WeatherBlend     float32            `json:"weather_blend"`
+	WindSpeed        float32            `json:"wind_speed"`
+	WindDirection    components.Vector2 `json:"wind_direction"`
+	WantedMultiplier int32              `json:"wanted_multiplier"`
 }
 
 type SaveInfo struct {
@@ -224,10 +224,10 @@ type SaveInfo struct {
 
 // AutoSave runs periodic saves
 type AutoSave struct {
-	manager   *SaveManager
-	interval  time.Duration
-	slot      string
-	stopCh    chan struct{}
+	manager  *SaveManager
+	interval time.Duration
+	slot     string
+	stopCh   chan struct{}
 }
 
 func NewAutoSave(manager *SaveManager, interval time.Duration, slot string) *AutoSave {

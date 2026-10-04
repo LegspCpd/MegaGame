@@ -1,8 +1,8 @@
 package network
 
 import (
-	"sync"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/megame/server/internal/components"
@@ -15,13 +15,13 @@ import (
 // GameServer implements the gRPC service
 type GameServer struct {
 	network.UnimplementedGameServiceServer
-	world       *ecs.World
-	systemMgr   *ecs.SystemManager
-	clients     map[string]*ClientSession
-	clientsMu   sync.RWMutex
-	tickRate    int
-	running     bool
-	stopCh      chan struct{}
+	world     *ecs.World
+	systemMgr *ecs.SystemManager
+	clients   map[string]*ClientSession
+	clientsMu sync.RWMutex
+	tickRate  int
+	running   bool
+	stopCh    chan struct{}
 }
 
 type ClientSession struct {
@@ -86,8 +86,8 @@ func (s *GameServer) broadcastSnapshots() {
 	for _, client := range s.clients {
 		if client.Stream != nil {
 			err := client.Stream.Send(&network.ServerMessage{
-			Payload: &network.ServerMessage_Snapshot{Snapshot: snapshot},
-		})
+				Payload: &network.ServerMessage_Snapshot{Snapshot: snapshot},
+			})
 			if err != nil {
 				// Client disconnected
 				go s.handleDisconnect(client.PlayerID)
@@ -141,7 +141,7 @@ func (s *GameServer) buildSnapshot() *network.ServerSnapshot {
 				Rotation: &entity.Quaternion{X: t.Rotation.X, Y: t.Rotation.Y, Z: t.Rotation.Z, W: t.Rotation.W},
 				Scale:    &entity.Vector3{X: t.Scale.X, Y: t.Scale.Y, Z: t.Scale.Z},
 			},
-			Velocity: &entity.Vector3{},
+			Velocity:  &entity.Vector3{},
 			Timestamp: uint64(time.Now().UnixMilli()),
 		})
 
@@ -160,14 +160,14 @@ func (s *GameServer) buildSnapshot() *network.ServerSnapshot {
 	})
 
 	return &network.ServerSnapshot{
-		Tick:             uint64(time.Now().UnixMilli()),
-		ServerTimeMs:     uint64(time.Now().UnixMilli()),
-		Entities:         entityStates,
-		PlayerUpdates:    playerUpdates,
-		VehicleUpdates:   vehicleUpdates,
-		WeaponUpdates:    weaponUpdates,
-		NpcUpdates:       npcUpdates,
-		World:            s.buildWorldState(),
+		Tick:           uint64(time.Now().UnixMilli()),
+		ServerTimeMs:   uint64(time.Now().UnixMilli()),
+		Entities:       entityStates,
+		PlayerUpdates:  playerUpdates,
+		VehicleUpdates: vehicleUpdates,
+		WeaponUpdates:  weaponUpdates,
+		NpcUpdates:     npcUpdates,
+		World:          s.buildWorldState(),
 	}
 }
 
@@ -201,9 +201,9 @@ func (s *GameServer) buildVehicleUpdate(e ecs.EntityID) *network.VehicleStateUpd
 	doors := make([]*entity.VehicleDoorState, len(v.Doors))
 	for i, d := range v.Doors {
 		doors[i] = &entity.VehicleDoorState{
-			Index:     d.Index,
-			Angle:     d.Angle,
-			IsBroken:  d.Broken,
+			Index:    d.Index,
+			Angle:    d.Angle,
+			IsBroken: d.Broken,
 		}
 	}
 
@@ -220,19 +220,19 @@ func (s *GameServer) buildVehicleUpdate(e ecs.EntityID) *network.VehicleStateUpd
 	}
 
 	return &network.VehicleStateUpdate{
-		EntityId:       uint64(e),
-		EngineHealth:   v.EngineHealth,
-		BodyHealth:     v.BodyHealth,
-		Fuel:           v.Fuel,
-		CurrentGear:    v.CurrentGear,
-		Rpm:            v.RPM,
-		SpeedKph:       v.SpeedKPH,
-		EngineOn:       v.EngineOn,
-		LightsOn:       v.LightsOn,
-		SirenOn:        v.SirenOn,
-		Doors:          doors,
-		Wheels:         wheels,
-		OccupantIds:    s.uint64Slice(v.Occupants),
+		EntityId:     uint64(e),
+		EngineHealth: v.EngineHealth,
+		BodyHealth:   v.BodyHealth,
+		Fuel:         v.Fuel,
+		CurrentGear:  v.CurrentGear,
+		Rpm:          v.RPM,
+		SpeedKph:     v.SpeedKPH,
+		EngineOn:     v.EngineOn,
+		LightsOn:     v.LightsOn,
+		SirenOn:      v.SirenOn,
+		Doors:        doors,
+		Wheels:       wheels,
+		OccupantIds:  s.uint64Slice(v.Occupants),
 	}
 }
 
@@ -257,20 +257,20 @@ func (s *GameServer) buildNPCUpdate(e ecs.EntityID) *network.NPCStateUpdate {
 	h := health.(*components.HealthComponent)
 
 	return &network.NPCStateUpdate{
-		EntityId:        uint64(e),
-		Health:          h.CurrentHealth,
-		TargetEntityId:  uint64(n.TargetEntity),
-		IsFleeing:       n.IsFleeing,
-		IsInCombat:      n.IsInCombat,
+		EntityId:       uint64(e),
+		Health:         h.CurrentHealth,
+		TargetEntityId: uint64(n.TargetEntity),
+		IsFleeing:      n.IsFleeing,
+		IsInCombat:     n.IsInCombat,
 	}
 }
 
 func (s *GameServer) buildWorldState() *network.WorldState {
 	return &network.WorldState{
-		TimeOfDay:    1200, // 12:00
-		WeatherBlend: 0,
+		TimeOfDay:      1200, // 12:00
+		WeatherBlend:   0,
 		CurrentWeather: "clear",
-		WindSpeed:    2.0,
+		WindSpeed:      2.0,
 	}
 }
 
@@ -433,11 +433,11 @@ func (s *GameServer) rpcSpawnPlayer(session *ClientSession, rpc *network.RPCRequ
 	s.world.AddComponent(playerEntity, health)
 
 	player := &components.PlayerComponent{
-		CharacterName:    "Player",
-		Money:            5000,
-		CameraMode:       components.CameraThirdPerson,
-		Stamina:          100,
-		MaxStamina:       100,
+		CharacterName:      "Player",
+		Money:              5000,
+		CameraMode:         components.CameraThirdPerson,
+		Stamina:            100,
+		MaxStamina:         100,
 		InventoryWeaponIDs: []ecs.EntityID{},
 		InventoryItemIDs:   []ecs.EntityID{},
 	}
@@ -454,14 +454,14 @@ func (s *GameServer) rpcSpawnPlayer(session *ClientSession, rpc *network.RPCRequ
 	s.world.AddComponent(playerEntity, appearance)
 
 	inventory := &components.InventoryComponent{
-		Items:       make(map[string]int32),
-		MaxWeight:   50,
+		Items:     make(map[string]int32),
+		MaxWeight: 50,
 	}
 	s.world.AddComponent(playerEntity, inventory)
 
 	stats := &components.StatsComponent{
-		WeaponKills:   make(map[string]uint32),
-		VehicleUsage:  make(map[string]float32),
+		WeaponKills:    make(map[string]uint32),
+		VehicleUsage:   make(map[string]float32),
 		LocationVisits: make(map[string]uint32),
 	}
 	s.world.AddComponent(playerEntity, stats)
@@ -474,10 +474,10 @@ func (s *GameServer) rpcSpawnPlayer(session *ClientSession, rpc *network.RPCRequ
 	s.world.AddComponent(playerEntity, phone)
 
 	mission := &components.MissionComponent{
-		MissionProgress:    make(map[string]*components.MissionProgress),
-		CompletedMissions:  []string{},
-		FailedMissions:     []string{},
-		AvailableMissions:  []string{"mission_intro_01"},
+		MissionProgress:   make(map[string]*components.MissionProgress),
+		CompletedMissions: []string{},
+		FailedMissions:    []string{},
+		AvailableMissions: []string{"mission_intro_01"},
 	}
 	s.world.AddComponent(playerEntity, mission)
 
@@ -538,7 +538,7 @@ func (s *GameServer) rpcSpawnVehicle(session *ClientSession, rpc *network.RPCReq
 			{Index: 0}, {Index: 1}, {Index: 2}, {Index: 3},
 		},
 		Occupants: []ecs.EntityID{},
-		Mods: &components.VehicleModifications{},
+		Mods:      &components.VehicleModifications{},
 	}
 	s.world.AddComponent(vehicleEntity, vehicle)
 

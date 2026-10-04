@@ -12,10 +12,10 @@ import (
 	"sync"
 	"time"
 
-	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	dto "github.com/prometheus/client_model/go"
 )
 
 // ============================================================================
@@ -89,11 +89,11 @@ var (
 	}, []string{"method", "error"})
 
 	// expvar for /debug/vars
-	expvarTickCount    = expvar.NewInt("tick_count")
-	expvarEntityCount  = expvar.NewInt("entity_count")
-	expvarPlayerCount  = expvar.NewInt("player_count")
-	expvarBytesSent    = expvar.NewInt("bytes_sent")
-	expvarBytesRecv    = expvar.NewInt("bytes_received")
+	expvarTickCount   = expvar.NewInt("tick_count")
+	expvarEntityCount = expvar.NewInt("entity_count")
+	expvarPlayerCount = expvar.NewInt("player_count")
+	expvarBytesSent   = expvar.NewInt("bytes_sent")
+	expvarBytesRecv   = expvar.NewInt("bytes_received")
 )
 
 // Profiler manages all profiling facilities

@@ -92,7 +92,7 @@ func (s *VehicleSystem) simulateVehicle(t *components.TransformComponent, v *com
 
 	// Calculate engine torque based on RPM and gear
 	engineTorque := s.calculateEngineTorque(v, specs)
-	
+
 	// Apply throttle
 	if input.Throttle > 0 {
 		v.RPM += engineTorque * input.Throttle * dt * 100
@@ -155,42 +155,42 @@ func (s *VehicleSystem) getVehicleSpecs(modelID string) *VehicleSpecs {
 	// In real implementation, load from definition database
 	// Return defaults for now
 	return &VehicleSpecs{
-		MaxSpeed:        200.0 / 3.6, // m/s
-		MaxRPM:          7000,
-		IdleRPM:         800,
-		MaxTorque:       400.0,
-		TorqueCurve:     []float32{0.3, 0.5, 0.8, 1.0, 0.9, 0.7, 0.5},
-		GearRatios:      []float32{3.5, 2.2, 1.5, 1.1, 0.9, 0.7},
-		FinalDriveRatio: 3.7,
-		DriveBiasFront:  0.0, // RWD
-		MaxSteerAngle:   0.6, // radians
-		BrakeForce:      8000.0,
-		DragCoefficient: 0.32,
+		MaxSpeed:          200.0 / 3.6, // m/s
+		MaxRPM:            7000,
+		IdleRPM:           800,
+		MaxTorque:         400.0,
+		TorqueCurve:       []float32{0.3, 0.5, 0.8, 1.0, 0.9, 0.7, 0.5},
+		GearRatios:        []float32{3.5, 2.2, 1.5, 1.1, 0.9, 0.7},
+		FinalDriveRatio:   3.7,
+		DriveBiasFront:    0.0, // RWD
+		MaxSteerAngle:     0.6, // radians
+		BrakeForce:        8000.0,
+		DragCoefficient:   0.32,
 		RollingResistance: 0.015,
-		Mass:            1500.0,
-		WheelBase:       2.8,
-		TrackWidth:      1.6,
-		CenterOfMass:    components.Vector3{X: 0, Y: -0.3, Z: 0},
+		Mass:              1500.0,
+		WheelBase:         2.8,
+		TrackWidth:        1.6,
+		CenterOfMass:      components.Vector3{X: 0, Y: -0.3, Z: 0},
 	}
 }
 
 type VehicleSpecs struct {
-	MaxSpeed        float32
-	MaxRPM          float32
-	IdleRPM         float32
-	MaxTorque       float32
-	TorqueCurve     []float32
-	GearRatios      []float32
-	FinalDriveRatio float32
-	DriveBiasFront  float32
-	MaxSteerAngle   float32
-	BrakeForce      float32
-	DragCoefficient float32
+	MaxSpeed          float32
+	MaxRPM            float32
+	IdleRPM           float32
+	MaxTorque         float32
+	TorqueCurve       []float32
+	GearRatios        []float32
+	FinalDriveRatio   float32
+	DriveBiasFront    float32
+	MaxSteerAngle     float32
+	BrakeForce        float32
+	DragCoefficient   float32
 	RollingResistance float32
-	Mass            float32
-	WheelBase       float32
-	TrackWidth      float32
-	CenterOfMass    components.Vector3
+	Mass              float32
+	WheelBase         float32
+	TrackWidth        float32
+	CenterOfMass      components.Vector3
 }
 
 func (s *VehicleSystem) calculateEngineTorque(v *components.VehicleComponent, specs *VehicleSpecs) float32 {
@@ -210,7 +210,7 @@ func (s *VehicleSystem) calculateEngineTorque(v *components.VehicleComponent, sp
 	}
 	t := index - float32(i)
 	torque := specs.TorqueCurve[i]*(1-t) + specs.TorqueCurve[i+1]*t
-	
+
 	// Apply engine mods
 	torque *= 1.0 + float32(v.Mods.EngineLevel)*0.15
 	if v.Mods.TurboLevel > 0 {
@@ -274,23 +274,23 @@ func (s *VehicleSystem) applyHandbrake(p *components.PhysicsComponent, v *compon
 
 func (s *VehicleSystem) updateWheels(t *components.TransformComponent, v *components.VehicleComponent, p *components.PhysicsComponent, dt float32) {
 	speed := p.Velocity.Length()
-	
+
 	for i := range v.Wheels {
 		wheel := &v.Wheels[i]
-		
+
 		// Rotation based on speed
 		wheelRadius := float32(0.35) // Would come from wheel definition
 		wheel.Rotation += speed / wheelRadius * dt
-		
+
 		// Steering angle for front wheels
 		if i == 0 || i == 1 { // Front wheels
 			// Would get from input
-			wheel.SteerAngle = 0 
+			wheel.SteerAngle = 0
 		}
-		
+
 		// Suspension (simplified)
 		wheel.SuspensionComp = 0.5 // Would do raycast
-		
+
 		// Brake force
 		wheel.BrakeForce = 0
 	}

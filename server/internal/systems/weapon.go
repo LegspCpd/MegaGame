@@ -127,10 +127,10 @@ func (s *WeaponSystem) FireWeapon(world *ecs.World, weaponEntity ecs.EntityID, s
 	}
 
 	return &FireResult{
-		Success:      true,
-		Hits:         results,
+		Success:       true,
+		Hits:          results,
 		AmmoRemaining: w.AmmoInClip,
-		Heat:         w.Heat,
+		Heat:          w.Heat,
 	}
 }
 
@@ -143,12 +143,12 @@ type FireResult struct {
 }
 
 type HitResult struct {
-	Entity    ecs.EntityID
-	Point     components.Vector3
-	Normal    components.Vector3
-	Distance  float32
-	Bone      string
-	Damage    float32
+	Entity   ecs.EntityID
+	Point    components.Vector3
+	Normal   components.Vector3
+	Distance float32
+	Bone     string
+	Damage   float32
 }
 
 func (s *WeaponSystem) StartReload(world *ecs.World, weaponEntity ecs.EntityID) {
@@ -158,7 +158,7 @@ func (s *WeaponSystem) StartReload(world *ecs.World, weaponEntity ecs.EntityID) 
 	}
 
 	w := weapon.(*components.WeaponComponent)
-	
+
 	if w.AmmoReserve <= 0 || w.AmmoInClip >= w.MaxClipSize {
 		return
 	}
@@ -183,19 +183,19 @@ func (s *WeaponSystem) calculateSpread(w *components.WeaponComponent, def *Weapo
 		// Check if aiming
 		// Would check player component for aim state
 	}
-	
+
 	// Apply attachments
 	if w.Attachments != nil {
 		// Grip reduces spread
 		// Laser reduces hip spread
 	}
-	
+
 	// Apply condition
 	if w.Condition != nil {
 		baseSpread *= (1.0 + w.Condition.Dirt*0.5)
 		baseSpread *= (1.0 + w.Condition.Carbon*0.3)
 	}
-	
+
 	return baseSpread
 }
 
@@ -207,7 +207,7 @@ func (s *WeaponSystem) applySpread(baseDir components.Vector3, spread float32, d
 	// Generate random point in cone
 	angle := spread * s.rng.Float32() * 2 * math.Pi
 	radius := spread * float32(math.Sqrt(s.rng.Float64()))
-	
+
 	// Create orthogonal basis
 	up := components.Vector3{X: 0, Y: 1, Z: 0}
 	if math.Abs(float64(baseDir.Dot(up))) > 0.99 {
@@ -218,14 +218,14 @@ func (s *WeaponSystem) applySpread(baseDir components.Vector3, spread float32, d
 
 	offset := right.Mul(float32(radius) * float32(math.Cos(float64(angle)))).Add(
 		up.Mul(float32(radius) * float32(math.Sin(float64(angle)))))
-	
+
 	return baseDir.Add(offset).Normalized()
 }
 
 func (s *WeaponSystem) raycast(world *ecs.World, origin, direction components.Vector3, maxDist float32, ignoreEntity ecs.EntityID) HitResult {
 	// Simplified raycast - in real implementation would use physics engine
 	// For now, check entity bounding boxes
-	
+
 	query := world.Query(components.CompTransform, components.CompHealth, components.CompPhysics)
 	var closestHit HitResult
 	closestDist := maxDist
@@ -237,7 +237,7 @@ func (s *WeaponSystem) raycast(world *ecs.World, origin, direction components.Ve
 
 		transform, _ := world.GetComponent(entity, components.CompTransform)
 		physics, _ := world.GetComponent(entity, components.CompPhysics)
-		
+
 		t := transform.(*components.TransformComponent)
 		p := physics.(*components.PhysicsComponent)
 
@@ -246,14 +246,14 @@ func (s *WeaponSystem) raycast(world *ecs.World, origin, direction components.Ve
 			if col.Type == components.ColliderSphere || col.Type == components.ColliderCapsule {
 				center := t.Position.Add(t.Rotation.RotateVector(col.Center))
 				radius := col.Radius
-				
+
 				// Ray-sphere intersection
 				oc := origin.Sub(center)
 				a := direction.Dot(direction)
 				b := 2.0 * oc.Dot(direction)
 				c := oc.Dot(oc) - radius*radius
 				disc := b*b - 4*a*c
-				
+
 				if disc >= 0 {
 					t1 := (-b - float32(math.Sqrt(float64(disc)))) / (2 * a)
 					if t1 > 0.01 && t1 < closestDist {
@@ -333,24 +333,24 @@ func (s *WeaponSystem) onDeath(world *ecs.World, victim, killer ecs.EntityID) {
 }
 
 type WeaponDefinition struct {
-	ModelID         string
-	DisplayName     string
-	WeaponClass     string
-	Damage          float32
-	Pellets         int
-	Range           float32
-	AccuracyHip     float32
-	AccuracyADS     float32
-	FireRateRPM     float32
-	HeatPerShot     float32
-	MaxClipSize     int32
-	MaxReserve      int32
+	ModelID            string
+	DisplayName        string
+	WeaponClass        string
+	Damage             float32
+	Pellets            int
+	Range              float32
+	AccuracyHip        float32
+	AccuracyADS        float32
+	FireRateRPM        float32
+	HeatPerShot        float32
+	MaxClipSize        int32
+	MaxReserve         int32
 	ReloadTimeTactical float32
 	ReloadTimeEmpty    float32
-	RecoilVertical  float32
-	RecoilHorizontal float32
-	RecoilRecovery  float32
-	MuzzleVelocity  float32
+	RecoilVertical     float32
+	RecoilHorizontal   float32
+	RecoilRecovery     float32
+	MuzzleVelocity     float32
 }
 
 func (s *WeaponSystem) getWeaponDefinition(modelID string) *WeaponDefinition {
@@ -358,84 +358,84 @@ func (s *WeaponSystem) getWeaponDefinition(modelID string) *WeaponDefinition {
 	// Return defaults based on weapon class
 	defs := map[string]*WeaponDefinition{
 		"weapon_pistol_glock17": {
-			ModelID:          "weapon_pistol_glock17",
-			DisplayName:      "Glock 17",
-			WeaponClass:      "pistol",
-			Damage:           26,
-			Pellets:          1,
-			Range:            50,
-			AccuracyHip:      0.03,
-			AccuracyADS:      0.01,
-			FireRateRPM:      450,
-			HeatPerShot:      0.02,
-			MaxClipSize:      17,
-			MaxReserve:       170,
+			ModelID:            "weapon_pistol_glock17",
+			DisplayName:        "Glock 17",
+			WeaponClass:        "pistol",
+			Damage:             26,
+			Pellets:            1,
+			Range:              50,
+			AccuracyHip:        0.03,
+			AccuracyADS:        0.01,
+			FireRateRPM:        450,
+			HeatPerShot:        0.02,
+			MaxClipSize:        17,
+			MaxReserve:         170,
 			ReloadTimeTactical: 1.8,
 			ReloadTimeEmpty:    2.5,
-			RecoilVertical:   0.8,
-			RecoilHorizontal: 0.3,
-			RecoilRecovery:   8.0,
-			MuzzleVelocity:   375,
+			RecoilVertical:     0.8,
+			RecoilHorizontal:   0.3,
+			RecoilRecovery:     8.0,
+			MuzzleVelocity:     375,
 		},
 		"weapon_rifle_ak47": {
-			ModelID:          "weapon_rifle_ak47",
-			DisplayName:      "AK-47",
-			WeaponClass:      "rifle",
-			Damage:           32,
-			Pellets:          1,
-			Range:            300,
-			AccuracyHip:      0.08,
-			AccuracyADS:      0.015,
-			FireRateRPM:      600,
-			HeatPerShot:      0.015,
-			MaxClipSize:      30,
-			MaxReserve:       300,
+			ModelID:            "weapon_rifle_ak47",
+			DisplayName:        "AK-47",
+			WeaponClass:        "rifle",
+			Damage:             32,
+			Pellets:            1,
+			Range:              300,
+			AccuracyHip:        0.08,
+			AccuracyADS:        0.015,
+			FireRateRPM:        600,
+			HeatPerShot:        0.015,
+			MaxClipSize:        30,
+			MaxReserve:         300,
 			ReloadTimeTactical: 2.2,
 			ReloadTimeEmpty:    3.0,
-			RecoilVertical:   1.2,
-			RecoilHorizontal: 0.5,
-			RecoilRecovery:   6.0,
-			MuzzleVelocity:   715,
+			RecoilVertical:     1.2,
+			RecoilHorizontal:   0.5,
+			RecoilRecovery:     6.0,
+			MuzzleVelocity:     715,
 		},
 		"weapon_shotgun_pump": {
-			ModelID:          "weapon_shotgun_pump",
-			DisplayName:      "Pump Shotgun",
-			WeaponClass:      "shotgun",
-			Damage:           18,
-			Pellets:          8,
-			Range:            40,
-			AccuracyHip:      0.15,
-			AccuracyADS:      0.08,
-			FireRateRPM:      120,
-			HeatPerShot:      0.05,
-			MaxClipSize:      8,
-			MaxReserve:       80,
+			ModelID:            "weapon_shotgun_pump",
+			DisplayName:        "Pump Shotgun",
+			WeaponClass:        "shotgun",
+			Damage:             18,
+			Pellets:            8,
+			Range:              40,
+			AccuracyHip:        0.15,
+			AccuracyADS:        0.08,
+			FireRateRPM:        120,
+			HeatPerShot:        0.05,
+			MaxClipSize:        8,
+			MaxReserve:         80,
 			ReloadTimeTactical: 0.5, // Per shell
 			ReloadTimeEmpty:    4.0,
-			RecoilVertical:   2.5,
-			RecoilHorizontal: 0.8,
-			RecoilRecovery:   4.0,
-			MuzzleVelocity:   400,
+			RecoilVertical:     2.5,
+			RecoilHorizontal:   0.8,
+			RecoilRecovery:     4.0,
+			MuzzleVelocity:     400,
 		},
 		"weapon_sniper_heavy": {
-			ModelID:          "weapon_sniper_heavy",
-			DisplayName:      "Heavy Sniper",
-			WeaponClass:      "sniper",
-			Damage:           216,
-			Pellets:          1,
-			Range:            1500,
-			AccuracyHip:      0.5,
-			AccuracyADS:      0.001,
-			FireRateRPM:      30,
-			HeatPerShot:      0.1,
-			MaxClipSize:      6,
-			MaxReserve:       40,
+			ModelID:            "weapon_sniper_heavy",
+			DisplayName:        "Heavy Sniper",
+			WeaponClass:        "sniper",
+			Damage:             216,
+			Pellets:            1,
+			Range:              1500,
+			AccuracyHip:        0.5,
+			AccuracyADS:        0.001,
+			FireRateRPM:        30,
+			HeatPerShot:        0.1,
+			MaxClipSize:        6,
+			MaxReserve:         40,
 			ReloadTimeTactical: 3.5,
 			ReloadTimeEmpty:    4.2,
-			RecoilVertical:   5.0,
-			RecoilHorizontal: 1.0,
-			RecoilRecovery:   2.0,
-			MuzzleVelocity:   950,
+			RecoilVertical:     5.0,
+			RecoilHorizontal:   1.0,
+			RecoilRecovery:     2.0,
+			MuzzleVelocity:     950,
 		},
 	}
 

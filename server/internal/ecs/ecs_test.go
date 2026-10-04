@@ -161,4 +161,4 @@ type recorderSystem struct {
 }
 
 func (s *recorderSystem) Update(_ *World, _ float32) { *s.name = append(*s.name, s.label) }
-func (s *recorderSystem) Priority() int               { return s.priority }
+func (s *recorderSystem) Priority() int              { return s.priority }

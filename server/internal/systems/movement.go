@@ -194,25 +194,25 @@ func NewInputSystem() *InputSystem {
 func (s *InputSystem) Priority() int { return s.Priority_ }
 
 type PlayerInput struct {
-	Move         components.Vector2
-	Look         components.Vector2
-	Jump         bool
-	Sprint       bool
-	Crouch       bool
-	Prone        bool
-	Interact     bool
-	Attack       bool
-	Aim          bool
-	Reload       bool
-	WeaponWheel  bool
-	WeaponSlot   int32
-	EnterVehicle bool
-	ExitVehicle  bool
-	VehicleControl components.Vector2
+	Move             components.Vector2
+	Look             components.Vector2
+	Jump             bool
+	Sprint           bool
+	Crouch           bool
+	Prone            bool
+	Interact         bool
+	Attack           bool
+	Aim              bool
+	Reload           bool
+	WeaponWheel      bool
+	WeaponSlot       int32
+	EnterVehicle     bool
+	ExitVehicle      bool
+	VehicleControl   components.Vector2
 	VehicleHandbrake bool
-	VehicleHorn  bool
-	VehicleLights bool
-	VehicleSiren bool
+	VehicleHorn      bool
+	VehicleLights    bool
+	VehicleSiren     bool
 }
 
 func (s *InputSystem) Update(world *ecs.World, dt float32) {

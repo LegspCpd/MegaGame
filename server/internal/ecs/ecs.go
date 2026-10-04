@@ -28,10 +28,10 @@ type Component interface {
 
 // ComponentRegistry manages component type registration
 type ComponentRegistry struct {
-	mu           sync.RWMutex
-	nameToID     map[string]ComponentID
-	idToFactory  map[ComponentID]func() Component
-	nextID       ComponentID
+	mu          sync.RWMutex
+	nameToID    map[string]ComponentID
+	idToFactory map[ComponentID]func() Component
+	nextID      ComponentID
 }
 
 func NewComponentRegistry() *ComponentRegistry {
@@ -287,10 +287,10 @@ func (w *World) GetEntityVersion(entity EntityID) uint32 {
 // Query builds a query for entities with specific components
 func (w *World) Query(required ...ComponentID) *Query {
 	return &Query{
-		world:     w,
-		required:  required,
-		excluded:  nil,
-		anyOf:     nil,
+		world:    w,
+		required: required,
+		excluded: nil,
+		anyOf:    nil,
 	}
 }
 
@@ -314,12 +314,12 @@ func (w *World) QueryAny(required []ComponentID, anyOf ...ComponentID) *Query {
 
 // Query represents an entity query
 type Query struct {
-	world     *World
-	required  []ComponentID
-	excluded  []ComponentID
-	anyOf     []ComponentID
-	cached    []EntityID
-	dirty     bool
+	world    *World
+	required []ComponentID
+	excluded []ComponentID
+	anyOf    []ComponentID
+	cached   []EntityID
+	dirty    bool
 }
 
 func (q *Query) Iterate(fn func(EntityID)) {

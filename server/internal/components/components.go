@@ -33,16 +33,24 @@ type Vector3 struct {
 	X, Y, Z float32
 }
 
-func (v Vector3) Add(o Vector3) Vector3      { return Vector3{v.X + o.X, v.Y + o.Y, v.Z + o.Z} }
-func (v Vector3) Sub(o Vector3) Vector3      { return Vector3{v.X - o.X, v.Y - o.Y, v.Z - o.Z} }
-func (v Vector3) Mul(s float32) Vector3      { return Vector3{v.X * s, v.Y * s, v.Z * s} }
-func (v Vector3) Div(s float32) Vector3      { return Vector3{v.X / s, v.Y / s, v.Z / s} }
-func (v Vector3) Length() float32            { return float32(math.Sqrt(float64(v.X*v.X + v.Y*v.Y + v.Z*v.Z))) }
-func (v Vector3) LengthSq() float32          { return v.X*v.X + v.Y*v.Y + v.Z*v.Z }
-func (v Vector3) Normalized() Vector3        { l := v.Length(); if l == 0 { return Vector3{} }; return v.Div(l) }
-func (v Vector3) Dot(o Vector3) float32      { return v.X*o.X + v.Y*o.Y + v.Z*o.Z }
-func (v Vector3) Cross(o Vector3) Vector3    { return Vector3{v.Y*o.Z - v.Z*o.Y, v.Z*o.X - v.X*o.Z, v.X*o.Y - v.Y*o.X} }
-func (v Vector3) Distance(o Vector3) float32 { return v.Sub(o).Length() }
+func (v Vector3) Add(o Vector3) Vector3 { return Vector3{v.X + o.X, v.Y + o.Y, v.Z + o.Z} }
+func (v Vector3) Sub(o Vector3) Vector3 { return Vector3{v.X - o.X, v.Y - o.Y, v.Z - o.Z} }
+func (v Vector3) Mul(s float32) Vector3 { return Vector3{v.X * s, v.Y * s, v.Z * s} }
+func (v Vector3) Div(s float32) Vector3 { return Vector3{v.X / s, v.Y / s, v.Z / s} }
+func (v Vector3) Length() float32       { return float32(math.Sqrt(float64(v.X*v.X + v.Y*v.Y + v.Z*v.Z))) }
+func (v Vector3) LengthSq() float32     { return v.X*v.X + v.Y*v.Y + v.Z*v.Z }
+func (v Vector3) Normalized() Vector3 {
+	l := v.Length()
+	if l == 0 {
+		return Vector3{}
+	}
+	return v.Div(l)
+}
+func (v Vector3) Dot(o Vector3) float32 { return v.X*o.X + v.Y*o.Y + v.Z*o.Z }
+func (v Vector3) Cross(o Vector3) Vector3 {
+	return Vector3{v.Y*o.Z - v.Z*o.Y, v.Z*o.X - v.X*o.Z, v.X*o.Y - v.Y*o.X}
+}
+func (v Vector3) Distance(o Vector3) float32        { return v.Sub(o).Length() }
 func (v Vector3) Lerp(o Vector3, t float32) Vector3 { return v.Add(o.Sub(v).Mul(t)) }
 
 // Quaternion represents a rotation
@@ -161,14 +169,14 @@ type PhysicsComponent struct {
 func (PhysicsComponent) ComponentID() ecs.ComponentID { return CompPhysics }
 
 type Collider struct {
-	Type       ColliderType
-	Center     Vector3
-	Size       Vector3      // for box
-	Radius     float32      // for sphere/capsule
-	Height     float32      // for capsule
-	Rotation   Quaternion
-	IsTrigger  bool
-	Material   string
+	Type      ColliderType
+	Center    Vector3
+	Size      Vector3 // for box
+	Radius    float32 // for sphere/capsule
+	Height    float32 // for capsule
+	Rotation  Quaternion
+	IsTrigger bool
+	Material  string
 }
 
 type ColliderType int
@@ -183,43 +191,43 @@ const (
 
 // HealthComponent
 type HealthComponent struct {
-	CurrentHealth float32
-	MaxHealth     float32
-	Armor         float32
-	MaxArmor      float32
-	RegenRate     float32
-	RegenDelay    float32
+	CurrentHealth  float32
+	MaxHealth      float32
+	Armor          float32
+	MaxArmor       float32
+	RegenRate      float32
+	RegenDelay     float32
 	LastDamageTime float32
-	IsDead        bool
-	Invulnerable  bool
+	IsDead         bool
+	Invulnerable   bool
 }
 
 func (HealthComponent) ComponentID() ecs.ComponentID { return CompHealth }
 
 // PlayerComponent
 type PlayerComponent struct {
-	CharacterName string
-	Money         uint32
-	WantedLevel   uint8
+	CharacterName  string
+	Money          uint32
+	WantedLevel    uint8
 	MaxWantedLevel uint8
-	CameraMode    CameraMode
-	CurrentWeapon ecs.EntityID
+	CameraMode     CameraMode
+	CurrentWeapon  ecs.EntityID
 	CurrentVehicle ecs.EntityID
 	// InventoryWeaponIDs and InventoryItemIDs mirror InventoryComponent for the
 	// network snapshot, which serialises the player without a second lookup.
 	InventoryWeaponIDs []ecs.EntityID
 	InventoryItemIDs   []ecs.EntityID
-	VehicleSeatIndex int32
-	IsInVehicle   bool
-	Stamina       float32
-	MaxStamina    float32
-	Experience    uint64
-	Level         uint32
-	SkillPoints   uint32
-	Skills        map[string]uint32
-	SafehouseID   string
-	LastSaveTime  int64
-	PlayTime      float64
+	VehicleSeatIndex   int32
+	IsInVehicle        bool
+	Stamina            float32
+	MaxStamina         float32
+	Experience         uint64
+	Level              uint32
+	SkillPoints        uint32
+	Skills             map[string]uint32
+	SafehouseID        string
+	LastSaveTime       int64
+	PlayTime           float64
 }
 
 func (PlayerComponent) ComponentID() ecs.ComponentID { return CompPlayer }
@@ -236,104 +244,104 @@ const (
 
 // VehicleComponent
 type VehicleComponent struct {
-	ModelID       string
-	DisplayName   string
-	Manufacturer  string
-	VehicleClass  string
-	EngineHealth  float32
-	BodyHealth    float32
-	Fuel          float32
-	MaxFuel       float32
-	CurrentGear   int32
-	RPM           float32
-	SpeedKPH      float32
-	EngineOn      bool
-	LightsOn      bool
-	SirenOn       bool
-	Doors         []VehicleDoor
-	Wheels        []VehicleWheel
-	Occupants     []ecs.EntityID
-	Mods          *VehicleModifications
-	Handler       string // handling profile name
+	ModelID      string
+	DisplayName  string
+	Manufacturer string
+	VehicleClass string
+	EngineHealth float32
+	BodyHealth   float32
+	Fuel         float32
+	MaxFuel      float32
+	CurrentGear  int32
+	RPM          float32
+	SpeedKPH     float32
+	EngineOn     bool
+	LightsOn     bool
+	SirenOn      bool
+	Doors        []VehicleDoor
+	Wheels       []VehicleWheel
+	Occupants    []ecs.EntityID
+	Mods         *VehicleModifications
+	Handler      string // handling profile name
 }
 
 func (VehicleComponent) ComponentID() ecs.ComponentID { return CompVehicle }
 
 type VehicleDoor struct {
-	Index   int32
-	Angle   float32
-	Broken  bool
+	Index  int32
+	Angle  float32
+	Broken bool
 }
 
 type VehicleWheel struct {
-	Index           int32
-	Rotation        float32
-	SteerAngle      float32
-	Burst           bool
-	SuspensionComp  float32
-	BrakeForce      float32
-	ContactPoint    Vector3
-	ContactNormal   Vector3
-	Slip            float32
+	Index          int32
+	Rotation       float32
+	SteerAngle     float32
+	Burst          bool
+	SuspensionComp float32
+	BrakeForce     float32
+	ContactPoint   Vector3
+	ContactNormal  Vector3
+	Slip           float32
 }
 
 type VehicleModifications struct {
-	EngineLevel      int32
-	TurboLevel       int32
+	EngineLevel       int32
+	TurboLevel        int32
 	TransmissionLevel int32
-	SuspensionLevel  int32
-	SuspensionHeight float32
-	BrakesLevel      int32
-	ArmorLevel       int32
-	BodyKit          int32
-	Spoiler          int32
-	Hood             int32
-	Roof             int32
-	Grille           int32
-	Exhaust          int32
-	Skirt            int32
-	Fender           int32
-	WheelType        int32
-	WheelVariant     int32
-	TireSmokeR       int32
-	TireSmokeG       int32
-	TireSmokeB       int32
-	BulletproofTires bool
-	CustomTires      bool
-	PrimaryColor     string
-	SecondaryColor   string
-	PearlescentColor string
-	WheelColor       string
-	PaintType        int32
-	Livery           string
-	WindowTint       int32
-	XenonLights      bool
-	XenonColor       int32
-	NeonEnabled      bool
-	NeonR            int32
-	NeonG            int32
-	NeonB            int32
-	PlateText        string
-	PlateStyle       int32
+	SuspensionLevel   int32
+	SuspensionHeight  float32
+	BrakesLevel       int32
+	ArmorLevel        int32
+	BodyKit           int32
+	Spoiler           int32
+	Hood              int32
+	Roof              int32
+	Grille            int32
+	Exhaust           int32
+	Skirt             int32
+	Fender            int32
+	WheelType         int32
+	WheelVariant      int32
+	TireSmokeR        int32
+	TireSmokeG        int32
+	TireSmokeB        int32
+	BulletproofTires  bool
+	CustomTires       bool
+	PrimaryColor      string
+	SecondaryColor    string
+	PearlescentColor  string
+	WheelColor        string
+	PaintType         int32
+	Livery            string
+	WindowTint        int32
+	XenonLights       bool
+	XenonColor        int32
+	NeonEnabled       bool
+	NeonR             int32
+	NeonG             int32
+	NeonB             int32
+	PlateText         string
+	PlateStyle        int32
 }
 
 // WeaponComponent
 type WeaponComponent struct {
-	ModelID         string
-	DisplayName     string
-	Manufacturer    string
-	WeaponClass     string
-	AmmoInClip      int32
-	AmmoReserve     int32
-	MaxClipSize     int32
-	MaxReserve      int32
-	NextFireTime    float64
-	Heat            float32
-	IsReloading     bool
-	ReloadProgress  float32
-	Attachments     *WeaponAttachments
-	Condition       *WeaponCondition
-	Owner           ecs.EntityID
+	ModelID        string
+	DisplayName    string
+	Manufacturer   string
+	WeaponClass    string
+	AmmoInClip     int32
+	AmmoReserve    int32
+	MaxClipSize    int32
+	MaxReserve     int32
+	NextFireTime   float64
+	Heat           float32
+	IsReloading    bool
+	ReloadProgress float32
+	Attachments    *WeaponAttachments
+	Condition      *WeaponCondition
+	Owner          ecs.EntityID
 }
 
 func (WeaponComponent) ComponentID() ecs.ComponentID { return CompWeapon }
@@ -352,17 +360,17 @@ type WeaponCondition struct {
 
 // NPCComponent
 type NPCComponent struct {
-	NPCType         string
-	BehaviorTree    string
-	TargetEntity    ecs.EntityID
-	RelationshipGroup int32
-	Weapons         []ecs.EntityID
+	NPCType            string
+	BehaviorTree       string
+	TargetEntity       ecs.EntityID
+	RelationshipGroup  int32
+	Weapons            []ecs.EntityID
 	CurrentWeaponIndex int32
-	IsFleeing       bool
-	IsInCombat      bool
-	HomePosition    Vector3
-	WanderRadius    float32
-	PatrolPoints    []Vector3
+	IsFleeing          bool
+	IsInCombat         bool
+	HomePosition       Vector3
+	WanderRadius       float32
+	PatrolPoints       []Vector3
 	CurrentPatrolIndex int32
 }
 
@@ -370,9 +378,9 @@ func (NPCComponent) ComponentID() ecs.ComponentID { return CompNPC }
 
 // InventoryComponent
 type InventoryComponent struct {
-	Weapons  []ecs.EntityID
-	Items    map[string]int32 // item_id -> count
-	MaxWeight float32
+	Weapons       []ecs.EntityID
+	Items         map[string]int32 // item_id -> count
+	MaxWeight     float32
 	CurrentWeight float32
 }
 
@@ -380,26 +388,26 @@ func (InventoryComponent) ComponentID() ecs.ComponentID { return CompInventory }
 
 // CharacterAppearanceComponent
 type CharacterAppearanceComponent struct {
-	BodyType      string
-	HeadModel     string
-	HairStyle     string
-	HairColor     string
-	SkinTone      string
-	EyeColor      string
-	Clothing      []ClothingItem
-	Accessories   []AccessoryItem
-	Tattoos       []TattooItem
+	BodyType    string
+	HeadModel   string
+	HairStyle   string
+	HairColor   string
+	SkinTone    string
+	EyeColor    string
+	Clothing    []ClothingItem
+	Accessories []AccessoryItem
+	Tattoos     []TattooItem
 }
 
 func (CharacterAppearanceComponent) ComponentID() ecs.ComponentID { return CompCharacterAppearance }
 
 type ClothingItem struct {
-	Slot        ClothingSlot
-	ItemID      string
-	Variant     string
-	Color       string // hex
-	IsDirty     bool
-	Wear        float32
+	Slot    ClothingSlot
+	ItemID  string
+	Variant string
+	Color   string // hex
+	IsDirty bool
+	Wear    float32
 }
 
 type ClothingSlot int
@@ -435,17 +443,17 @@ const (
 )
 
 type TattooItem struct {
-	TattooID   string
-	Position   Vector3
-	Scale      float32
-	Rotation   float32
-	Color      string
+	TattooID string
+	Position Vector3
+	Scale    float32
+	Rotation float32
+	Color    string
 }
 
 // MissionComponent
 type MissionComponent struct {
-	ActiveMission   string
-	MissionProgress map[string]*MissionProgress
+	ActiveMission     string
+	MissionProgress   map[string]*MissionProgress
 	CompletedMissions []string
 	FailedMissions    []string
 	AvailableMissions []string
@@ -454,19 +462,19 @@ type MissionComponent struct {
 func (MissionComponent) ComponentID() ecs.ComponentID { return CompMission }
 
 type MissionProgress struct {
-	MissionID     string
-	Objectives    map[string]*ObjectiveProgress
-	StartTime     int64
-	CurrentPhase  int32
+	MissionID    string
+	Objectives   map[string]*ObjectiveProgress
+	StartTime    int64
+	CurrentPhase int32
 }
 
 type ObjectiveProgress struct {
-	ObjectiveID   string
-	Status        ObjectiveStatus
-	Current       int32
-	Target        int32
-	IsOptional    bool
-	IsHidden      bool
+	ObjectiveID string
+	Status      ObjectiveStatus
+	Current     int32
+	Target      int32
+	IsOptional  bool
+	IsHidden    bool
 }
 
 type ObjectiveStatus int
@@ -480,33 +488,33 @@ const (
 
 // DialogueComponent
 type DialogueComponent struct {
-	CurrentDialogue   string
-	CurrentNode       string
-	NodeHistory       []string
-	IsInDialogue      bool
-	SpeakerEntity     ecs.EntityID
-	Choices           []DialogueChoice
-	SubtitleQueue     []SubtitleEntry
+	CurrentDialogue string
+	CurrentNode     string
+	NodeHistory     []string
+	IsInDialogue    bool
+	SpeakerEntity   ecs.EntityID
+	Choices         []DialogueChoice
+	SubtitleQueue   []SubtitleEntry
 }
 
 func (DialogueComponent) ComponentID() ecs.ComponentID { return CompDialogue }
 
 type DialogueChoice struct {
-	ID          string
-	Text        string
-	NextNode    string
-	Conditions  []string
+	ID           string
+	Text         string
+	NextNode     string
+	Conditions   []string
 	Consequences []string
 	// EndsConversation is set when picking this choice closes the dialogue.
 	EndsConversation bool
 }
 
 type SubtitleEntry struct {
-	Text          string
-	Speaker       string
-	Duration      float32
-	Position      SubtitlePosition
-	Style         SubtitleStyle
+	Text     string
+	Speaker  string
+	Duration float32
+	Position SubtitlePosition
+	Style    SubtitleStyle
 }
 
 type SubtitlePosition int
@@ -519,22 +527,22 @@ const (
 )
 
 type SubtitleStyle struct {
-	FontSize      int32
-	Color         string
-	OutlineColor  string
-	OutlineWidth  float32
-	Background    bool
+	FontSize        int32
+	Color           string
+	OutlineColor    string
+	OutlineWidth    float32
+	Background      bool
 	BackgroundColor string
-	ShowSpeaker   bool
+	ShowSpeaker     bool
 }
 
 // PhoneComponent
 type PhoneComponent struct {
-	Contacts    []PhoneContact
-	Messages    []PhoneMessage
-	Apps        map[string]PhoneApp
-	Wallpaper   string
-	Ringtone    string
+	Contacts  []PhoneContact
+	Messages  []PhoneMessage
+	Apps      map[string]PhoneApp
+	Wallpaper string
+	Ringtone  string
 }
 
 func (PhoneComponent) ComponentID() ecs.ComponentID { return CompPhone }
@@ -560,15 +568,15 @@ const (
 )
 
 type PhoneMessage struct {
-	ID           string
-	ContactID    string
-	Text         string
-	FromPlayer   bool
-	Timestamp    int64
-	Read         bool
-	Type         MessageType
-	MediaURL     string
-	ActionText   string
+	ID             string
+	ContactID      string
+	Text           string
+	FromPlayer     bool
+	Timestamp      int64
+	Read           bool
+	Type           MessageType
+	MediaURL       string
+	ActionText     string
 	ActionCallback string
 }
 
@@ -593,55 +601,55 @@ type PhoneApp struct {
 
 // StatsComponent
 type StatsComponent struct {
-	PlaytimeSeconds    uint64
-	MissionsCompleted  uint32
-	MissionsFailed     uint32
-	Kills              uint32
-	Deaths             uint32
-	Headshots          uint32
-	VehiclesDestroyed  uint32
-	DistanceTraveled   float64
-	MoneyEarned        uint64
-	MoneySpent         uint64
-	MaxWantedLevel     uint8
-	TimeAtMaxWanted    float32
-	Achievements       []string
-	WeaponKills        map[string]uint32
-	VehicleUsage       map[string]float32 // seconds driven
-	LocationVisits     map[string]uint32
+	PlaytimeSeconds   uint64
+	MissionsCompleted uint32
+	MissionsFailed    uint32
+	Kills             uint32
+	Deaths            uint32
+	Headshots         uint32
+	VehiclesDestroyed uint32
+	DistanceTraveled  float64
+	MoneyEarned       uint64
+	MoneySpent        uint64
+	MaxWantedLevel    uint8
+	TimeAtMaxWanted   float32
+	Achievements      []string
+	WeaponKills       map[string]uint32
+	VehicleUsage      map[string]float32 // seconds driven
+	LocationVisits    map[string]uint32
 }
 
 func (StatsComponent) ComponentID() ecs.ComponentID { return CompStats }
 
 // AudioComponent
 type AudioComponent struct {
-	EmitterID     string
-	ActiveSounds  map[string]ActiveSound
-	Occlusion     float32
+	EmitterID    string
+	ActiveSounds map[string]ActiveSound
+	Occlusion    float32
 }
 
 func (AudioComponent) ComponentID() ecs.ComponentID { return CompAudio }
 
 type ActiveSound struct {
-	Clip       string
-	Volume     float32
-	Pitch      float32
-	Position   Vector3
-	Is3D       bool
-	Loop       bool
-	StartTime  float64
-	Duration   float32
+	Clip      string
+	Volume    float32
+	Pitch     float32
+	Position  Vector3
+	Is3D      bool
+	Loop      bool
+	StartTime float64
+	Duration  float32
 }
 
 // AIComponent
 type AIComponent struct {
-	BehaviorTree    string
-	CurrentNode     string
-	Blackboard      map[string]interface{}
-	TargetEntity    ecs.EntityID
-	LastTargetPos   Vector3
-	AlertLevel      AIAlertLevel
-	Memory          map[string]AIMemory
+	BehaviorTree  string
+	CurrentNode   string
+	Blackboard    map[string]interface{}
+	TargetEntity  ecs.EntityID
+	LastTargetPos Vector3
+	AlertLevel    AIAlertLevel
+	Memory        map[string]AIMemory
 }
 
 func (AIComponent) ComponentID() ecs.ComponentID { return CompAI }
@@ -657,11 +665,11 @@ const (
 )
 
 type AIMemory struct {
-	Fact         string
-	Value        interface{}
-	Confidence   float32
-	Timestamp    float64
-	ExpiresAt    float64
+	Fact       string
+	Value      interface{}
+	Confidence float32
+	Timestamp  float64
+	ExpiresAt  float64
 }
 
 // RegisterAllComponents registers all game components with the registry
@@ -689,21 +697,21 @@ func RegisterAllComponents(reg *ecs.ComponentRegistry) {
 
 // CutsceneComponent
 type CutsceneComponent struct {
-	CutsceneID     string
-	CurrentTime    float32
-	Duration       float32
-	IsPlaying      bool
-	IsSkippable    bool
-	Tracks         []CutsceneTrack
-	OnComplete     string
+	CutsceneID  string
+	CurrentTime float32
+	Duration    float32
+	IsPlaying   bool
+	IsSkippable bool
+	Tracks      []CutsceneTrack
+	OnComplete  string
 }
 
 func (CutsceneComponent) ComponentID() ecs.ComponentID { return CompCutscene }
 
 type CutsceneTrack struct {
-	Type       CutsceneTrackType
-	TargetID   string
-	Keyframes  []CutsceneKeyframe
+	Type      CutsceneTrackType
+	TargetID  string
+	Keyframes []CutsceneKeyframe
 }
 
 type CutsceneTrackType int
@@ -775,10 +783,10 @@ type Vector2 struct {
 }
 
 func (Vector2) Add(o Vector2) Vector2   { return Vector2{X: o.X, Y: o.Y} }
-func (v Vector2) Sub(o Vector2) Vector2    { return Vector2{v.X - o.X, v.Y - o.Y} }
-func (v Vector2) Mul(s float32) Vector2    { return Vector2{v.X * s, v.Y * s} }
-func (v Vector2) LengthSq() float32        { return v.X*v.X + v.Y*v.Y }
-func (v Vector2) Length() float32          { return float32(math.Sqrt(float64(v.LengthSq()))) }
+func (v Vector2) Sub(o Vector2) Vector2 { return Vector2{v.X - o.X, v.Y - o.Y} }
+func (v Vector2) Mul(s float32) Vector2 { return Vector2{v.X * s, v.Y * s} }
+func (v Vector2) LengthSq() float32     { return v.X*v.X + v.Y*v.Y }
+func (v Vector2) Length() float32       { return float32(math.Sqrt(float64(v.LengthSq()))) }
 func (v Vector2) Normalized() Vector2 {
 	l := v.Length()
 	if l == 0 {

@@ -2,9 +2,9 @@ package network
 
 import (
 	"sync"
-	"unsafe"
 	"sync/atomic"
 	"time"
+	"unsafe"
 
 	"github.com/megame/server/internal/components"
 	"github.com/megame/server/internal/ecs"
@@ -19,29 +19,29 @@ import (
 // ============================================================================
 
 const (
-	MaxSnapshotSize      = 1024 * 1024 // 1MB max snapshot
-	SnapshotHistorySize  = 128         // keep last 128 snapshots for delta
+	MaxSnapshotSize        = 1024 * 1024 // 1MB max snapshot
+	SnapshotHistorySize    = 128         // keep last 128 snapshots for delta
 	MaxEntitiesPerSnapshot = 8192
-	InterestRadius       = 500.0       // meters
-	MaxSnapshotFrequency = 60          // Hz
-	MinSnapshotFrequency = 10          // Hz for far entities
+	InterestRadius         = 500.0 // meters
+	MaxSnapshotFrequency   = 60    // Hz
+	MinSnapshotFrequency   = 10    // Hz for far entities
 )
 
 type EntitySnapshot struct {
-	EntityID    uint64
-	Type        entity.EntityType
-	Transform   *entity.Transform
-	Velocity    *entity.Vector3
-	Timestamp   uint64
-	Components  map[uint16][]byte // componentID -> serialized data
+	EntityID   uint64
+	Type       entity.EntityType
+	Transform  *entity.Transform
+	Velocity   *entity.Vector3
+	Timestamp  uint64
+	Components map[uint16][]byte // componentID -> serialized data
 }
 
 type Snapshot struct {
-	Tick        uint64
-	Timestamp   int64
-	Entities    []EntitySnapshot
-	Destroyed   []uint64
-	PlayerUpdates []*network.PlayerStateUpdate
+	Tick           uint64
+	Timestamp      int64
+	Entities       []EntitySnapshot
+	Destroyed      []uint64
+	PlayerUpdates  []*network.PlayerStateUpdate
 	VehicleUpdates []*network.VehicleStateUpdate
 	WeaponUpdates  []*network.WeaponStateUpdate
 	NPCUpdates     []*network.NPCStateUpdate
@@ -89,16 +89,16 @@ func (p *SnapshotPool) Put(s *Snapshot) {
 
 // DeltaSnapshot stores differences from previous snapshot
 type DeltaSnapshot struct {
-	BaseTick    uint64
-	Tick        uint64
-	Timestamp   int64
-	NewEntities    []EntitySnapshot
+	BaseTick        uint64
+	Tick            uint64
+	Timestamp       int64
+	NewEntities     []EntitySnapshot
 	UpdatedEntities []EntitySnapshot // only changed components
-	Destroyed     []uint64
-	PlayerUpdates  []*network.PlayerStateUpdate
-	VehicleUpdates []*network.VehicleStateUpdate
-	WeaponUpdates  []*network.WeaponStateUpdate
-	NPCUpdates     []*network.NPCStateUpdate
+	Destroyed       []uint64
+	PlayerUpdates   []*network.PlayerStateUpdate
+	VehicleUpdates  []*network.VehicleStateUpdate
+	WeaponUpdates   []*network.WeaponStateUpdate
+	NPCUpdates      []*network.NPCStateUpdate
 }
 
 var snapshotPool = NewSnapshotPool()
@@ -147,11 +147,11 @@ func (h *SnapshotHistory) GetLatest() *Snapshot {
 // ============================================================================
 
 type InterestManager struct {
-	grid         map[GridCoord]*GridCell
-	cellSize     float32
-	entityCells  map[uint64]GridCoord
-	playerViews  map[uint64]*PlayerView
-	mu           sync.RWMutex
+	grid        map[GridCoord]*GridCell
+	cellSize    float32
+	entityCells map[uint64]GridCoord
+	playerViews map[uint64]*PlayerView
+	mu          sync.RWMutex
 }
 
 type GridCoord struct {
@@ -255,10 +255,10 @@ func (im *InterestManager) RegisterPlayerView(playerID uint64, pos ecs.Vector3, 
 	im.mu.Lock()
 	defer im.mu.Unlock()
 	im.playerViews[playerID] = &PlayerView{
-		PlayerID:  playerID,
-		Position:  pos,
-		Radius:    radius,
-		Relevant:  make(map[uint64]bool),
+		PlayerID: playerID,
+		Position: pos,
+		Radius:   radius,
+		Relevant: make(map[uint64]bool),
 	}
 }
 
@@ -337,15 +337,15 @@ func (dc *DeltaCompressor) Compress(current *Snapshot, playerID uint64) *DeltaSn
 	if last == nil {
 		// First snapshot - send full
 		return &DeltaSnapshot{
-			BaseTick:        0,
-			Tick:            current.Tick,
-			Timestamp:       current.Timestamp,
-			NewEntities:     current.Entities,
-			Destroyed:       current.Destroyed,
-			PlayerUpdates:   current.PlayerUpdates,
-			VehicleUpdates:  current.VehicleUpdates,
-			WeaponUpdates:   current.WeaponUpdates,
-			NPCUpdates:      current.NPCUpdates,
+			BaseTick:       0,
+			Tick:           current.Tick,
+			Timestamp:      current.Timestamp,
+			NewEntities:    current.Entities,
+			Destroyed:      current.Destroyed,
+			PlayerUpdates:  current.PlayerUpdates,
+			VehicleUpdates: current.VehicleUpdates,
+			WeaponUpdates:  current.WeaponUpdates,
+			NPCUpdates:     current.NPCUpdates,
 		}
 	}
 
@@ -444,56 +444,56 @@ func transformEqual(a, b *entity.Transform) bool {
 // ============================================================================
 
 type OptimizedGameServer struct {
-	world          *ecs.World
-	scheduler      *ecs.SystemScheduler
-	clients        map[string]*OptimizedClientSession
-	clientsMu      sync.RWMutex
-	tickRate       int
-	running        atomic.Bool
-	stopCh         chan struct{}
+	world           *ecs.World
+	scheduler       *ecs.SystemScheduler
+	clients         map[string]*OptimizedClientSession
+	clientsMu       sync.RWMutex
+	tickRate        int
+	running         atomic.Bool
+	stopCh          chan struct{}
 	snapshotHistory *SnapshotHistory
 	interestManager *InterestManager
 	deltaCompressor *DeltaCompressor
-	snapshotPool   *SnapshotPool
+	snapshotPool    *SnapshotPool
 
 	// Metrics
 	metrics *ServerMetrics
 }
 
 type OptimizedClientSession struct {
-	PlayerID       ecs.EntityID
-	Stream         network.GameService_GameStreamServer
-	LastAckTick    uint64
-	SnapshotRate   int
+	PlayerID         ecs.EntityID
+	Stream           network.GameService_GameStreamServer
+	LastAckTick      uint64
+	SnapshotRate     int
 	LastSnapshotTime time.Time
-	ViewRadius     float32
-	Compression    bool
-	SendQueue      chan *network.ServerMessage
+	ViewRadius       float32
+	Compression      bool
+	SendQueue        chan *network.ServerMessage
 }
 
 type ServerMetrics struct {
-	TickCount        atomic.Uint64
-	EntitiesCount    atomic.Int32
-	PlayersCount     atomic.Int32
-	BytesSent        atomic.Uint64
-	BytesReceived    atomic.Uint64
+	TickCount         atomic.Uint64
+	EntitiesCount     atomic.Int32
+	PlayersCount      atomic.Int32
+	BytesSent         atomic.Uint64
+	BytesReceived     atomic.Uint64
 	SnapshotBuildTime atomic.Int64 // nanoseconds
 	DeltaCompressTime atomic.Int64
-	NetworkTime      atomic.Int64
+	NetworkTime       atomic.Int64
 }
 
 func NewOptimizedGameServer(world *ecs.World, scheduler *ecs.SystemScheduler) *OptimizedGameServer {
 	s := &OptimizedGameServer{
-		world:            world,
-		scheduler:        scheduler,
-		clients:          make(map[string]*OptimizedClientSession),
-		tickRate:         60,
-		stopCh:           make(chan struct{}),
-		snapshotHistory:  NewSnapshotHistory(),
-		interestManager:  NewInterestManager(100.0), // 100m cells
-		deltaCompressor:  NewDeltaCompressor(),
-		snapshotPool:     NewSnapshotPool(),
-		metrics:          &ServerMetrics{},
+		world:           world,
+		scheduler:       scheduler,
+		clients:         make(map[string]*OptimizedClientSession),
+		tickRate:        60,
+		stopCh:          make(chan struct{}),
+		snapshotHistory: NewSnapshotHistory(),
+		interestManager: NewInterestManager(100.0), // 100m cells
+		deltaCompressor: NewDeltaCompressor(),
+		snapshotPool:    NewSnapshotPool(),
+		metrics:         &ServerMetrics{},
 	}
 	s.running.Store(true)
 	return s
