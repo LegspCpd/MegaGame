@@ -63,6 +63,8 @@ namespace Megame.Client
         // Client-side system accessors shared with UI and input layers.
         public DialogueManager dialogueManager => _dialogueManager;
         public PhoneManager phoneManager => _phoneManager;
+        public MissionManager missionManager => _missionManager;
+        public CutsceneManager cutsceneManager => _cutsceneManager;
         public WeaponController weaponController => _weaponController;
 
         private void Awake()

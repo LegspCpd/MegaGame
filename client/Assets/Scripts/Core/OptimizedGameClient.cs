@@ -169,6 +169,11 @@ namespace Megame.Client
             }
         }
 
+        private void HandleRPCResponse(RPCResponse response)
+        {
+            Debug.Log($"RPC Response: {response.RequestId} - Success: {response.Success}");
+        }
+
         [BurstCompile]
         private struct ProcessSnapshotJob : IJob
         {
@@ -185,9 +190,23 @@ namespace Megame.Client
                     var snap = snapshots[i];
                     if (snap.EntityId == localPlayerId) continue; // Local player predicted
 
-                    if (entityViews.TryGetValue(snap.EntityId, out NativeEntityView view))
+                    var newView = new NativeEntityView
                     {
-                        // Queue update for interpolation
+                        EntityId = snap.EntityId,
+                        EntityType = snap.Type,
+                        CurrentPosition = snap.Position,
+                        CurrentRotation = snap.Rotation,
+                        Velocity = snap.Velocity,
+                        LastServerTick = snap.Tick
+                    };
+
+                    if (entityViews.TryAdd(snap.EntityId, newView))
+                    {
+                        // New entity view created
+                    }
+                    else
+                    {
+                        // Already exists: queue update for interpolation
                         updateQueue.Enqueue(new EntityUpdate
                         {
                             EntityId = snap.EntityId,
@@ -197,20 +216,6 @@ namespace Megame.Client
                             ServerTick = snap.Tick,
                             InterpolationTime = interpolationTime
                         });
-                    }
-                    else
-                    {
-                        // Create new entity view
-                        var newView = new NativeEntityView
-                        {
-                            EntityId = snap.EntityId,
-                            EntityType = snap.Type,
-                            Position = snap.Position,
-                            Rotation = snap.Rotation,
-                            Velocity = snap.Velocity,
-                            LastServerTick = snap.Tick
-                        };
-                        entityViews.TryAdd(snap.EntityId, newView);
                     }
                 }
             }
@@ -616,7 +621,7 @@ namespace Megame.Client
         {
             OwnerId = owner;
             GameObject.transform.position = position.ToVector3();
-            Rigidbody.linearVelocity = velocity.ToVector3();
+            Rigidbody.velocity = velocity.ToVector3();
             Damage = damage;
             LifeTime = lifeTime;
             SpawnTime = Time.time;
@@ -655,8 +660,8 @@ namespace Megame.Client
     public static class MathTypeExtensions
     {
         public static float3 ToFloat3(this Vector3 v) => new float3(v.X, v.Y, v.Z);
-        public static quaternion ToQuaternion(this Vector3 q) => new quaternion(q.X, q.Y, q.Z, q.W);
-        public static Vector3 ToVector3(this float3 v) => new Vector3(v.x, v.y, v.z);
-        public static Vector3 ToQuaternion(this quaternion q) => new Vector3(q.value.x, q.value.y, q.value.z, q.value.w);
+        public static quaternion ToQuaternion(this Vector3 q) => new quaternion(q.X, q.Y, q.Z, 1f);
+        public static UnityEngine.Vector3 ToVector3(this float3 v) => new UnityEngine.Vector3(v.x, v.y, v.z);
+        public static UnityEngine.Quaternion ToQuaternion(this quaternion q) => new UnityEngine.Quaternion(q.value.x, q.value.y, q.value.z, q.value.w);
     }
 }

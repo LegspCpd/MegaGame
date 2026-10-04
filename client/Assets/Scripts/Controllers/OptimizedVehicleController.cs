@@ -392,7 +392,7 @@ namespace Megame.Controllers
                 4 => new Color(0.5f, 1f, 0.2f),
                 5 => Color.yellow,
                 6 => new Color(1f, 0.8f, 0.2f),
-                7 => Color.orange,
+                7 => new Color(1f, 0.5f, 0f),
                 8 => Color.red,
                 9 => new Color(1f, 0.4f, 0.7f),
                 10 => new Color(1f, 0.2f, 0.6f),
@@ -577,7 +577,7 @@ namespace Megame.Controllers
         
         private void SimulateSteering()
         {
-            float speed = rb.linearVelocity.magnitude;
+            float speed = rb.velocity.magnitude;
             float maxSteer = maxSteerAngle * steerAngleBySpeed.Evaluate(speed / 50f);
             float targetSteer = steerInput * maxSteer;
             
@@ -629,7 +629,7 @@ namespace Megame.Controllers
         
         private void SimulateAero()
         {
-            float speed = rb.linearVelocity.magnitude;
+            float speed = rb.velocity.magnitude;
             if (speed < 5f) return;
             
             // Downforce
@@ -637,7 +637,7 @@ namespace Megame.Controllers
             rb.AddForce(downforce, ForceMode.Force);
             
             // Drag
-            Vector3 drag = -rb.linearVelocity.normalized * speed * speed * dragCoefficient;
+            Vector3 drag = -rb.velocity.normalized * speed * speed * dragCoefficient;
             rb.AddForce(drag, ForceMode.Force);
         }
         
@@ -700,7 +700,7 @@ namespace Megame.Controllers
         // PUBLIC API
         // ============================================================================
         
-        public float SpeedKPH => rb.linearVelocity.magnitude * 3.6f;
+        public float SpeedKPH => rb.velocity.magnitude * 3.6f;
         public float CurrentRPM => currentRPM;
         public int CurrentGear => currentGear;
         public bool EngineOn => engineOn;
@@ -802,7 +802,7 @@ namespace Megame.Controllers
             
             // Velocity
             Gizmos.color = Color.blue;
-            Gizmos.DrawRay(transform.position, rb.linearVelocity);
+            Gizmos.DrawRay(transform.position, rb.velocity);
         }
     }
 }

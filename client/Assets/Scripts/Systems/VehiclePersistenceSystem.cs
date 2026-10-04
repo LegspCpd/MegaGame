@@ -199,7 +199,7 @@ namespace Megame.Systems
         // Save/Load
         // ============================================================================
         
-        private void SaveGarage()
+        public void SaveGarage()
         {
             var data = new GarageSaveData
             {
@@ -213,7 +213,7 @@ namespace Megame.Systems
             File.WriteAllText(filePath, json);
         }
         
-        private void LoadGarage()
+        public void LoadGarage()
         {
             string filePath = Path.Combine(savePath, "garage.json");
             if (!File.Exists(filePath)) return;
@@ -248,6 +248,11 @@ namespace Megame.Systems
         public event System.Action<SavedVehicle> OnVehicleSelected;
         public event System.Action<SavedVehicle> OnVehicleSpawned;
         public event System.Action<string> OnVehicleRemoved;
+
+        public void NotifyVehicleSpawned(SavedVehicle vehicle)
+        {
+            OnVehicleSpawned?.Invoke(vehicle);
+        }
     }
     
     // ============================================================================

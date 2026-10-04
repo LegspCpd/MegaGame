@@ -39,7 +39,7 @@ namespace Megame.Client
                 _client.cameraController.enabled = true;
 
                 _isPlaying = false;
-                Destroy(_currentCutscene.gameObject);
+                UnityEngine.Object.Destroy(_currentCutscene.gameObject);
                 _currentCutscene = null;
 
                 // Notify server
@@ -215,6 +215,7 @@ namespace Megame.Client
     public class CutsceneKeyframeData
     {
         public float Time;
+        public string TargetId;
         public EasingKind Easing;
         public Vector3 Position;
         public Quaternion Rotation;

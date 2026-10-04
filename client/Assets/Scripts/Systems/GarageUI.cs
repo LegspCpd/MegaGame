@@ -4,6 +4,7 @@ using TMPro;
 using System.Collections.Generic;
 using Megame.Data;
 using Megame.Vehicles;
+using Megame.Controllers;
 
 namespace Megame.Systems
 {
@@ -48,7 +49,7 @@ namespace Megame.Systems
         
         // State
         private SavedVehicle selectedVehicle;
-        private System.Action<string> pendingConfirmCallback;
+        private System.Action pendingConfirmCallback;
         
         private void Awake()
         {
@@ -202,7 +203,7 @@ namespace Megame.Systems
             
             if (go != null)
             {
-                VehiclePersistenceSystem.Instance.OnVehicleSpawned?.Invoke(selectedVehicle);
+                VehiclePersistenceSystem.Instance.NotifyVehicleSpawned(selectedVehicle);
                 
                 // Warp player to vehicle
                 var player = GameObject.FindGameObjectWithTag("Player");

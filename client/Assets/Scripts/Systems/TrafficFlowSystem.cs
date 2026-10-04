@@ -127,8 +127,8 @@ namespace Megame.Systems
             
             SpawnVehicle(new VehicleSpawnRequest
             {
-                position = spawnPoint.position,
-                rotation = spawnPoint.rotation,
+                position = spawnPoint.transform.position,
+                rotation = spawnPoint.transform.rotation,
                 vehicleClass = GetRandomVehicleClassForRegion(spawnPoint.region),
                 roadSegment = spawnPoint.roadSegment,
                 lane = spawnPoint.lane,
@@ -479,14 +479,14 @@ namespace Megame.Systems
                 // Steer toward road
                 Vector3 toRoad = roadPos - transform.position;
                 float steerAngle = Vector3.SignedAngle(transform.forward, roadDir, Vector3.up);
-                steerAngle = Mathf.Clamp(steerAngle, -controller.MaxSteerAngle, controller.MaxSteerAngle);
-                
-                controller.SetInput(new Vector2(1f, steerAngle / controller.MaxSteerAngle), false, false);
+                steerAngle = Mathf.Clamp(steerAngle, -controller.maxSteerAngle, controller.maxSteerAngle);
+
+                controller.SetInput(1f, 0f, steerAngle / controller.maxSteerAngle, false);
             }
             else
             {
                 // Free driving - wander
-                controller.SetInput(new Vector2(1f, Random.Range(-0.1f, 0.1f)), false, false);
+                controller.SetInput(1f, 0f, Random.Range(-0.1f, 0.1f), false);
             }
         }
         
@@ -508,7 +508,7 @@ namespace Megame.Systems
             {
                 // Execute lane change
                 float steerInput = laneChangeDirection * 0.5f;
-                controller.SetInput(new Vector2(1f, steerInput), false, false);
+                controller.SetInput(1f, 0f, steerInput, false);
                 
                 // Check if lane change complete
                 if (IsLaneChangeComplete())

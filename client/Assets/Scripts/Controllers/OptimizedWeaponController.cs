@@ -3,6 +3,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Burst;
 using Unity.Mathematics;
+using Random = UnityEngine.Random;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
@@ -83,7 +84,7 @@ namespace Megame.Client
 
             // Recovery
             float recovery = recoveryRate * dt;
-            currentRecoil = math.max(float2(0), math.abs(currentRecoil) - recovery) * math.sign(currentRecoil);
+            currentRecoil = math.max(float2.zero, math.abs(currentRecoil) - recovery) * math.sign(currentRecoil);
         }
     }
 
@@ -261,7 +262,7 @@ namespace Megame.Client
             if (math.length(_currentRecoil) > 0)
             {
                 float recovery = RecoilRecoveryRate * Time.deltaTime;
-                _currentRecoil = math.max(float2(0), math.abs(_currentRecoil) - recovery) * math.sign(_currentRecoil);
+                _currentRecoil = math.max(float2.zero, math.abs(_currentRecoil) - recovery) * math.sign(_currentRecoil);
             }
 
             // Update aim progress
@@ -303,7 +304,7 @@ namespace Megame.Client
         private void HandleFireInput()
         {
             bool fireInput = false;
-            switch (Definition.FireMode)
+            switch (Definition.WeaponFireMode)
             {
                 case WeaponFireMode.Semi:
                     fireInput = Input.GetMouseButtonDown(0);
@@ -430,7 +431,7 @@ namespace Megame.Client
                 if (!_projectileData[i].IsActive)
                 {
                     var visual = _projectileVisualPool.Get();
-                    visual.Initialize(MuzzlePoint.position, direction, MuzzleVelocity, Definition.Damage, MaxRange);
+                    visual.Initialize(MuzzlePoint.position, direction, MuzzleVelocity, (int)Definition.Damage, MaxRange);
 
                     _projectileData[i] = new ProjectileData
                     {
@@ -443,7 +444,7 @@ namespace Megame.Client
                         LifeTime = MaxRange / MuzzleVelocity,
                         MaxRange = MaxRange,
                         DistanceTraveled = 0,
-                        Damage = Definition.Damage,
+                        Damage = (int)Definition.Damage,
                         OwnerId = OptimizedGameClient.Instance.LocalPlayerId
                     };
                     _activeProjectiles.Add(new ActiveProjectile { Index = i, Visual = visual });
@@ -726,5 +727,10 @@ namespace Megame.Client
             SpawnTime = Time.time;
             gameObject.SetActive(true);
         }
+    }
+
+    public static class WeaponMathExtensions
+    {
+        public static float3 ToFloat3(this Vector3 v) => new float3(v.x, v.y, v.z);
     }
 }

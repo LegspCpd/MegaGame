@@ -38,7 +38,7 @@ namespace Megame.Systems
         public ParticleSystem spawnEffect;
         public AudioClip spawnSound;
         
-        private bool isOccupied = false;
+        public bool isOccupied = false;
         private GameObject currentVehicle = null;
         
         private void Awake()

@@ -378,7 +378,7 @@ namespace Megame.UI
             return 0; // Simplified
         }
         
-        private int CalculateModCost(ModOption option, ShopCategory category)
+        public int CalculateModCost(ModOption option, ShopCategory category)
         {
             int baseCost = GetBaseCostForCategory(category);
             return Mathf.RoundToInt(baseCost * option.priceMultiplier);

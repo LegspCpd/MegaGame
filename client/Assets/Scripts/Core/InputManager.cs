@@ -131,14 +131,17 @@ namespace Megame.Client
             _reloadPressed = keyboard?.rKey.wasPressedThisFrame ?? false;
             _weaponWheelHeld = keyboard?.tabKey.isPressed ?? false;
 
-            // Weapon slots
-            for (int i = 0; i < 8; i++)
+            // Weapon slots (Digit1..Digit8 -> slots 0..7)
+            if (keyboard != null)
             {
-                if (keyboard?.digitKeys[i].wasPressedThisFrame ?? false)
-                {
-                    _weaponSlot = i;
-                    break;
-                }
+                if (keyboard.digit1Key.wasPressedThisFrame) _weaponSlot = 0;
+                else if (keyboard.digit2Key.wasPressedThisFrame) _weaponSlot = 1;
+                else if (keyboard.digit3Key.wasPressedThisFrame) _weaponSlot = 2;
+                else if (keyboard.digit4Key.wasPressedThisFrame) _weaponSlot = 3;
+                else if (keyboard.digit5Key.wasPressedThisFrame) _weaponSlot = 4;
+                else if (keyboard.digit6Key.wasPressedThisFrame) _weaponSlot = 5;
+                else if (keyboard.digit7Key.wasPressedThisFrame) _weaponSlot = 6;
+                else if (keyboard.digit8Key.wasPressedThisFrame) _weaponSlot = 7;
             }
 
             // Vehicle

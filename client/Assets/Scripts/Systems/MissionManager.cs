@@ -85,6 +85,14 @@ namespace Megame.Client
             _client.uiManager.HideMission();
         }
 
+        public void CompleteMission(string missionId)
+        {
+            if (_activeMissions.ContainsKey(missionId))
+            {
+                OnMissionCompleted(missionId);
+            }
+        }
+
         public void OnMissionsAvailable(List<string> missionIds)
         {
             _availableMissions = missionIds;

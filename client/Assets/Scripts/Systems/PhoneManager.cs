@@ -53,8 +53,7 @@ namespace Megame.Client
             {
                 ContactId = contactId,
                 Text = text,
-                FromPlayer = true,
-                Timestamp = (ulong)System.DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                IsFromPlayer = true,                Timestamp = (ulong)System.DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 Type = MessageType.Text
             };
 
@@ -113,7 +112,7 @@ namespace Megame.Client
             {
                 var go = Instantiate(messagePrefab, messageList);
                 var texts = go.GetComponentsInChildren<TextMeshProUGUI>();
-                texts[0].text = msg.FromPlayer ? "You" : msg.ContactId; // Would resolve contact name
+                texts[0].text = msg.IsFromPlayer ? "You" : msg.ContactId; // Would resolve contact name
                 texts[1].text = msg.Text;
             }
         }

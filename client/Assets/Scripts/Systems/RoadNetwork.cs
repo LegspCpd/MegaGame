@@ -124,16 +124,9 @@ namespace Megame.Systems
         private void OnDrawGizmos()
         {
             if (!showGizmos) return;
-            
-            Gizmos.color = Color.gray;
-            foreach (var segment in segments)
-            {
-                if (segment != null)
-                {
-                    segment.DrawGizmos();
-                }
-            }
-            
+
+            // Segments draw themselves via their own OnDrawGizmos.
+
             Gizmos.color = Color.yellow;
             foreach (var intersection in intersections)
             {
@@ -195,7 +188,8 @@ namespace Megame.Systems
             var lane = laneTransforms[Random.Range(0, laneTransforms.Length)];
             float t = Random.value;
             
-            Vector3 pos, rot;
+            Vector3 pos;
+            Quaternion rot = Quaternion.identity;
             if (useSpline && splinePoints.Length >= 2)
             {
                 pos = GetSplinePosition(t);
@@ -210,14 +204,15 @@ namespace Megame.Systems
                 rot = Quaternion.Slerp(start.rotation, end.rotation, t);
             }
             
-            return new RoadSpawnPoint
-            {
-                position = pos,
-                rotation = Quaternion.Euler(0, rot.eulerAngles.y, 0),
-                roadSegment = this,
-                lane = System.Array.IndexOf(laneTransforms, lane),
-                region = region,
-            };
+            var spawnGo = new GameObject("RoadSpawnPoint");
+            spawnGo.transform.SetParent(transform);
+            var spawnPoint = spawnGo.AddComponent<RoadSpawnPoint>();
+            spawnPoint.transform.position = pos;
+            spawnPoint.transform.rotation = Quaternion.Euler(0, rot.eulerAngles.y, 0);
+            spawnPoint.roadSegment = this;
+            spawnPoint.lane = System.Array.IndexOf(laneTransforms, lane);
+            spawnPoint.region = region;
+            return spawnPoint;
         }
         
         public float GetDistanceTo(Vector3 position)

@@ -228,7 +228,6 @@ namespace Megame.Vehicles
             armorLevel = 1,
             wheelType = 4, // Offroad
             bulletproofTires = true,
-            armorLevel = 2,
         };
 
         public static VehicleModificationsData StreetRacer => new VehicleModificationsData

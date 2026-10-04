@@ -34,7 +34,7 @@ namespace Megame.World
         
         [Header("Settings")]
         public float dayLengthMinutes = 30f; // Real minutes per game day
-        public AnimationCurve sunIntensityByHour = AnimationCurve.Linear(0, 0, 12, 1, 24, 0);
+        public AnimationCurve sunIntensityByHour = new AnimationCurve(new Keyframe(0, 0), new Keyframe(12, 1), new Keyframe(24, 0));
         public AnimationCurve sunColorByHour;
         public AnimationCurve fogDensityByHour;
         

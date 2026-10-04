@@ -55,21 +55,21 @@ namespace Megame.Client
             // Destroy current
             if (_currentWeapon != null)
             {
-                Destroy(_currentWeapon);
+                UnityEngine.Object.Destroy(_currentWeapon);
             }
             if (_viewModel != null)
             {
-                Destroy(_viewModel);
+                UnityEngine.Object.Destroy(_viewModel);
             }
 
             // Spawn world model (on character)
-            _currentWeapon = Instantiate(weaponPrefab);
+            _currentWeapon = UnityEngine.Object.Instantiate(weaponPrefab);
             _currentWeapon.name = "CurrentWeapon";
 
             // Spawn view model (first person)
             if (definition.FirstPersonViewModel != null)
             {
-                _viewModel = Instantiate(definition.FirstPersonViewModel);
+                _viewModel = UnityEngine.Object.Instantiate(definition.FirstPersonViewModel);
                 _viewModel.name = "ViewModel";
                 _viewModelAnimator = _viewModel.GetComponent<Animator>();
 
@@ -87,12 +87,12 @@ namespace Megame.Client
         {
             if (_currentWeapon != null)
             {
-                Destroy(_currentWeapon);
+                UnityEngine.Object.Destroy(_currentWeapon);
                 _currentWeapon = null;
             }
             if (_viewModel != null)
             {
-                Destroy(_viewModel);
+                UnityEngine.Object.Destroy(_viewModel);
                 _viewModel = null;
             }
             _definition = null;
@@ -185,7 +185,7 @@ namespace Megame.Client
 
             // Check fire mode
             bool canFire = false;
-            switch (_definition.FireMode)
+            switch (_definition.WeaponFireMode)
             {
                 case WeaponFireMode.Semi:
                     canFire = Input.GetButtonDown("Fire1");

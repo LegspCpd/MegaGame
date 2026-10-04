@@ -223,6 +223,16 @@ namespace Megame.Vehicles
     /// Police equipment definition
     /// </summary>
     [System.Serializable]
+    public class PoliceEquipmentBehaviour : MonoBehaviour
+    {
+        public PoliceEquipment Equipment { get; private set; }
+
+        public void Initialize(PoliceEquipment equipment)
+        {
+            Equipment = equipment;
+        }
+    }
+
     public class PoliceEquipment
     {
         public string id;
@@ -474,7 +484,7 @@ namespace Megame.Vehicles
         
         private float patrolSpeed;
         private float targetSpeed;
-        private VehicleController targetVehicle;
+        private OptimizedVehicleController targetVehicle;
         private float updateTimer;
         
         public void SetMode(RadarMode newMode)
@@ -511,7 +521,7 @@ namespace Megame.Vehicles
         private void ScanForTargets()
         {
             float maxDist = 0;
-            VehicleController bestTarget = null;
+            OptimizedVehicleController bestTarget = null;
             float bestSpeed = 0;
             
             var allVehicles = FindObjectsOfType<OptimizedVehicleController>();

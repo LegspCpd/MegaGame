@@ -1,3 +1,4 @@
+using Megame.Core;
 using UnityEngine;
 
 namespace Megame.Client

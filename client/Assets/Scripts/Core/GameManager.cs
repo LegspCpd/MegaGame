@@ -8,6 +8,7 @@ using Megame.Systems;
 using Megame.World;
 using Megame.Client;
 using Megame.UI;
+using Megame.Controllers;
 
 namespace Megame.Core
 {
@@ -176,41 +177,17 @@ namespace Megame.Core
                 dlsSystem = go.AddComponent<DLSLightingSystem>();
             }
             
-            // MissionManager
-            if (missionManager == null) missionManager = FindObjectOfType<MissionManager>();
-            if (missionManager == null)
-            {
-                var go = new GameObject("MissionManager");
-                go.transform.SetParent(transform);
-                missionManager = go.AddComponent<MissionManager>();
-            }
-            
+            // MissionManager (plain class, created by GameClient.InitializeSystems)
+            if (missionManager == null) missionManager = gameClient.missionManager;
+
             // DialogueManager
-            if (dialogueManager == null) dialogueManager = FindObjectOfType<DialogueManager>();
-            if (dialogueManager == null)
-            {
-                var go = new GameObject("DialogueManager");
-                go.transform.SetParent(transform);
-                dialogueManager = go.AddComponent<DialogueManager>();
-            }
-            
+            if (dialogueManager == null) dialogueManager = gameClient.dialogueManager;
+
             // PhoneManager
-            if (phoneManager == null) phoneManager = FindObjectOfType<PhoneManager>();
-            if (phoneManager == null)
-            {
-                var go = new GameObject("PhoneManager");
-                go.transform.SetParent(transform);
-                phoneManager = go.AddComponent<PhoneManager>();
-            }
-            
+            if (phoneManager == null) phoneManager = gameClient.phoneManager;
+
             // CutsceneManager
-            if (cutsceneManager == null) cutsceneManager = FindObjectOfType<CutsceneManager>();
-            if (cutsceneManager == null)
-            {
-                var go = new GameObject("CutsceneManager");
-                go.transform.SetParent(transform);
-                cutsceneManager = go.AddComponent<CutsceneManager>();
-            }
+            if (cutsceneManager == null) cutsceneManager = gameClient.cutsceneManager;
             
             // ModShopUI
             if (modShopUI == null) modShopUI = FindObjectOfType<ModShopUI>();
@@ -236,7 +213,7 @@ namespace Megame.Core
             // Core
             if (cameraController != null) cameraController.enabled = true;
             if (inputManager != null) inputManager.enabled = true;
-            if (uiManager != null) uiManager.Initialize(this);
+            if (uiManager != null) uiManager.Initialize(gameClient);
             
             // Persistence
             if (vehiclePersistence != null)
@@ -255,11 +232,8 @@ namespace Megame.Core
             // Traffic
             if (trafficSystem != null) trafficSystem.enabled = true;
             
-            // Mission/Story
-            if (missionManager != null) missionManager.enabled = true;
-            if (dialogueManager != null) dialogueManager.enabled = true;
-            if (phoneManager != null) phoneManager.enabled = true;
-            if (cutsceneManager != null) cutsceneManager.enabled = true;
+            // Mission/Story (plain classes, always active)
+            // missionManager/dialogueManager/phoneManager/cutsceneManager have no .enabled
             
             // UI Systems
             if (modShopUI != null) modShopUI.enabled = true;
@@ -505,7 +479,7 @@ namespace Megame.Core
         
         public void StartCutscene(string cutsceneId)
         {
-            StartCoroutine(cutsceneManager.PlayCutscene(cutsceneId));
+            _ = cutsceneManager.PlayCutscene(cutsceneId);
         }
         
         public void OpenModShop(VehicleDefinitionData vehicle)

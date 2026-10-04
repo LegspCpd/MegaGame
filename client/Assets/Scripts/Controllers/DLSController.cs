@@ -310,8 +310,8 @@ namespace Megame.Vehicles
                         if (phaseIndex >= 0 && phaseIndex < lightData.phases.Count)
                         {
                             var phase = lightData.phases[phaseIndex];
-                            instance.light.color = phase.color;
-                            instance.light.intensity = lightData.intensity * phase.intensityMultiplier;
+                            instance.light.color = lightData.color;
+                            instance.light.intensity = lightData.intensity;
                         }
                     }
                 }

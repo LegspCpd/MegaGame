@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Megame.Data;
+using Megame.Controllers;
 
 namespace Megame.Editor
 {

@@ -83,7 +83,7 @@ namespace Megame.Client
         {
             if (_client.LocalPlayerId == 0) return;
 
-            var player = _client.GetEntity<PlayerController>(_client.LocalPlayerId);
+            var player = _client.GetEntity<Transform>(_client.LocalPlayerId);
             if (player == null) return;
 
             // Health/Armor/Stamina from server state
@@ -154,8 +154,33 @@ namespace Megame.Client
                 Speaker = data.SpeakerName,
                 Duration = data.DisplayTime > 0 ? data.DisplayTime : 5f,
                 Position = data.Position,
-                Style = data.Style
+                Style = ConvertSubtitleStyle(data.Style)
             });
+        }
+
+        private static SubtitleStyleKind ConvertSubtitleStyle(Megame.Gameplay.SubtitleStyle style)
+        {
+            if (style == null) return new SubtitleStyleKind();
+            return new SubtitleStyleKind
+            {
+                FontSize = style.FontSize,
+                Color = ColorToHex(style.Color),
+                OutlineColor = ColorToHex(style.OutlineColor),
+                OutlineThickness = style.OutlineThickness,
+                Background = style.Background,
+                BackgroundColor = ColorToHex(style.BackgroundColor),
+                ShowSpeaker = style.SpeakerNameVisible
+            };
+        }
+
+        private static string ColorToHex(Megame.Common.Color color)
+        {
+            if (color == null) return "#FFFFFF";
+            int r = Mathf.RoundToInt(color.R * 255f);
+            int g = Mathf.RoundToInt(color.G * 255f);
+            int b = Mathf.RoundToInt(color.B * 255f);
+            int a = Mathf.RoundToInt(color.A * 255f);
+            return $"#{r:X2}{g:X2}{b:X2}{a:X2}";
         }
 
         private void UpdateSubtitles()
@@ -251,7 +276,7 @@ namespace Megame.Client
             phoneRoot.SetActive(active);
             if (active)
             {
-                phoneUI.Refresh();
+                phoneUI.RefreshUI();
             }
         }
     }

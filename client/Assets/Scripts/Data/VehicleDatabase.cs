@@ -14,8 +14,10 @@ namespace Megame.Data
         public string modelName;
         public string displayName;
         public string manufacturer;
+        public float basePrice = 20000f;
         public VehicleClass vehicleClass;
         public VehicleType vehicleType;
+        public string[] requiredRegions = new string[0];
         
         [Header("Dimensions")]
         public float length = 4.5f;
@@ -189,6 +191,13 @@ namespace Megame.Data
         {
             if (_lookup == null) Initialize();
             return vehicles.Where(v => v.modKitId > 0).ToArray();
+        }
+
+        public VehicleDefinitionData GetRandomPedestrian()
+        {
+            var civilians = GetCivilianVehicles();
+            if (civilians.Length == 0) return null;
+            return civilians[UnityEngine.Random.Range(0, civilians.Length)];
         }
     }
     

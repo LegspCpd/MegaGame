@@ -1,5 +1,6 @@
 using UnityEngine;
-using Unity.Profiling;
+using UnityEngine.Profiling;
+using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Jobs;
 using System.Collections.Generic;
@@ -123,9 +124,9 @@ namespace Megame.Client
         public static readonly ProfilerMarker MemoryGC = new ProfilerMarker("Memory.GC");
 
         // Custom markers with metadata
-        public static ProfilerMarker Create(string name, ProfilerCategory category = default)
+        public static ProfilerMarker Create(string name)
         {
-            return new ProfilerMarker(name, category);
+            return new ProfilerMarker(name);
         }
     }
 
@@ -156,9 +157,9 @@ namespace Megame.Client
     {
         private readonly ProfilerMarker _marker;
 
-        public ProfilerScopeCustom(string name, ProfilerCategory category = default)
+        public ProfilerScopeCustom(string name)
         {
-            _marker = new ProfilerMarker(name, category);
+            _marker = new ProfilerMarker(name);
             _marker.Begin();
         }
 
@@ -297,7 +298,8 @@ namespace Megame.Client
         public void Record(float value)
         {
             System.Threading.Interlocked.Increment(ref _count);
-            System.Threading.Interlocked.Add(ref _sum, value);
+            double currentSum;
+            do { currentSum = _sum; } while (System.Threading.Interlocked.CompareExchange(ref _sum, currentSum + value, currentSum) != currentSum);
             float v = value;
             float currentMin, currentMax;
             do { currentMin = _min; } while (v < currentMin && System.Threading.Interlocked.CompareExchange(ref _min, v, currentMin) != currentMin);
