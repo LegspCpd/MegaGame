@@ -4,9 +4,7 @@
     "com.unity.inputsystem": "1.7.0",
     "com.unity.cinemachine": "2.9.7",
     "com.unity.netcode.gameobjects": "1.5.2",
-    "com.unity.addressables": "1.23.19",
-    "com.unity.recorder": "4.0.1",
-    "com.unity.performance.profile-analyzer": "1.2.0"
+    "com.unity.addressables": "1.23.19"
   },
   "scopedRegistries": [
     {

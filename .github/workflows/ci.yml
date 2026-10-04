@@ -184,14 +184,39 @@ jobs:
           projectPath: client
           targetPlatform: StandaloneLinux64
           buildMethod: Megame.Client.BuildScript.PerformClientBuild
-          customParameters: -buildVersion ${{ github.ref_name }}
+          customParameters: -buildVersion ${{ github.ref_name }} -outputPath /github/workspace/build/linux
           compression: lz4hc
+
+      # Personal licences are floating: returning them lets the next run
+      # activate cleanly instead of hitting the activation limit.
+      - name: Return Unity License
+        if: always()
+        uses: game-ci/unity-license-activate@v1
+        with:
+          returnLicense: true
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+
+      - name: Verify player was produced
+        run: |
+          set -euo pipefail
+          if [ ! -f build/linux/MegaGame ]; then
+            echo "::error::No Linux player at build/linux/MegaGame"
+            find build -maxdepth 3 -type f | head -20 || true
+            exit 1
+          fi
+          chmod +x build/linux/MegaGame
+          ls -la build/linux/
+
+      - name: Package Linux client
+        run: tar -czf megame-client-${{ github.ref_name }}-linux-amd64.tar.gz -C build/linux .
 
       - name: Upload Linux build
         uses: actions/upload-artifact@v4
         with:
           name: megame-linux
-          path: build/
+          path: |
+            megame-client-${{ github.ref_name }}-linux-amd64.tar.gz
           retention-days: 7
 
   docker-build:
@@ -238,8 +263,8 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: [go-build]
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [go-build, unity-build]
+    if: always() && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -257,7 +282,6 @@ jobs:
           files: |
             release-assets/*.tar.gz
             release-assets/*.zip
-            release-assets/*.exe
           fail_on_unmatched_files: false
           generate_release_notes: true
         env:

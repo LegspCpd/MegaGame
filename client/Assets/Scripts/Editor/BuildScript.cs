@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using System;
 using System.IO;
 
 namespace Megame.Client
@@ -141,10 +142,118 @@ namespace Megame.Client
             BuildWindows();
         }
 
+        /// <summary>
+        /// Entry point used by CI (game-ci/unity-builder -buildMethod).
+        /// Honours -outputPath and -buildVersion, and fails the build when
+        /// Unity reports an error so CI cannot pass on a broken player.
+        /// </summary>
+        public static void PerformClientBuild()
+        {
+            string outputPath = GetArg("-outputPath", "build");
+            string version = GetArg("-buildVersion", null);
+
+            string targetName = Environment.GetEnvironmentVariable("UNITY_BUILD_TARGET");
+            BuildTarget target = targetName == "windows"
+                ? BuildTarget.StandaloneWindows64
+                : BuildTarget.StandaloneLinux64;
+
+            string exe = target == BuildTarget.StandaloneWindows64 ? "MegaGame.exe" : "MegaGame";
+            Directory.CreateDirectory(outputPath);
+            string locationPath = Path.Combine(outputPath, exe);
+
+            if (!string.IsNullOrEmpty(version))
+            {
+                PlayerSettings.bundleVersion = version;
+            }
+
+            BuildPlayerOptions options = new BuildPlayerOptions
+            {
+                scenes = GetEnabledScenes(),
+                locationPathName = locationPath,
+                target = target,
+                options = BuildOptions.None
+            };
+
+            BuildReport report = BuildPipeline.BuildPlayer(options);
+            if (report.summary.result != BuildResult.Succeeded)
+            {
+                throw new Exception(
+                    $"Unity build failed for {target}: {report.summary.result} " +
+                    $"({report.summary.totalErrors} errors, {report.summary.totalWarnings} warnings)");
+            }
+
+            Debug.Log($"Build succeeded: {locationPath}");
+        }
+
+        /// <summary>
+        /// Dedicated server build (headless Linux player), also used by CI.
+        /// </summary>
+        public static void PerformHeadlessBuild()
+        {
+            string outputPath = GetArg("-outputPath", "build/server");
+            string version = GetArg("-buildVersion", null);
+
+            Directory.CreateDirectory(outputPath);
+            string locationPath = Path.Combine(outputPath, "MegaGameServer");
+
+            if (!string.IsNullOrEmpty(version))
+            {
+                PlayerSettings.bundleVersion = version;
+            }
+
+            BuildPlayerOptions options = new BuildPlayerOptions
+            {
+                scenes = GetEnabledScenes(),
+                locationPathName = locationPath,
+                target = BuildTarget.StandaloneLinux64,
+                targetGroup = BuildTargetGroup.Server,
+                options = BuildOptions.None
+            };
+
+            BuildReport report = BuildPipeline.BuildPlayer(options);
+            if (report.summary.result != BuildResult.Succeeded)
+            {
+                throw new Exception(
+                    $"Unity headless build failed: {report.summary.result} " +
+                    $"({report.summary.totalErrors} errors)");
+            }
+
+            Debug.Log($"Headless build succeeded: {locationPath}");
+        }
+
+        private static string GetArg(string name, string fallback)
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length - 1; i++)
+            {
+                if (args[i] == name)
+                {
+                    return args[i + 1];
+                }
+            }
+            return fallback;
+        }
+
+        private const string DefaultScenePath = "Assets/Scenes/Boot.unity";
+
         private static string[] GetEnabledScenes()
         {
-            return System.Array.FindAll(EditorBuildSettings.scenes, scene => scene.enabled)
-                .Select(scene => scene.path).ToArray();
+            string[] enabled = System.Array.FindAll(
+                EditorBuildSettings.scenes,
+                scene => scene.enabled)
+                .Select(scene => scene.path)
+                .ToArray();
+
+            // .meta GUIDs are generated on first import, so a checked-in
+            // EditorBuildSettings can end up pointing at nothing. Fall back to
+            // the boot scene rather than building with zero scenes.
+            if (enabled.Length == 0 || !File.Exists(enabled[0]))
+            {
+                Debug.Log($"No usable build scenes configured; falling back to {DefaultScenePath}");
+                return new[] { DefaultScenePath };
+            }
+
+            return enabled;
         }
     }
 }
