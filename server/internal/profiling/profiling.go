@@ -425,26 +425,18 @@ func (m *ServerMetrics) Stop() {
 
 // gaugeValue reads the current value of a Prometheus gauge.
 func gaugeValue(g prometheus.Gauge) int64 {
-	var m prometheus.Metric
-	if err := g.Write(&m); err != nil {
+	var m dto.Metric
+	if err := g.Write(&m); err != nil || m.Gauge == nil {
 		return 0
 	}
-	var pb dto.Metric
-	if err := m.Write(&pb); err != nil || pb.Gauge == nil {
-		return 0
-	}
-	return int64(pb.Gauge.GetValue())
+	return int64(m.Gauge.GetValue())
 }
 
 // counterValue reads the current value of a Prometheus counter.
 func counterValue(c prometheus.Counter) int64 {
-	var m prometheus.Metric
-	if err := c.Write(&m); err != nil {
+	var m dto.Metric
+	if err := c.Write(&m); err != nil || m.Counter == nil {
 		return 0
 	}
-	var pb dto.Metric
-	if err := m.Write(&pb); err != nil || pb.Counter == nil {
-		return 0
-	}
-	return int64(pb.Counter.GetValue())
+	return int64(m.Counter.GetValue())
 }
