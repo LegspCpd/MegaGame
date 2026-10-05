@@ -11,7 +11,9 @@ namespace Megame.Client
     /// </summary>
     public static class Bootstrap
     {
-        private const string GameManagerTypeName = "Megame.Client.GameManager";
+        private const string GameManagerTypeName = "Megame.Core.GameManager";
+        // GameManager lives in Megame.Client.asmdef, not Assembly-CSharp.
+        private const string GameManagerAssemblyName = "Megame.Client";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void CreateGameManager()
@@ -26,7 +28,18 @@ namespace Megame.Client
 
             // AddComponent by type would hard-link GameManager into every
             // build; resolving the type keeps the bootstrap resilient.
-            System.Type type = System.Type.GetType($"{GameManagerTypeName}, Assembly-CSharp");
+            System.Type type = System.Type.GetType(
+                $"{GameManagerTypeName}, {GameManagerAssemblyName}");
+            if (type == null)
+            {
+                // Fall back to a scan: asmdef/namespace changes should not
+                // leave the game booting to an empty scene.
+                foreach (var asm in System.AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    type = asm.GetType(GameManagerTypeName);
+                    if (type != null) break;
+                }
+            }
             if (type == null)
             {
                 Debug.LogError($"Bootstrap could not resolve {GameManagerTypeName}");

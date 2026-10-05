@@ -4,6 +4,7 @@
 ProjectSettings:
   productName: MegaGame
   companyName: MegaGame Studios
+  activeInputHandler: 2
   defaultScreenWidth: 1920
   defaultScreenHeight: 1080
   defaultScreenWidthWeb: 960
