@@ -216,7 +216,7 @@ namespace Megame.Client
             bool right = kb[Key.D].isPressed || kb[Key.RightArrow].isPressed;
 
             _throttle = up ? 1f : (down ? -1f : 0f);
-            _brake = down && Vector3.Dot(transform.forward) > 0.5f ? 1f : 0f;
+            _brake = down && Vector3.Dot(_rb.velocity, transform.forward) > 0.5f ? 1f : 0f;
             _steer = (left ? -1f : 0f) + (right ? 1f : 0f);
             _handbrake = kb[Key.Space].isPressed ? 1f : 0f;
         }
@@ -233,7 +233,7 @@ namespace Megame.Client
 
             // Apply steering as yaw torque. Writing transform.localRotation here
             // would compound every frame and spin the car uncontrollably.
-            float forwardSpeed = Vector3.Dot(transform.forward);
+            float forwardSpeed = Vector3.Dot(_rb.velocity, transform.forward);
             float grip = Mathf.Clamp01(Mathf.Abs(forwardSpeed) / 3f);
             float yawTorque = _steerAngle * 0.22f * grip;
             _rb.AddTorque(transform.up * yawTorque, ForceMode.Force);
@@ -304,7 +304,7 @@ namespace Megame.Client
             // A subtle body roll sells the weight transfer without a real
             // wheel-by-wheel raycast rig.
             float speed = _rb.velocity.magnitude;
-            float lateral = Vector3.Dot(transform.right);
+            float lateral = Vector3.Dot(_rb.velocity, transform.right);
             float targetRoll = Mathf.Clamp(-lateral / 20f, -1f, 1f) * BodyRoll;
             Quaternion target = Quaternion.Euler(targetRoll, 0f, 0f);
             _body.localRotation = Quaternion.Slerp(_body.localRotation, target, 6f * dt);
