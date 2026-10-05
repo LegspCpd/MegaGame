@@ -80,13 +80,27 @@ namespace Megame.Client
 
         private void DrawTopLeft(PlayablePlayer player)
         {
-            var r = new Rect(12f, 12f, 320f, 78f);
+            var r = new Rect(12f, 12f, 320f, 100f);
             GUI.Box(r, GUIContent.none, _panel);
             GUI.Label(new Rect(r.x + 10f, r.y + 6f, 300f, 24f), "MEGAME", _title);
 
             string pos = player != null ? player.transform.position.ToString("F1") : "-";
             GUI.Label(new Rect(r.x + 10f, r.y + 32f, 300f, 20f), $"FPS  {_fps:F0}", _label);
             GUI.Label(new Rect(r.x + 10f, r.y + 52f, 300f, 20f), $"POS  {pos}", _label);
+
+            // Surface the real network state instead of hiding failures.
+            var client = GameClient.Instance;
+            if (client == null)
+            {
+                GUI.Label(new Rect(r.x + 10f, r.y + 72f, 300f, 20f), "NET  offline", _label);
+            }
+            else
+            {
+                string state = client.IsConnected
+                    ? $"connected  id={client.LocalPlayerId}  tick={client.ServerTick}"
+                    : "connecting to localhost:50051 ...";
+                GUI.Label(new Rect(r.x + 10f, r.y + 72f, 300f, 20f), $"NET  {state}", _label);
+            }
         }
 
         private void DrawBars(PlayablePlayer player)

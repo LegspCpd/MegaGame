@@ -573,8 +573,18 @@ namespace Megame.Client
             GameObject go;
             lock (stack)
             {
-                go = stack.Count > 0 ? stack.Pop() : Object.Instantiate(_prefabs[type]);
+                go = stack.Count > 0 ? stack.Pop() : null;
             }
+
+            if (go == null)
+            {
+                // No prefab registered (or it was left null): fall back to a
+                // placeholder rather than throwing inside the snapshot loop.
+                _prefabs.TryGetValue(type, out var prefab);
+                if (prefab != null) go = Object.Instantiate(prefab);
+                else go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            }
+
             go.SetActive(true);
             return go;
         }
@@ -626,13 +636,13 @@ namespace Megame.Client
         public void Initialize(uint owner, float3 position, float3 velocity, int damage, float lifeTime)
         {
             OwnerId = owner;
-            GameObject.transform.position = position.ToVector3();
-            Rigidbody.velocity = velocity.ToVector3();
+            if (GameObject != null) GameObject.transform.position = position.ToVector3();
+            if (Rigidbody != null) Rigidbody.velocity = velocity.ToVector3();
             Damage = damage;
             LifeTime = lifeTime;
             SpawnTime = Time.time;
-            Trail.Clear();
-            GameObject.SetActive(true);
+            if (Trail != null) Trail.Clear();
+            if (GameObject != null) GameObject.SetActive(true);
         }
 
         public bool IsExpired => Time.time - SpawnTime > LifeTime;

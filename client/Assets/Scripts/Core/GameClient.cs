@@ -95,13 +95,19 @@ namespace Megame.Client
 
         private async void Start()
         {
-            if (autoConnect)
+            if (!autoConnect) return;
+
+            // The server may not be up yet, or a transient failure (server
+            // restart, Wi-Fi blip) would otherwise leave us permanently offline.
+            while (!_connected && enabled)
             {
                 await ConnectAsync();
+                if (_connected) break;
+                await System.Threading.Tasks.Task.Delay(3000);
             }
         }
 
-        public async Task ConnectAsync()
+        public async Task<bool> ConnectAsync()
         {
             try
             {
@@ -118,11 +124,25 @@ namespace Megame.Client
 
                 _connected = true;
                 Debug.Log("Connected to server");
+                return true;
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"Connection failed: {e.Message}");
+                _connected = false;
+                Debug.LogWarning($"Connection failed ({e.GetType().Name}), retrying in 3s: {e.Message}");
+                SafeCloseChannel();
+                return false;
             }
+        }
+
+        private void SafeCloseChannel()
+        {
+            try { _stream?.RequestStream.CompleteAsync(); }
+            catch (System.Exception) { }
+            try { _channel?.ShutdownAsync().Wait(200); }
+            catch (System.Exception) { }
+            _stream = null;
+            _channel = null;
         }
 
         private async Task ReceiveLoopAsync()
@@ -263,11 +283,58 @@ namespace Megame.Client
             }
 
             GameObject prefab = GetPrefabForType(type);
+            if (prefab == null)
+            {
+                // No prefab was authored for this entity type (the project ships
+                // none). Instantiating null would throw inside the snapshot
+                // handler, so fall back to a plain placeholder.
+                prefab = CreatePlaceholder(type);
+            }
             var go = Instantiate(prefab);
             go.name = $"{type}_{entityId}";
             _entities[entityId] = go;
 
             return go;
+        }
+
+        private static GameObject CreatePlaceholder(EntityType type)
+        {
+            PrimitiveType shape;
+            switch (type)
+            {
+                case EntityType.Vehicle: shape = PrimitiveType.Cube; break;
+                case EntityType.Weapon: shape = PrimitiveType.Cube; break;
+                case EntityType.Npc: shape = PrimitiveType.Capsule; break;
+                default: shape = PrimitiveType.Capsule; break;
+            }
+
+            var go = GameObject.CreatePrimitive(shape);
+            go.name = $"placeholder_{type}";
+
+            float scale = type == EntityType.Vehicle ? 1.8f : 0.8f;
+            go.transform.localScale = new Vector3(scale, shape == PrimitiveType.Capsule ? scale : scale * 0.5f, scale);
+
+            go.GetComponent<MeshRenderer>().sharedMaterial =
+                PlayableWorld.NewMaterial(PlaceholderColor(type));
+
+            // Placeholder prims ship with a collider; network entities should
+            // not block the local player.
+            var col = go.GetComponent<Collider>();
+            if (col != null) Destroy(col);
+
+            return go;
+        }
+
+        // Megame.Common also declares a proto Color; bind this one explicitly.
+        private static UnityEngine.Color PlaceholderColor(EntityType type)
+        {
+            switch (type)
+            {
+                case EntityType.Player: return new UnityEngine.Color(0.95f, 0.75f, 0.30f);
+                case EntityType.Vehicle: return new UnityEngine.Color(0.85f, 0.30f, 0.30f);
+                case EntityType.Weapon: return new UnityEngine.Color(0.35f, 0.35f, 0.40f);
+                default: return new UnityEngine.Color(0.55f, 0.55f, 0.60f);
+            }
         }
 
         private GameObject GetPrefabForType(EntityType type)
@@ -284,8 +351,10 @@ namespace Megame.Client
 
         private void OnDestroy()
         {
-            _stream?.RequestStream.CompleteAsync();
-            _channel?.ShutdownAsync().Wait();
+            _connected = false;
+            // Bounded wait: a dead server would otherwise hang OnDestroy and
+            // freeze the player on quit.
+            SafeCloseChannel();
         }
     }
 }
