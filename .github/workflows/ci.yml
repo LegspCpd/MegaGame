@@ -305,6 +305,23 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends wine64
 
+          # The Debian/Ubuntu wine packaging renamed the binary across releases
+          # (wine64 on some images, plain wine on Ubuntu 24.04), so probe for a
+          # working name instead of hard-coding one. Exit 127 here is what
+          # v1.0.195 hit.
+          WINE=""
+          for candidate in wine wine64 wine-stable wine-development; do
+            if command -v "$candidate" >/dev/null 2>&1; then
+              WINE="$candidate"
+              break
+            fi
+          done
+          if [ -z "$WINE" ]; then
+            echo "::error::No wine executable found after installing wine64"
+            exit 1
+          fi
+          echo "Using wine: $WINE"
+
           # The /is/6/ index only lists .issig signature files, not installers, so
           # resolve the real URL from the official download page instead. It
           # points at the GitHub release for the current Inno Setup, so this
@@ -323,7 +340,7 @@ jobs:
           # Install into the prefix as the runner user so ISCC, run with the
           # same WINEPREFIX, can see it.
           mkdir -p /tmp/innosetup
-          wine64 /tmp/innosetup.exe /VERYSILENT /SUPPRESSMSGBOXES \
+          "$WINE" /tmp/innosetup.exe /VERYSILENT /SUPPRESSMSGBOXES \
             /NORESTART /SP- /DIR='C:\innosetup'
           ISCC="$(ls /tmp/wineprefix/drive_c/innosetup/ISCC.exe 2>/dev/null || true)"
           if [ -z "$ISCC" ]; then
@@ -331,13 +348,14 @@ jobs:
             ls -R /tmp/wineprefix/drive_c/innosetup || true
             exit 1
           fi
+          echo "Using ISCC: $ISCC"
 
           mkdir -p dist/windows/publish
           cp -r build/windows/. dist/windows/publish/
 
           # ISCC resolves Source: paths relative to the script location, and the
-          # script uses ..\dist\windows\publish, so run it from client\build.
-          wine64 "$ISCC" /DMyAppVersion=${{ github.ref_name }} \
+          # script uses ..\..\..\dist\windows\publish, so run it from client\build.
+          "$WINE" "$ISCC" /DMyAppVersion=${{ github.ref_name }} \
             client/build/installer/MegaGame.iss
           ls -la dist/
 
