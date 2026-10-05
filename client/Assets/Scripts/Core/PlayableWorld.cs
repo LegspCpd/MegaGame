@@ -171,30 +171,74 @@ namespace Megame.Client
 
         private static void CreateBuilding(float x, float z, float w, float d, float h, System.Random rnd)
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = "Building";
-            go.transform.position = new Vector3(x, h / 2f, z);
-            go.transform.localScale = new Vector3(w, h, d);
-
             float shade = 0.34f + (float)rnd.NextDouble() * 0.26f;
-            var mat = NewMaterial(new Color(shade, shade * 0.97f, shade * 0.92f));
-            go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            var bodyMat = NewMaterial(new Color(shade, shade * 0.97f, shade * 0.92f));
+            var trimMat = NewMaterial(new Color(shade * 0.55f, shade * 0.55f, shade * 0.58f));
 
-            // Emissive window bands so the skyline reads as a city at night-ish light.
+            // Two stacked masses with a setback, so the silhouette steps back
+            // instead of reading as one extruded rectangle.
+            float lowerH = h * (0.55f + 0.25f * (float)rnd.NextDouble());
+            float upperH = h - lowerH;
+            bool hasUpper = upperH > 4f;
+            float inset = hasUpper ? 0.8f + 1.4f * (float)rnd.NextDouble() : 0f;
+            float twist = hasUpper ? (float)(rnd.NextDouble() * 12f - 6f) : 0f;
+
+            var mb = new MeshBuilder();
+            mb.AddSetbackTower(
+                Vector3.zero,
+                w, d,
+                lowerH,
+                hasUpper ? upperH : 0.01f,
+                inset,
+                twist,
+                uvScale: Mathf.Max(1f, Mathf.Max(w, d) * 0.35f));
+
+            // Root sits on the ground; the mesh is built in local space so the
+            // transform stays a clean parent for roof cap and window bands.
+            var root = new GameObject("Building");
+            root.transform.position = new Vector3(x, 0f, z);
+
+            var body = mb.ToObject("BuildingBody", bodyMat, Vector3.zero);
+            body.transform.SetParent(root.transform, false);
+
+            var col = root.AddComponent<BoxCollider>();
+            col.size = new Vector3(w, h, d);
+            col.center = new Vector3(0f, h * 0.5f, 0f);
+
+            // Ground-floor band gives the street level some read.
+            var baseTrim = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            baseTrim.name = "BuildingBase";
+            baseTrim.transform.SetParent(root.transform, false);
+            baseTrim.transform.localPosition = new Vector3(0f, 1.1f, 0f);
+            baseTrim.transform.localScale = new Vector3(w + 0.5f, 2.2f, d + 0.5f);
+            baseTrim.GetComponent<MeshRenderer>().sharedMaterial = trimMat;
+
+            if (hasUpper)
+            {
+                var roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                roof.name = "RoofCap";
+                roof.transform.SetParent(root.transform, false);
+                roof.transform.localPosition = new Vector3(0f, h + 0.25f, 0f);
+                roof.transform.localScale = new Vector3(
+                    Mathf.Max(0.5f, w - inset * 2f), 0.5f, Mathf.Max(0.5f, d - inset * 2f));
+                roof.transform.localRotation = Quaternion.Euler(0f, twist, 0f);
+                StripCollider(roof);
+                roof.GetComponent<MeshRenderer>().sharedMaterial = trimMat;
+            }
+
+            // Emissive window bands on the lower shaft.
             if (h > 20f)
             {
-                for (int f = 1; f < (int)(h / 6f); f++)
+                var windowMat = NewMaterial(new Color(0.9f, 0.85f, 0.6f), true);
+                int floors = Mathf.Max(1, (int)(lowerH / 6f));
+                for (int f = 1; f < floors; f++)
                 {
                     var band = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     band.name = "WindowBand";
-                    band.transform.SetParent(go.transform, false);
-                    // localScale is relative to the parent, which is already
-                    // scaled to (w, h, d). Mixing a ratio (1.006) on one axis
-                    // with world units on another makes the band explode.
-                    band.transform.localPosition = new Vector3(0f, -0.5f + (f * 6f) / h, 0f);
-                    band.transform.localScale = new Vector3(1.004f, 0.06f, 1.004f);
+                    band.transform.SetParent(root.transform, false);
+                    band.transform.localPosition = new Vector3(0f, f * 6f, 0f);
+                    band.transform.localScale = new Vector3(w * 1.004f, 1.1f, d * 1.004f);
                     StripCollider(band);
-                    var windowMat = NewMaterial(new Color(0.9f, 0.85f, 0.6f), true);
                     band.GetComponent<MeshRenderer>().sharedMaterial = windowMat;
                 }
             }
