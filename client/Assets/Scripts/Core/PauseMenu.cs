@@ -43,7 +43,10 @@ namespace Megame.Client
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Escape))
+            // Input System, matching PlayablePlayer/PlayableCameraRig: with
+            // activeInputHandler=Both the legacy Input class is disabled.
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (kb != null && kb[UnityEngine.InputSystem.Key.Escape].wasPressedThisFrame)
             {
                 Toggle();
             }
@@ -68,7 +71,9 @@ namespace Megame.Client
             }
             else
             {
-                CursorLock();
+                // Re-capture after a short delay so the click that dismissed the
+                // menu does not also click a HUD button through the UI.
+                _cursorLockTimeout = 0.15f;
                 Time.timeScale = 1f;
             }
         }

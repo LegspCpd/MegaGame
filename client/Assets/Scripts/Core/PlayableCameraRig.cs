@@ -12,6 +12,20 @@ namespace Megame.Client
         public static Vector3 Forward { get; private set; } = Vector3.forward;
         public static Vector3 Right { get; private set; } = Vector3.right;
 
+        /// <summary>
+        /// Mouse delta accumulated this frame. The weapon reads and clears it so
+        /// look input drives both the camera and the view model without either
+        /// one having to poll the mouse independently.
+        /// </summary>
+        private static Vector2 _lookDelta;
+
+        public static Vector2 ConsumeLookDelta()
+        {
+            var d = _lookDelta;
+            _lookDelta = Vector2.zero;
+            return d;
+        }
+
         public float Distance = 7.5f;
         public float MinDistance = 2f;
         public float MaxDistance = 16f;
@@ -27,7 +41,7 @@ namespace Megame.Client
         private float _pitchVel;
         private Vector3 _followVel;
 
-        public static void AttachTo(Transform target)
+        public static PlayableCameraRig AttachTo(Transform target)
         {
             var cam = Camera.main;
             if (cam == null)
@@ -44,6 +58,7 @@ namespace Megame.Client
             var rig = cam.gameObject.GetComponent<PlayableCameraRig>();
             if (rig == null) rig = cam.gameObject.AddComponent<PlayableCameraRig>();
             rig.Init(target);
+            return rig;
         }
 
         private void Init(Transform target)
@@ -52,6 +67,17 @@ namespace Megame.Client
             _camera = GetComponent<Camera>();
             _yaw = target != null ? target.eulerAngles.y : 0f;
             _zoom = Distance;
+        }
+
+        /// <summary>Switch what the camera orbits (player body vs vehicle).</summary>
+        public void Follow(Transform target)
+        {
+            _target = target;
+            if (target != null)
+            {
+                _yaw = target.eulerAngles.y;
+                _pitch = 14f;
+            }
         }
 
         private void LateUpdate()
@@ -87,29 +113,45 @@ namespace Megame.Client
         {
             float mx = 0f, my = 0f;
 
-            if (Input.GetMouseButton(1) || Input.GetKey(KeyCode.LeftAlt))
+            // Input System rather than the legacy Input class: with
+            // activeInputHandler=Both the new backend wins and Input.GetKey
+            // silently stops responding.
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+
+            bool lookHeld = (mouse != null && mouse.rightButton.isPressed) ||
+                            (kb != null && kb[UnityEngine.InputSystem.Key.LeftAlt].isPressed);
+
+            if (lookHeld)
             {
-                mx = Input.GetAxisRaw("Mouse X") * Sensitivity;
-                my = Input.GetAxisRaw("Mouse Y") * Sensitivity;
+                var delta = mouse != null ? mouse.delta.ReadValue() : Vector2.zero;
+                mx += delta.x * Sensitivity;
+                my += delta.y * Sensitivity;
+
+                // Publish for the weapon so recoil and look stay in sync.
+                _lookDelta += delta;
             }
 
-            // Keyboard look, so the game is playable without a mouse capture.
-            if (Input.GetKey(KeyCode.LeftArrow)) my += 2.2f;
-            if (Input.GetKey(KeyCode.RightArrow)) my -= 2.2f;
-            if (Input.GetKey(KeyCode.UpArrow)) mx += 2.2f;
-            if (Input.GetKey(KeyCode.DownArrow)) mx -= 2.2f;
+            if (kb != null)
+            {
+                // Keyboard look, so the game is playable without a mouse.
+                if (kb[UnityEngine.InputSystem.Key.LeftArrow].isPressed) my += 2.2f;
+                if (kb[UnityEngine.InputSystem.Key.RightArrow].isPressed) my -= 2.2f;
+                if (kb[UnityEngine.InputSystem.Key.UpArrow].isPressed) mx += 2.2f;
+                if (kb[UnityEngine.InputSystem.Key.DownArrow].isPressed) mx -= 2.2f;
+                if (kb[UnityEngine.InputSystem.Key.Q].isPressed) _yaw -= 2.2f;
+                if (kb[UnityEngine.InputSystem.Key.E].isPressed) _yaw += 2.2f;
+            }
 
-            if (Input.GetKey(KeyCode.Q)) _yaw -= 2.2f;
-            if (Input.GetKey(KeyCode.E)) _yaw += 2.2f;
+            if (mouse != null)
+            {
+                float scroll = mouse.scroll.ReadValue().y / 120f;
+                if (Mathf.Abs(scroll) > 0.001f)
+                    _zoom = Mathf.Clamp(_zoom - scroll * 6f, MinDistance, MaxDistance);
+            }
 
             _yaw += mx;
             _pitch = Mathf.Clamp(_pitch - my, -25f, 70f);
-
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (Mathf.Abs(scroll) > 0.001f)
-            {
-                _zoom = Mathf.Clamp(_zoom - scroll * 6f, MinDistance, MaxDistance);
-            }
         }
     }
 }

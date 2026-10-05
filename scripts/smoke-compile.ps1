@@ -11,6 +11,16 @@ $src = @()
 $src += Get-ChildItem $repo -Recurse -Filter *.cs | ForEach-Object { $_.FullName }
 if (Test-Path $protoSrc) { $src += Get-ChildItem $protoSrc -Filter *.cs | ForEach-Object { $_.FullName } }
 
+# The Input System package ships as source, not a DLL. Without its sources the
+# keyboard/mouse code in the playable layer is never type-checked, so pull the
+# package in when it is present locally.
+$isSrc = Join-Path $env:TEMP 'ispkg\package\InputSystem'
+if (Test-Path $isSrc) {
+    $src += Get-ChildItem $isSrc -Recurse -Filter *.cs |
+        Where-Object { $_.FullName -notmatch '\\(Editor|Tests)\\' } |
+        ForEach-Object { $_.FullName }
+}
+
 # 2) references: net8 ref pack + Unity 6000 Managed (broken install, DLLs intact) + vendored grpc
 $refs = @()
 $refDir = 'C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.31\ref\net8.0'

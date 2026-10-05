@@ -120,6 +120,35 @@ namespace Megame.Client
             GUI.DrawTexture(new Rect(x, y + h + 4f, w, h), _staminaBg);
             GUI.DrawTexture(new Rect(x, y + h + 4f, w * Mathf.Clamp01(stamina / maxStamina), h), _staminaFill);
             GUI.Label(new Rect(x, y + h - 16f, w, 18f), "STAMINA", _label);
+
+            DrawWeapon(x, y);
+            DrawPrompt();
+        }
+
+        private void DrawWeapon(float x, float y)
+        {
+            var weapon = Object.FindObjectOfType<PlayableWeapon>();
+            if (weapon == null || !weapon.gameObject.activeInHierarchy) return;
+
+            string ammo = weapon.IsReloading
+                ? "RELOADING..."
+                : $"{weapon.AmmoInMag} / {weapon.AmmoReserve}";
+            GUI.Label(new Rect(x, y - 42f, 220f, 20f), $"AMMO  {ammo}", _label);
+        }
+
+        private void DrawPrompt()
+        {
+            var interaction = Object.FindObjectOfType<PlayablePlayerInteraction>();
+            if (interaction == null || string.IsNullOrEmpty(interaction.Prompt)) return;
+
+            var style = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 18,
+                alignment = TextAnchor.MiddleCenter,
+                fontStyle = FontStyle.Bold
+            };
+            style.normal.textColor = new Color(1f, 0.9f, 0.4f);
+            GUI.Label(new Rect(0f, Screen.height - 210f, Screen.width, 26f), interaction.Prompt, style);
         }
 
         private void DrawHelp()
@@ -131,10 +160,12 @@ namespace Megame.Client
                 "WASD / Arrows .... Move\n" +
                 "Shift .............. Sprint\n" +
                 "Ctrl ............... Crouch\n" +
-                "Space .............. Jump\n" +
+                "Space .............. Jump / Handbrake\n" +
                 "Right mouse ....... Look\n" +
                 "Q / E .............. Rotate camera\n" +
-                "Scroll ............. Zoom\n" +
+                "Left click ......... Fire\n" +
+                "R .................. Reload\n" +
+                "F .................. Enter / exit car\n" +
                 "ESC ................ Menu / Save",
                 _label);
         }

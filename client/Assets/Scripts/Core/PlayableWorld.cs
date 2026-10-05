@@ -46,9 +46,12 @@ namespace Megame.Client
 
             var spawn = new Vector3(0f, 1.2f, -RoadWidth * 0.5f - 2f);
             var player = PlayablePlayer.Create(spawn);
-            PlayableCameraRig.AttachTo(player.transform);
+            var rig = PlayableCameraRig.AttachTo(player.transform);
+            var weapon = PlayableWeapon.Create(Camera.main, PlayableWeapon.WeaponKind.Rifle);
+
             PlayableHUD.Ensure();
             PauseMenu.Ensure();
+            PlayablePlayerInteraction.Create(player, weapon, rig);
         }
 
         private static void SetupEnvironment()
@@ -80,9 +83,17 @@ namespace Megame.Client
         {
             var ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
             ground.name = "Ground";
-            ground.transform.position = new Vector3(0f, -0.5f, 0f);
-            ground.transform.localScale = new Vector3(600f, 1f, 600f);
-            StripCollider(ground);
+            ground.transform.position = new Vector3(0f, -1f, 0f);
+            ground.transform.localScale = new Vector3(600f, 2f, 600f);
+            // The ground MUST keep a collider: the player's CharacterController
+            // only reports isGrounded when it is standing on one.
+            var groundCol = ground.GetComponent<BoxCollider>();
+            if (groundCol != null)
+            {
+                groundCol.size = new Vector3(600f, 2f, 600f);
+                groundCol.center = Vector3.zero;
+            }
+            ground.isStatic = true;
 
             var mat = NewMaterial(new Color(0.24f, 0.30f, 0.22f));
             ground.GetComponent<MeshRenderer>().sharedMaterial = mat;
@@ -111,7 +122,15 @@ namespace Megame.Client
             slab.name = name;
             slab.transform.position = pos;
             slab.transform.localScale = scale;
-            StripCollider(slab);
+            // Roads keep their collider too, but they sit flush on the ground so
+            // the top face stays walkable without stepping on a curb.
+            var col = slab.GetComponent<BoxCollider>();
+            if (col != null)
+            {
+                col.size = Vector3.one;
+                col.center = Vector3.zero;
+            }
+            slab.isStatic = true;
             return slab;
         }
 
@@ -169,8 +188,11 @@ namespace Megame.Client
                     var band = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     band.name = "WindowBand";
                     band.transform.SetParent(go.transform, false);
-                    band.transform.localPosition = new Vector3(0f, -0.5f + f * 6f / h, 0f);
-                    band.transform.localScale = new Vector3(1.006f, 0.22f, 1.006f);
+                    // localScale is relative to the parent, which is already
+                    // scaled to (w, h, d). Mixing a ratio (1.006) on one axis
+                    // with world units on another makes the band explode.
+                    band.transform.localPosition = new Vector3(0f, -0.5f + (f * 6f) / h, 0f);
+                    band.transform.localScale = new Vector3(1.004f, 0.06f, 1.004f);
                     StripCollider(band);
                     var windowMat = NewMaterial(new Color(0.9f, 0.85f, 0.6f), true);
                     band.GetComponent<MeshRenderer>().sharedMaterial = windowMat;
@@ -224,21 +246,19 @@ namespace Megame.Client
             {
                 for (int bz = -half; bz < BlocksPerAxis - half; bz++)
                 {
-                    float x = bx * BlockSize + BlockSize / 2f;
-                    float z = bz * BlockSize + BlockSize / 2f;
-                    if (rnd.NextDouble() > 0.55) continue;
+                    if (rnd.NextDouble() > 0.42) continue;
 
-                    var car = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    car.name = "ParkedCar";
+                    // Real drivable cars, not boxes: the player can press F next
+                    // to any of these and drive it.
                     float angle = rnd.Next(4) * 90f;
                     bool alongZ = angle == 0 || angle == 180;
-                    car.transform.position = new Vector3(x + (alongZ ? RoadWidth * 0.38f : 0f), 0.45f,
-                                                          z + (alongZ ? 0f : RoadWidth * 0.38f));
-                    car.transform.rotation = Quaternion.Euler(0f, angle, 0f);
-                    car.transform.localScale = alongZ
-                        ? new Vector3(1.8f, 0.9f, 4.2f)
-                        : new Vector3(4.2f, 0.9f, 1.8f);
-                    car.GetComponent<MeshRenderer>().sharedMaterial = NewMaterial(ColorFromHue((float)rnd.NextDouble()));
+                    float x = bx * BlockSize + BlockSize / 2f + (alongZ ? RoadWidth * 0.30f : 0f);
+                    float z = bz * BlockSize + BlockSize / 2f + (alongZ ? 0f : RoadWidth * 0.30f);
+
+                    PlayableVehicle.Create(
+                        new Vector3(x, 0.05f, z),
+                        Quaternion.Euler(0f, angle, 0f),
+                        ColorFromHue((float)rnd.NextDouble()));
                 }
             }
         }
@@ -263,6 +283,9 @@ namespace Megame.Client
 
         private static void StripCollider(GameObject go)
         {
+            // Only ever call this on decoration. The ground, roads, buildings and
+            // props MUST keep their colliders or the CharacterController never
+            // reports isGrounded and the player falls through the world.
             var col = go.GetComponent<Collider>();
             if (col != null) Object.Destroy(col);
         }
