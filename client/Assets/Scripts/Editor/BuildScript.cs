@@ -106,11 +106,17 @@ namespace Megame.Client
             PlayerSettings.SetUseDefaultGraphicsAPIs(target, false);
             if (target == BuildTarget.StandaloneLinux64)
             {
-                PlayerSettings.SetGraphicsAPIs(target, new[] { UnityEngine.Rendering.GraphicsDeviceType.Vulkan, UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+                PlayerSettings.SetGraphicsAPIs(target, new[] {
+                    UnityEngine.Rendering.GraphicsDeviceType.Vulkan,
+                    UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
             }
             else
             {
-                PlayerSettings.SetGraphicsAPIs(target, new[] { UnityEngine.Rendering.GraphicsDeviceType.Direct3D11, UnityEngine.Rendering.GraphicsDeviceType.Vulkan, UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+                // OpenGLES3 does not exist as a desktop backend on Windows;
+                // leaving it in the list makes the player fail to start.
+                PlayerSettings.SetGraphicsAPIs(target, new[] {
+                    UnityEngine.Rendering.GraphicsDeviceType.Direct3D11,
+                    UnityEngine.Rendering.GraphicsDeviceType.Vulkan });
             }
         }
 

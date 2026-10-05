@@ -182,10 +182,32 @@ jobs:
           retention-days: 7
 
   unity-build:
-    name: Unity Client Build
+    name: Unity Client Build (${{ matrix.target.label }})
     needs: protobuf
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
+    strategy:
+      # Linux and Windows are both published; Windows is the platform the dev
+      # box runs. fail-fast is off so one broken target still reports the other.
+      fail-fast: false
+      matrix:
+        target:
+          - label: linux
+            unityTarget: StandaloneLinux64
+            buildTarget: linux
+            folder: linux
+            binary: MegaGame
+            archive: linux-amd64
+            packageCommand: >-
+              tar -czf megame-client-${{ github.ref_name }}-linux-amd64.tar.gz -C build/linux .
+          - label: windows
+            unityTarget: StandaloneWindows64
+            buildTarget: windows
+            folder: windows
+            binary: MegaGame.exe
+            archive: windows-amd64
+            packageCommand: >-
+              zip -q -r megame-client-${{ github.ref_name }}-windows-amd64.zip build/windows
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -227,44 +249,50 @@ jobs:
       # manualLicenseFile branch was removed in v4, so all three secrets are
       # required; there is no separate pre-activation step (unity-activate runs
       # in a throwaway container and its result never reaches this one).
-      - name: Build Unity Project (Linux)
+      # Builds the client for every desktop platform we ship. The Windows
+      # player is what the dev machine actually runs, so both are produced.
+      # matrix.target drives targetPlatform / the output folder / the archive
+      # name; BuildScript.PerformClientBuild also reads UNITY_BUILD_TARGET.
+      - name: Build Unity Project (${{ matrix.target.label }})
         uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_BUILD_TARGET: ${{ matrix.target.buildTarget }}
         with:
           unityVersion: ${{ env.UNITY_VERSION }}
           projectPath: client
-          targetPlatform: StandaloneLinux64
+          targetPlatform: ${{ matrix.target.unityTarget }}
           buildMethod: Megame.Client.BuildScript.PerformClientBuild
-          customParameters: -buildVersion ${{ github.ref_name }} -outputPath /github/workspace/build/linux
+          customParameters: -buildVersion ${{ github.ref_name }} -outputPath /github/workspace/build/${{ matrix.target.folder }}
           versioning: None
           allowDirtyBuild: true
 
-      - name: Verify player was produced
+      - name: Verify player was produced (${{ matrix.target.label }})
         run: |
           set -euo pipefail
-          if [ ! -f build/linux/MegaGame ]; then
-            echo "::error::No Linux player at build/linux/MegaGame"
+          if [ ! -f "build/${{ matrix.target.folder }}/${{ matrix.target.binary }}" ]; then
+            echo "::error::No player at build/${{ matrix.target.folder }}/${{ matrix.target.binary }}"
             find build -maxdepth 3 -type f | head -20 || true
             exit 1
           fi
           # unity-builder builds inside a container as root, so the player is owned
           # by root and a plain chmod fails with EPERM. The Unity player is already
           # executable, so this is best-effort only and must not fail the job.
-          chmod +x build/linux/MegaGame 2>/dev/null || sudo chmod +x build/linux/MegaGame || true
-          ls -la build/linux/
+          chmod +x "build/${{ matrix.target.folder }}/${{ matrix.target.binary }}" 2>/dev/null \
+            || sudo chmod +x "build/${{ matrix.target.folder }}/${{ matrix.target.binary }}" || true
+          ls -la "build/${{ matrix.target.folder }}/"
 
-      - name: Package Linux client
-        run: tar -czf megame-client-${{ github.ref_name }}-linux-amd64.tar.gz -C build/linux .
+      - name: Package client (${{ matrix.target.label }})
+        run: ${{ matrix.target.packageCommand }}
 
-      - name: Upload Linux build
+      - name: Upload ${{ matrix.target.label }} build
         uses: actions/upload-artifact@v4
         with:
-          name: megame-linux
+          name: megame-client-${{ matrix.target.label }}
           path: |
-            megame-client-${{ github.ref_name }}-linux-amd64.tar.gz
+            megame-client-${{ github.ref_name }}-${{ matrix.target.archive }}.*
           retention-days: 7
 
   docker-build:
