@@ -606,10 +606,10 @@ namespace Megame.Systems
     
     public class PedestrianDriver : MonoBehaviour
     {
-        public PedestrianDefinition definition;
+        public VehicleDefinitionData definition;
         public TrafficVehicle vehicle;
         
-        public void Initialize(PedestrianDefinition def, TrafficVehicle veh)
+        public void Initialize(VehicleDefinitionData def, TrafficVehicle veh)
         {
             definition = def;
             vehicle = veh;

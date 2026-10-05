@@ -276,7 +276,7 @@ namespace Megame.Client
             phoneRoot.SetActive(active);
             if (active)
             {
-                phoneUI.RefreshUI();
+                _client.phoneManager.RefreshUI();
             }
         }
     }

@@ -450,8 +450,9 @@ namespace Megame.Client
         {
             TotalAllocated = Profiler.GetTotalAllocatedMemoryLong();
             TotalReserved = Profiler.GetTotalReservedMemoryLong();
-            MonoUsed = Profiler.GetMonoUsedMemoryLong();
-            MonoReserved = Profiler.GetMonoHeapSizeLong();
+            // Unity 2022.3 没有 GetMonoUsedMemoryLong / GetMonoHeapSizeLong，用 GC 替代
+            MonoUsed = System.GC.GetTotalMemory(false);
+            MonoReserved = Profiler.GetTotalReservedMemoryLong();
 
             int currentGC = System.GC.CollectionCount(0) + System.GC.CollectionCount(1) + System.GC.CollectionCount(2);
             GCMemoryDelta = TotalAllocated - _lastGCMemory;
