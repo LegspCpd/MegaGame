@@ -312,7 +312,8 @@ namespace Megame.Client
             go.name = $"placeholder_{type}";
 
             float scale = type == EntityType.Vehicle ? 1.8f : 0.8f;
-            go.transform.localScale = new Vector3(scale, shape == PrimitiveType.Capsule ? scale : scale * 0.5f, scale);
+            go.transform.localScale = new UnityEngine.Vector3(
+                scale, shape == PrimitiveType.Capsule ? scale : scale * 0.5f, scale);
 
             go.GetComponent<MeshRenderer>().sharedMaterial =
                 PlayableWorld.NewMaterial(PlaceholderColor(type));
