@@ -305,18 +305,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends wine64
 
-          # Do not pin the version: jrsoftware drops older installers from the
-          # index and a pinned URL eventually 404s (curl exit 22).
-          INNO_URL="$(curl -fsSL https://files.jrsoftware.org/is/6/ \
-            | grep -oE 'innosetup-[0-9]+\.[0-9]+\.[0-9]+\.exe' \
-            | sort -Vu | tail -n1 \
-            | sed 's|^|https://files.jrsoftware.org/is/6/|')"
+          # The /is/6/ index only lists .issig signature files, not installers, so
+          # resolve the real URL from the official download page instead. It
+          # points at the GitHub release for the current Inno Setup, so this
+          # keeps working when the version changes.
+          INNO_URL="$(curl -fsSL https://jrsoftware.org/isdl.php \
+            | grep -oE 'https://github\.com/jrsoftware/issrc/releases/download/[^"'"'"'<> ]*innosetup-[0-9.]+-x64\.exe' \
+            | head -n1)"
           if [ -z "$INNO_URL" ]; then
             echo "::error::Could not resolve an Inno Setup download URL"
             exit 1
           fi
           echo "Using $INNO_URL"
           curl -fsSL -o /tmp/innosetup.exe "$INNO_URL"
+          test -s /tmp/innosetup.exe || { echo "::error::downloaded file is empty"; exit 1; }
 
           # Install into the prefix as the runner user so ISCC, run with the
           # same WINEPREFIX, can see it.
