@@ -375,8 +375,20 @@ jobs:
             "/DPublishDir=$stage" `
             "/DOutputDirOverride=$out" `
             "/DMyAppVersion=${{ github.ref_name }}" `
-            'client\build\installer\MegaGame.iss'
-          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
+            'client\build\installer\MegaGame.iss' 2>&1 |
+            Tee-Object -FilePath "$env:RUNNER_TEMP\iscc.log"
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "--- ISCC output ---"
+            Get-Content "$env:RUNNER_TEMP\iscc.log"
+            # Surface the exact ISPP values the compiler saw, which is where a
+            # "cannot find the path" without a line number usually comes from.
+            Write-Host "--- PublishDir contents (first 10) ---"
+            Get-ChildItem $stage | Select-Object -First 10 Name
+            Write-Host "--- script ---"
+            Get-Content 'client\build\installer\MegaGame.iss' | Select-Object -First 40
+            throw "ISCC failed with exit code $LASTEXITCODE"
+          }
 
           $setup = Get-ChildItem $out -Filter '*.exe'
           if (-not $setup) { throw 'ISCC produced no installer' }
