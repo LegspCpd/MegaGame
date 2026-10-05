@@ -202,7 +202,7 @@ jobs:
               tar -czf megame-client-${{ github.ref_name }}-linux-amd64.tar.gz -C build/linux .
           - label: windows
             unityTarget: StandaloneWindows64
-            buildTarget: windows
+            buildTarget: StandaloneWindows64
             folder: windows
             binary: MegaGame.exe
             archive: windows-amd64
