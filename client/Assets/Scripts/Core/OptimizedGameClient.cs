@@ -51,6 +51,9 @@ namespace Megame.Client
         // Entity management with pooling
         private EntityPool _entityPool;
         private NativeHashMap<ulong, NativeEntityView> _entityViews;
+        // GameObjects are managed references and cannot live inside the Burst-compiled
+        // NativeEntityView (BC1051), so they are tracked here on the main thread only.
+        private readonly Dictionary<ulong, GameObject> _entityObjects = new Dictionary<ulong, GameObject>();
         private NativeQueue<EntityUpdate> _updateQueue;
         private JobHandle _updateJobHandle;
 
@@ -366,9 +369,9 @@ namespace Megame.Client
                 view.CurrentRotation = math.slerp(view.CurrentRotation, view.TargetRotation, t);
 
                 // Update GameObject transform (on main thread)
-                if (view.GameObject != null)
+                if (_entityObjects.TryGetValue(enumerator.Current.Key, out var go) && go != null)
                 {
-                    view.GameObject.transform.SetPositionAndRotation(
+                    go.transform.SetPositionAndRotation(
                         view.CurrentPosition.ToVector3(),
                         view.CurrentRotation.ToQuaternion()
                     );
@@ -405,8 +408,8 @@ namespace Megame.Client
 
         public GameObject GetOrCreateEntity(ulong entityId, EntityType type)
         {
-            if (_entityViews.TryGetValue(entityId, out var view) && view.GameObject != null)
-                return view.GameObject;
+            if (_entityObjects.TryGetValue(entityId, out var existing) && existing != null)
+                return existing;
 
             var go = _entityPool.Get(type);
             go.name = $"{type}_{entityId}";
@@ -415,21 +418,22 @@ namespace Megame.Client
             {
                 EntityId = entityId,
                 EntityType = type,
-                GameObject = go,
                 CurrentPosition = new float3(go.transform.position.x, go.transform.position.y, go.transform.position.z),
                 CurrentRotation = new quaternion(go.transform.rotation.x, go.transform.rotation.y, go.transform.rotation.z, go.transform.rotation.w)
             };
             _entityViews.TryAdd(entityId, newView);
+            _entityObjects[entityId] = go;
 
             return go;
         }
 
         public void ReturnEntity(ulong entityId)
         {
-            if (_entityViews.TryGetValue(entityId, out var view) && view.GameObject != null)
+            if (_entityViews.TryGetValue(entityId, out var view) && _entityObjects.TryGetValue(entityId, out var go) && go != null)
             {
-                _entityPool.Return(view.EntityType, view.GameObject);
+                _entityPool.Return(view.EntityType, go);
                 _entityViews.Remove(entityId);
+                _entityObjects.Remove(entityId);
             }
         }
 
@@ -438,6 +442,7 @@ namespace Megame.Client
             _updateJobHandle.Complete();
 
             _entityViews.Dispose();
+            _entityObjects.Clear();
             _updateQueue.Dispose();
             _predictedStates.Dispose();
             _snapshotHistory.Dispose();
@@ -460,7 +465,8 @@ namespace Megame.Client
     {
         public ulong EntityId;
         public EntityType EntityType;
-        public GameObject GameObject; // Not Burst-compatible, set on main thread only
+        // No managed references here: this struct lives in a NativeHashMap and is
+        // written by a [BurstCompile] job, so every field must be blittable.
         public float3 CurrentPosition;
         public quaternion CurrentRotation;
         public float3 TargetPosition;
