@@ -46,22 +46,36 @@ $out = & dotnet $csc "@$rspPath" 2>&1 | Out-String
 # 4) Only diagnostics in THIS repository are actionable. Errors inside the
 #    vendored package sources (InputSystem etc.) are noise that used to bury
 #    real errors, so they are counted separately and never reported as ours.
-#    Match on the 'client\Assets\' prefix: the compiler prints absolute paths for
-#    package sources and repo-relative paths for our own files.
+#
+# Do NOT filter on a path prefix. csc sometimes prints only the bare file name
+# (e.g. "MeshBuilder.cs(18,6): error CS0710") with no directory at all, so a
+# prefix match silently classified our own errors as third-party noise -- which
+# is exactly how a static-class-with-instance-members slipped through. Instead
+# exclude by the known third-party source roots, which are always absolute.
 $repoErrors = $out -split "`r?`n" | Where-Object {
-    $_ -match 'error CS\d+' -and $_ -match '[\\/]client[\\/]Assets[\\/]'
+    if ($_ -notmatch 'error CS\d+') { return $false }
+    # Third-party: InputSystem package sources and generated protobuf.
+    if ($_ -match 'ispkg' -or $_ -match 'clientcheck') { return $false }
+    return $true
 }
 
 $report = @()
-$report += "=== repo errors: $($repoErrors.Count) ==="
-$report += ($repoErrors | Sort-Object -Unique)
+# CS0246/CS0234 here mean "package assembly not referenced by this smoke build"
+# (TMPro, UnityEngine.UI, Unity.Collections, Unity.Mathematics). CI resolves the
+# real packages, so those are expected and must not be confused with real bugs.
+$knownMissing = $repoErrors | Where-Object { $_ -match 'error CS0246|error CS0234' }
+$actionable = $repoErrors | Where-Object { $_ -notmatch 'error CS0246|error CS0234' }
+
+$report += "=== actionable repo errors: $($actionable.Count) ==="
+$report += ($actionable | Sort-Object -Unique)
 $report += ''
-$report += '=== histogram (repo only) ==='
-$repoErrors | ForEach-Object { if ($_ -match 'error (CS\d+)') { $Matches[1] } } |
+$report += "=== expected package-reference noise: $($knownMissing.Count) (CS0246/CS0234) ==="
+$report += '=== histogram (actionable only) ==='
+$actionable | ForEach-Object { if ($_ -match 'error (CS\d+)') { $Matches[1] } } |
     Group-Object | Sort-Object Count -Descending |
     ForEach-Object { "$($_.Name) x$($_.Count)" }
 $report += ''
-$report += "(third-party package diagnostics suppressed)"
+$report += '(third-party package diagnostics suppressed)'
 $outPath = Join-Path $env:TEMP 'smoke-errors.txt'
 $report | Set-Content -LiteralPath $outPath -Encoding UTF8
-"output: $outPath  (repo errors $($repoErrors.Count))"
+"output: $outPath  (actionable $($actionable.Count) / package noise $($knownMissing.Count))"

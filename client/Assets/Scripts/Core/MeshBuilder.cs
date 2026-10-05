@@ -9,15 +9,11 @@ namespace Megame.Client
     /// / RecalculateBounds). Used to replace the blockout look: buildings,
     /// weapons and props get real silhouettes instead of scaled cubes.
     /// </summary>
-    public static class MeshBuilder
+    public class MeshBuilder
     {
         private readonly List<Vector3> _verts = new List<Vector3>();
         private readonly List<Vector2> _uvs = new List<Vector2>();
         private readonly List<int> _tris = new List<int>();
-
-        public MeshBuilder()
-        {
-        }
 
         public int VertexCount => _verts.Count;
 
