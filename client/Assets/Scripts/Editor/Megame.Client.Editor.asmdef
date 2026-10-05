@@ -1,12 +1,7 @@
 {
   "name": "Megame.Client.Editor",
   "references": [
-    "Megame.Client",
-    "Megame.Core",
-    "Megame.Controllers",
-    "Megame.Systems",
-    "Megame.UI",
-    "Megame.Vehicles"
+    "Megame.Client"
   ],
   "includePlatforms": [
     "Editor"

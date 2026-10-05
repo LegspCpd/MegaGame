@@ -8,7 +8,7 @@ using Megame.Data;
 using Megame.Vehicles;
 using Megame.Systems;
 using Megame.World;
-using Megame.Core;
+using Megame.Client;
 using Megame.Controllers;
 using Megame.UI;
 
