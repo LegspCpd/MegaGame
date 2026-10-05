@@ -357,25 +357,30 @@ jobs:
       - name: Compile installer
         shell: pwsh
         run: |
-          # ISCC resolves relative Source paths against the current working
-          # directory, so the tree is staged relative to the repo root and
-          # MegaGame.iss is invoked from there too.
-          New-Item -ItemType Directory -Force -Path 'dist\windows\publish' | Out-Null
-          Copy-Item -Path 'publish\*' -Destination 'dist\windows\publish' -Recurse -Force
+          # Pass absolute paths into the script. Relative Source: paths made ISCC
+          # depend on its working directory and it aborted with
+          # "The system cannot find the path specified." before reporting any
+          # script error.
+          $stage = Join-Path $env:GITHUB_WORKSPACE 'dist\windows\publish'
+          $out = Join-Path $env:GITHUB_WORKSPACE 'dist'
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item -Path 'publish\*' -Destination $stage -Recurse -Force
 
-          if (-not (Test-Path 'dist\windows\publish\MegaGame.exe')) {
-            Get-ChildItem -Recurse 'dist\windows\publish' | Select-Object -First 20 FullName
+          if (-not (Test-Path (Join-Path $stage 'MegaGame.exe'))) {
             throw 'Staged player is missing MegaGame.exe'
           }
-          Write-Host "Staged $((Get-ChildItem -Recurse -File 'dist\windows\publish').Count) files"
+          Write-Host "Staged $((Get-ChildItem -Recurse -File $stage).Count) files from $stage"
 
-          & 'C:\is\ISCC.exe' "/DMyAppVersion=${{ github.ref_name }}" `
+          & 'C:\is\ISCC.exe' `
+            "/DPublishDir=$stage" `
+            "/DOutputDirOverride=$out" `
+            "/DMyAppVersion=${{ github.ref_name }}" `
             'client\build\installer\MegaGame.iss'
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 
-          $setup = Get-ChildItem dist -Filter '*.exe'
+          $setup = Get-ChildItem $out -Filter '*.exe'
           if (-not $setup) { throw 'ISCC produced no installer' }
-          $setup | Select-Object Name, Length
+          $setup | Select-Object FullName, Length
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
