@@ -8,13 +8,21 @@ server/coverage.out
 client/Library/
 client/Temp/
 client/Obj/
-client/Build/
-client/Builds/
 client/Logs/
 client/UserSettings/
 client/*.csproj
 client/*.sln
 client/*.unitypackage
+# Unity's build output. Note git matches these case-insensitively on Windows,
+# so client/Build/ also matched client/build/ -- which is why the installer
+# script now lives in installer/ at the repo root instead.
+client/Build/
+client/Builds/
+# CI stages players under client/build/<target>/.
+client/build/linux/
+client/build/windows/
+client/build/publish/
+client/build/installer/
 
 # Generated protos
 server/internal/proto/*.pb.go

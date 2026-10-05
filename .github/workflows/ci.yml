@@ -375,7 +375,7 @@ jobs:
             "/DPublishDir=$stage" `
             "/DOutputDirOverride=$out" `
             "/DMyAppVersion=${{ github.ref_name }}" `
-            'client\build\installer\MegaGame.iss' 2>&1 |
+            'installer\MegaGame.iss' 2>&1 |
             Tee-Object -FilePath "$env:RUNNER_TEMP\iscc.log"
 
           if ($LASTEXITCODE -ne 0) {
@@ -386,7 +386,7 @@ jobs:
             Write-Host "--- PublishDir contents (first 10) ---"
             Get-ChildItem $stage | Select-Object -First 10 Name
             Write-Host "--- script ---"
-            Get-Content 'client\build\installer\MegaGame.iss' | Select-Object -First 40
+            Get-Content 'installer\MegaGame.iss' | Select-Object -First 40
             throw "ISCC failed with exit code $LASTEXITCODE"
           }
 
