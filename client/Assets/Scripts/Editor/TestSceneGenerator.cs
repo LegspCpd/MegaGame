@@ -8,6 +8,9 @@ using Megame.Data;
 using Megame.Vehicles;
 using Megame.Systems;
 using Megame.World;
+using Megame.Core;
+using Megame.Controllers;
+using Megame.UI;
 
 namespace Megame.Editor
 {
@@ -185,7 +188,7 @@ namespace Megame.Editor
             CreateTestRoadNetwork(roadNetworkGO);
             
             // Create traffic config
-            var config = ScriptableObject.CreateInstance<TrafficFlowSystem.TrafficFlowConfig>();
+            var config = ScriptableObject.CreateInstance<TrafficFlowConfig>();
             config.baseMaxVehicles = 30;
             config.initialSpawnCount = 15;
             AssetDatabase.CreateAsset(config, "Assets/Resources/TrafficFlowConfig.asset");

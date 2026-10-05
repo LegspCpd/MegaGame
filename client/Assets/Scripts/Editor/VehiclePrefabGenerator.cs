@@ -536,8 +536,8 @@ namespace Megame.Editor
             controller.dragCoefficient = def.dragCoefficient;
             
             // Wheel colliders
-            controller.WheelColliders = wheelColliders.ToArray();
-            controller.WheelTransforms = wheelTransforms.ToArray();
+            controller.wheelColliders = wheelColliders.ToArray();
+            controller.wheelTransforms = wheelTransforms.ToArray();
             
             // Emergency
             if (def.hasSiren)

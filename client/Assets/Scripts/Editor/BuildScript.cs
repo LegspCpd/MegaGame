@@ -76,7 +76,7 @@ namespace Megame.Client
             PlayerSettings.colorSpace = ColorSpace.Linear;
             PlayerSettings.gpuSkinning = true;
             PlayerSettings.graphicsJobs = true;
-            PlayerSettings.graphicsJobMode = GraphicsJobMode.Enabled;
+            PlayerSettings.graphicsJobMode = GraphicsJobMode.Automatic;
 
             // Scripting
             PlayerSettings.scriptingBackend = ScriptingImplementation.IL2CPP;
@@ -213,7 +213,7 @@ namespace Megame.Client
                 scenes = GetEnabledScenes(),
                 locationPathName = locationPath,
                 target = BuildTarget.StandaloneLinux64,
-                targetGroup = BuildTargetGroup.Server,
+                targetGroup = BuildTargetGroup.Standalone,
                 options = BuildOptions.None
             };
 
