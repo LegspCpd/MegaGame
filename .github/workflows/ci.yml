@@ -290,81 +290,90 @@ jobs:
       - name: Package client (${{ matrix.target.label }})
         run: ${{ matrix.target.packageCommand }}
 
-      # Windows ships as a real installer: a per-user Inno Setup package with
-      # an uninstaller, Start Menu / optional desktop shortcut and a post-install
-      # launch. ISCC is a Windows binary, so it runs under wine on this runner.
-      - name: Build Windows installer
-        if: matrix.target.label == 'windows'
-        env:
-          # One wine prefix for both the installer bootstrap and ISCC, so the
-          # files written by the first are visible to the second.
-          WINEPREFIX: /tmp/wineprefix
-          WINEDEBUG: -all
-        run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends wine64
-
-          # The Debian/Ubuntu wine packaging renamed the binary across releases
-          # (wine64 on some images, plain wine on Ubuntu 24.04), so probe for a
-          # working name instead of hard-coding one. Exit 127 here is what
-          # v1.0.195 hit.
-          WINE=""
-          for candidate in wine wine64 wine-stable wine-development; do
-            if command -v "$candidate" >/dev/null 2>&1; then
-              WINE="$candidate"
-              break
-            fi
-          done
-          if [ -z "$WINE" ]; then
-            echo "::error::No wine executable found after installing wine64"
-            exit 1
-          fi
-          echo "Using wine: $WINE"
-
-          # The /is/6/ index only lists .issig signature files, not installers, so
-          # resolve the real URL from the official download page instead. It
-          # points at the GitHub release for the current Inno Setup, so this
-          # keeps working when the version changes.
-          INNO_URL="$(curl -fsSL https://jrsoftware.org/isdl.php \
-            | grep -oE 'https://github\.com/jrsoftware/issrc/releases/download/[^"'"'"'<> ]*innosetup-[0-9.]+-x64\.exe' \
-            | head -n1)"
-          if [ -z "$INNO_URL" ]; then
-            echo "::error::Could not resolve an Inno Setup download URL"
-            exit 1
-          fi
-          echo "Using $INNO_URL"
-          curl -fsSL -o /tmp/innosetup.exe "$INNO_URL"
-          test -s /tmp/innosetup.exe || { echo "::error::downloaded file is empty"; exit 1; }
-
-          # Install into the prefix as the runner user so ISCC, run with the
-          # same WINEPREFIX, can see it.
-          mkdir -p /tmp/innosetup
-          "$WINE" /tmp/innosetup.exe /VERYSILENT /SUPPRESSMSGBOXES \
-            /NORESTART /SP- /DIR='C:\innosetup'
-          ISCC="$(ls /tmp/wineprefix/drive_c/innosetup/ISCC.exe 2>/dev/null || true)"
-          if [ -z "$ISCC" ]; then
-            echo "::error::ISCC.exe not found after installing Inno Setup"
-            ls -R /tmp/wineprefix/drive_c/innosetup || true
-            exit 1
-          fi
-          echo "Using ISCC: $ISCC"
-
-          mkdir -p dist/windows/publish
-          cp -r build/windows/. dist/windows/publish/
-
-          # ISCC resolves Source: paths relative to the script location, and the
-          # script uses ..\..\..\dist\windows\publish, so run it from client\build.
-          "$WINE" "$ISCC" /DMyAppVersion=${{ github.ref_name }} \
-            client/build/installer/MegaGame.iss
-          ls -la dist/
-
       - name: Upload ${{ matrix.target.label }} build
         uses: actions/upload-artifact@v4
         with:
           name: megame-client-${{ matrix.target.label }}
           path: |
             megame-client-${{ github.ref_name }}-${{ matrix.target.archive }}.*
+          retention-days: 7
+
+  # The Windows installer is produced on a Windows runner rather than by
+  # driving Inno Setup's compiler through wine on Linux: Ubuntu's wine64
+  # package ships no usable `wine` binary on 24.04, and a Windows installer
+  # built on Windows needs no emulation layer at all.
+  windows-installer:
+    name: Windows Installer
+    needs: unity-build
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download built Windows player
+        uses: actions/download-artifact@v4
+        with:
+          name: megame-client-windows
+          path: player
+
+      - name: Stage the player for Inno Setup
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem -Path player -Filter '*.zip' | Select-Object -First 1
+          if (-not $zip) { throw "No Windows client zip in the artifact" }
+          New-Item -ItemType Directory -Force -Path publish | Out-Null
+          Expand-Archive -Path $zip.FullName -DestinationPath publish -Force
+          # The zip is created with `zip -r ... build/windows`, so the player
+          # lands one level down; flatten it.
+          $inner = Join-Path 'publish' 'build' 'windows'
+          if (Test-Path $inner) {
+            Copy-Item -Path (Join-Path $inner '*') -Destination 'publish' -Recurse -Force
+            Remove-Item -Recurse -Force (Join-Path 'publish' 'build')
+          }
+          if (-not (Test-Path 'publish\MegaGame.exe')) {
+            throw "MegaGame.exe not found after extracting the artifact"
+          }
+          Get-ChildItem publish | Select-Object Name
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          # Resolve the current version from the official download page so the
+          # pinned URL can never go stale.
+          $page = Invoke-WebRequest -UseBasicParsing -Uri 'https://jrsoftware.org/isdl.php'
+          $m = [regex]::Match($page.Content,
+                'https://github\.com/jrsoftware/issrc/releases/download/[^"''<> ]*innosetup-[0-9.]+-x64\.exe')
+          if (-not $m.Success) { throw 'Could not resolve an Inno Setup download URL' }
+          $url = $m.Value
+          Write-Host "Using $url"
+          Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile "$env:RUNNER_TEMP\innosetup.exe"
+
+          $proc = Start-Process -FilePath "$env:RUNNER_TEMP\innosetup.exe" -Wait -PassThru -ArgumentList @(
+            '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',
+            '/DIR=C:\is')
+          if ($proc.ExitCode -ne 0) { throw "Inno Setup installer exited with $($proc.ExitCode)" }
+          if (-not (Test-Path 'C:\is\ISCC.exe')) { throw 'ISCC.exe not found after install' }
+
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          # The .iss references ..\..\..\dist\windows\publish relative to its own
+          # location (client\build\installer), so stage the tree to match.
+          New-Item -ItemType Directory -Force -Path 'dist\windows\publish' | Out-Null
+          Copy-Item -Path 'publish\*' -Destination 'dist\windows\publish' -Recurse -Force
+
+          & 'C:\is\ISCC.exe' "/DMyAppVersion=${{ github.ref_name }}" `
+            'client\build\installer\MegaGame.iss'
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
+
+          Get-ChildItem dist -Filter '*.exe' | Select-Object Name, Length
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: megame-installer
+          path: |
             dist/MegaGame-Setup-*.exe
           retention-days: 7
 
@@ -412,7 +421,7 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: [go-build, unity-build]
+    needs: [go-build, unity-build, windows-installer]
     if: always() && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
