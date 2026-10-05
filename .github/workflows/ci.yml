@@ -295,26 +295,47 @@ jobs:
       # launch. ISCC is a Windows binary, so it runs under wine on this runner.
       - name: Build Windows installer
         if: matrix.target.label == 'windows'
+        env:
+          # One wine prefix for both the installer bootstrap and ISCC, so the
+          # files written by the first are visible to the second.
+          WINEPREFIX: /tmp/wineprefix
+          WINEDEBUG: -all
         run: |
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends wine64
-          curl -fsSL -o /tmp/innosetup.exe \
-            https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe
-          sudo mkdir -p /opt/innosetup
-          sudo wine64 /tmp/innosetup.exe /VERYSILENT /SUPPRESSMSGBOXES \
-            /NORESTART /SP- /DIR="C:\\innosetup"
-          sudo chown -R "$(id -u):$(id -g)" /opt/innosetup
+
+          # Do not pin the version: jrsoftware drops older installers from the
+          # index and a pinned URL eventually 404s (curl exit 22).
+          INNO_URL="$(curl -fsSL https://files.jrsoftware.org/is/6/ \
+            | grep -oE 'innosetup-[0-9]+\.[0-9]+\.[0-9]+\.exe' \
+            | sort -Vu | tail -n1 \
+            | sed 's|^|https://files.jrsoftware.org/is/6/|')"
+          if [ -z "$INNO_URL" ]; then
+            echo "::error::Could not resolve an Inno Setup download URL"
+            exit 1
+          fi
+          echo "Using $INNO_URL"
+          curl -fsSL -o /tmp/innosetup.exe "$INNO_URL"
+
+          # Install into the prefix as the runner user so ISCC, run with the
+          # same WINEPREFIX, can see it.
+          mkdir -p /tmp/innosetup
+          wine64 /tmp/innosetup.exe /VERYSILENT /SUPPRESSMSGBOXES \
+            /NORESTART /SP- /DIR='C:\innosetup'
+          ISCC="$(ls /tmp/wineprefix/drive_c/innosetup/ISCC.exe 2>/dev/null || true)"
+          if [ -z "$ISCC" ]; then
+            echo "::error::ISCC.exe not found after installing Inno Setup"
+            ls -R /tmp/wineprefix/drive_c/innosetup || true
+            exit 1
+          fi
 
           mkdir -p dist/windows/publish
           cp -r build/windows/. dist/windows/publish/
 
-          export WINEPREFIX=/tmp/wineprefix
-          export WINEDEBUG=-all
           # ISCC resolves Source: paths relative to the script location, and the
           # script uses ..\dist\windows\publish, so run it from client\build.
-          wine64 /opt/innosetup/ISCC.exe \
-            /DMyAppVersion=${{ github.ref_name }} \
+          wine64 "$ISCC" /DMyAppVersion=${{ github.ref_name }} \
             client/build/installer/MegaGame.iss
           ls -la dist/
 
