@@ -265,7 +265,10 @@ jobs:
           projectPath: client
           targetPlatform: ${{ matrix.target.unityTarget }}
           buildMethod: Megame.Client.BuildScript.PerformClientBuild
-          customParameters: -buildVersion ${{ github.ref_name }} -outputPath /github/workspace/build/${{ matrix.target.folder }}
+          customParameters: >-
+            -buildVersion ${{ github.ref_name }}
+            -outputPath /github/workspace/build/${{ matrix.target.folder }}
+            -buildTarget ${{ matrix.target.buildTarget }}
           versioning: None
           allowDirtyBuild: true
 
@@ -287,12 +290,41 @@ jobs:
       - name: Package client (${{ matrix.target.label }})
         run: ${{ matrix.target.packageCommand }}
 
+      # Windows ships as a real installer: a per-user Inno Setup package with
+      # an uninstaller, Start Menu / optional desktop shortcut and a post-install
+      # launch. ISCC is a Windows binary, so it runs under wine on this runner.
+      - name: Build Windows installer
+        if: matrix.target.label == 'windows'
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends wine64
+          curl -fsSL -o /tmp/innosetup.exe \
+            https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe
+          sudo mkdir -p /opt/innosetup
+          sudo wine64 /tmp/innosetup.exe /VERYSILENT /SUPPRESSMSGBOXES \
+            /NORESTART /SP- /DIR="C:\\innosetup"
+          sudo chown -R "$(id -u):$(id -g)" /opt/innosetup
+
+          mkdir -p dist/windows/publish
+          cp -r build/windows/. dist/windows/publish/
+
+          export WINEPREFIX=/tmp/wineprefix
+          export WINEDEBUG=-all
+          # ISCC resolves Source: paths relative to the script location, and the
+          # script uses ..\dist\windows\publish, so run it from client\build.
+          wine64 /opt/innosetup/ISCC.exe \
+            /DMyAppVersion=${{ github.ref_name }} \
+            client/build/installer/MegaGame.iss
+          ls -la dist/
+
       - name: Upload ${{ matrix.target.label }} build
         uses: actions/upload-artifact@v4
         with:
           name: megame-client-${{ matrix.target.label }}
           path: |
             megame-client-${{ github.ref_name }}-${{ matrix.target.archive }}.*
+            dist/MegaGame-Setup-*.exe
           retention-days: 7
 
   docker-build:

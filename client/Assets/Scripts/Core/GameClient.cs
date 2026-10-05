@@ -23,7 +23,10 @@ namespace Megame.Client
     {
         [Header("Connection")]
         public string serverAddress = "localhost:50051";
-        public bool autoConnect = true;
+
+        [Tooltip("MegaGame is a single-player game. Leave this off so the client " +
+                 "never opens a socket or waits on a server that will not exist.")]
+        public bool autoConnect = false;
 
         [Header("Prefabs")]
         public GameObject playerPrefab;
@@ -95,10 +98,10 @@ namespace Megame.Client
 
         private async void Start()
         {
+            // Single-player: no socket, no retry loop, no port. The networking
+            // path only runs when explicitly enabled.
             if (!autoConnect) return;
 
-            // The server may not be up yet, or a transient failure (server
-            // restart, Wi-Fi blip) would otherwise leave us permanently offline.
             while (!_connected && enabled)
             {
                 await ConnectAsync();

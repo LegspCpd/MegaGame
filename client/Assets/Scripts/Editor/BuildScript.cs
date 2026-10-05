@@ -165,10 +165,31 @@ namespace Megame.Client
             string outputPath = GetArg("-outputPath", "build");
             string version = GetArg("-buildVersion", null);
 
-            string targetName = Environment.GetEnvironmentVariable("UNITY_BUILD_TARGET");
-            BuildTarget target = targetName == "windows"
-                ? BuildTarget.StandaloneWindows64
-                : BuildTarget.StandaloneLinux64;
+            // Prefer the explicit -buildTarget flag: unity-builder runs Unity in
+            // a container and does not forward host env vars into the Editor, so
+            // UNITY_BUILD_TARGET is not visible here even when CI sets it.
+            // -buildTarget is the documented Unity CLI switch and always wins.
+            string flagTarget = GetArg("-buildTarget", null);
+            string envTarget = Environment.GetEnvironmentVariable("UNITY_BUILD_TARGET");
+
+            string targetName = flagTarget ?? envTarget;
+            if (!string.IsNullOrEmpty(flagTarget))
+            {
+                Debug.Log($"BuildScript: using -buildTarget {flagTarget}");
+            }
+            else if (!string.IsNullOrEmpty(envTarget))
+            {
+                Debug.Log($"BuildScript: using UNITY_BUILD_TARGET {envTarget}");
+            }
+            else
+            {
+                Debug.Log("BuildScript: no build target specified, defaulting to Linux");
+            }
+
+            BuildTarget target =
+                targetName != null && targetName.ToLowerInvariant() == "windows"
+                    ? BuildTarget.StandaloneWindows64
+                    : BuildTarget.StandaloneLinux64;
 
             string exe = target == BuildTarget.StandaloneWindows64 ? "MegaGame.exe" : "MegaGame";
             Directory.CreateDirectory(outputPath);

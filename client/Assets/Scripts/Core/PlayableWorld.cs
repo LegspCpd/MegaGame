@@ -48,6 +48,7 @@ namespace Megame.Client
             var player = PlayablePlayer.Create(spawn);
             PlayableCameraRig.AttachTo(player.transform);
             PlayableHUD.Ensure();
+            PauseMenu.Ensure();
         }
 
         private static void SetupEnvironment()

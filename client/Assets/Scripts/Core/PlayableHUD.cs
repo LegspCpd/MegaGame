@@ -90,9 +90,9 @@ namespace Megame.Client
 
             // Surface the real network state instead of hiding failures.
             var client = GameClient.Instance;
-            if (client == null)
+            if (client == null || !client.autoConnect)
             {
-                GUI.Label(new Rect(r.x + 10f, r.y + 72f, 300f, 20f), "NET  offline", _label);
+                GUI.Label(new Rect(r.x + 10f, r.y + 72f, 300f, 20f), "MODE  single-player", _label);
             }
             else
             {
@@ -134,7 +134,8 @@ namespace Megame.Client
                 "Space .............. Jump\n" +
                 "Right mouse ....... Look\n" +
                 "Q / E .............. Rotate camera\n" +
-                "Scroll ............. Zoom",
+                "Scroll ............. Zoom\n" +
+                "ESC ................ Menu / Save",
                 _label);
         }
     }
