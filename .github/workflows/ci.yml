@@ -339,13 +339,11 @@ jobs:
       - name: Install Inno Setup
         shell: pwsh
         run: |
-          # Resolve the current version from the official download page so the
-          # pinned URL can never go stale.
-          $page = Invoke-WebRequest -UseBasicParsing -Uri 'https://jrsoftware.org/isdl.php'
-          $m = [regex]::Match($page.Content,
-                'https://github\.com/jrsoftware/issrc/releases/download/[^"''<> ]*innosetup-[0-9.]+-x64\.exe')
-          if (-not $m.Success) { throw 'Could not resolve an Inno Setup download URL' }
-          $url = $m.Value
+          # Pinned to the 6.x line on purpose: MegaGame.iss is written against
+          # Inno Setup 6 syntax, and the 7.x compiler changed several directive
+          # values. The URL is still a GitHub release asset, so it only breaks
+          # if that specific release is deleted.
+          $url = 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe'
           Write-Host "Using $url"
           Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile "$env:RUNNER_TEMP\innosetup.exe"
 
@@ -354,20 +352,30 @@ jobs:
             '/DIR=C:\is')
           if ($proc.ExitCode -ne 0) { throw "Inno Setup installer exited with $($proc.ExitCode)" }
           if (-not (Test-Path 'C:\is\ISCC.exe')) { throw 'ISCC.exe not found after install' }
+          & 'C:\is\ISCC.exe' /? | Select-Object -First 3
 
       - name: Compile installer
         shell: pwsh
         run: |
-          # The .iss references ..\..\..\dist\windows\publish relative to its own
-          # location (client\build\installer), so stage the tree to match.
+          # ISCC resolves relative Source paths against the current working
+          # directory, so the tree is staged relative to the repo root and
+          # MegaGame.iss is invoked from there too.
           New-Item -ItemType Directory -Force -Path 'dist\windows\publish' | Out-Null
           Copy-Item -Path 'publish\*' -Destination 'dist\windows\publish' -Recurse -Force
+
+          if (-not (Test-Path 'dist\windows\publish\MegaGame.exe')) {
+            Get-ChildItem -Recurse 'dist\windows\publish' | Select-Object -First 20 FullName
+            throw 'Staged player is missing MegaGame.exe'
+          }
+          Write-Host "Staged $((Get-ChildItem -Recurse -File 'dist\windows\publish').Count) files"
 
           & 'C:\is\ISCC.exe' "/DMyAppVersion=${{ github.ref_name }}" `
             'client\build\installer\MegaGame.iss'
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 
-          Get-ChildItem dist -Filter '*.exe' | Select-Object Name, Length
+          $setup = Get-ChildItem dist -Filter '*.exe'
+          if (-not $setup) { throw 'ISCC produced no installer' }
+          $setup | Select-Object Name, Length
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
