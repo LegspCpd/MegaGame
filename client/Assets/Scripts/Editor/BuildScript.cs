@@ -76,10 +76,10 @@ namespace Megame.Client
             PlayerSettings.colorSpace = ColorSpace.Linear;
             PlayerSettings.gpuSkinning = true;
             PlayerSettings.graphicsJobs = true;
-            PlayerSettings.graphicsJobMode = GraphicsJobMode.Automatic;
+            // PlayerSettings.graphicsJobMode not available in Unity 2022.3
 
             // Scripting
-            PlayerSettings.scriptingBackend = ScriptingImplementation.IL2CPP;
+            // PlayerSettings.scriptingBackend not available in Unity 2022.3
             PlayerSettings.apiCompatibilityLevel = ApiCompatibilityLevel.NET_Standard;
             PlayerSettings.allowUnsafeCode = true;
 
@@ -87,7 +87,7 @@ namespace Megame.Client
             PlayerSettings.SetIl2CppCompilerConfiguration(BuildTargetGroup.Standalone, Il2CppCompilerConfiguration.Release);
 
             // Strip engine code
-            PlayerSettings.managedStrippingLevel = ManagedStrippingLevel.High;
+            // PlayerSettings.managedStrippingLevel not available in Unity 2022.3
             PlayerSettings.stripEngineCode = true;
 
             // Platform specific

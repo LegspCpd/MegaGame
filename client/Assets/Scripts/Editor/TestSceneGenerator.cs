@@ -793,7 +793,7 @@ namespace Megame.Editor
                 
                 // Add police equipment
                 var equip = instance.AddComponent<PoliceEquipmentSystem>();
-                equip.ApplyLoadout(PoliceEquipmentSystem.PoliceLoadout.GetPreset("LSPD"));
+                equip.ApplyLoadout(PoliceEquipmentSystem.GetPreset("LSPD"));
                 
                 // Enable emergency lights
                 var dls = instance.GetComponent<DLSController>();
