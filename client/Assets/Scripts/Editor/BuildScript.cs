@@ -74,14 +74,13 @@ namespace Megame.Client
 
             // Graphics
             PlayerSettings.colorSpace = ColorSpace.Linear;
-            PlayerSettings.msaa = 4;
             PlayerSettings.gpuSkinning = true;
             PlayerSettings.graphicsJobs = true;
-            PlayerSettings.graphicsJobMode = GraphicsJobMode.Optimized;
+            PlayerSettings.graphicsJobMode = GraphicsJobMode.Enabled;
 
             // Scripting
             PlayerSettings.scriptingBackend = ScriptingImplementation.IL2CPP;
-            PlayerSettings.apiCompatibilityLevel = ApiCompatibilityLevel.NET_Standard_2_1;
+            PlayerSettings.apiCompatibilityLevel = ApiCompatibilityLevel.NET_Standard;
             PlayerSettings.allowUnsafeCode = true;
 
             // IL2CPP

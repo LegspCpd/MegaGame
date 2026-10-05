@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
@@ -137,7 +138,7 @@ namespace Megame.Editor
             // Lighting
             var lightGO = new GameObject("Sun");
             var light = lightGO.AddComponent<Light>();
-            light.type = LightType.Directional;
+            light.type = UnityEngine.LightType.Directional;
             light.intensity = 1.2f;
             light.color = new Color(1f, 0.95f, 0.85f);
             light.transform.rotation = Quaternion.Euler(50, -30, 0);
@@ -746,7 +747,7 @@ namespace Megame.Editor
                 lightObj.transform.LookAt(Vector3.zero);
                 
                 var light = lightObj.AddComponent<Light>();
-                light.type = LightType.Spot;
+                light.type = UnityEngine.LightType.Spot;
                 light.intensity = 50000;
                 light.range = 100;
                 light.spotAngle = 30;

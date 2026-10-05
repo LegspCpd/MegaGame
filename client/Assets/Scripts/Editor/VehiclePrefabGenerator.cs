@@ -359,7 +359,8 @@ namespace Megame.Editor
             
             // Find wheel meshes by name patterns
             var renderers = currentModelPrefab.GetComponentsInChildren<SkinnedMeshRenderer>()
-                .Concat(currentModelPrefab.GetComponentsInChildren<MeshRenderer>())
+                .Cast<Renderer>()
+                .Concat(currentModelPrefab.GetComponentsInChildren<MeshRenderer>().Cast<Renderer>())
                 .ToArray();
             
             var wheelPatterns = new[] { "wheel", "rim", "tire", "tyre", "hub" };
@@ -522,17 +523,17 @@ namespace Megame.Editor
         private void ApplyDefinitionToController(OptimizedVehicleController controller, VehicleDefinitionData def)
         {
             // Physics
-            controller.MaxTorque = def.maxTorque;
-            controller.MaxRPM = def.maxRPM;
-            controller.IdleRPM = def.idleRPM;
-            controller.GearRatios = def.gearRatios;
-            controller.FinalDriveRatio = def.finalDriveRatio;
-            controller.DriveBias = def.driveBiasFront;
-            controller.MaxSteerAngle = def.maxSteerAngle;
-            controller.BrakeForce = def.brakeForce;
-            controller.HandbrakeForce = def.handbrakeForce;
-            controller.DownforceCoefficient = def.downforceCoefficient;
-            controller.DragCoefficient = def.dragCoefficient;
+            controller.maxTorque = def.maxTorque;
+            controller.maxRPM = def.maxRPM;
+            controller.idleRPM = def.idleRPM;
+            controller.gearRatios = def.gearRatios;
+            controller.finalDriveRatio = def.finalDriveRatio;
+            controller.driveBiasFront = def.driveBiasFront;
+            controller.maxSteerAngle = def.maxSteerAngle;
+            controller.brakeForce = def.brakeForce;
+            controller.handbrakeForce = def.handbrakeForce;
+            controller.downforceCoefficient = def.downforceCoefficient;
+            controller.dragCoefficient = def.dragCoefficient;
             
             // Wheel colliders
             controller.WheelColliders = wheelColliders.ToArray();
