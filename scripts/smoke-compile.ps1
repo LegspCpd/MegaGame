@@ -35,7 +35,7 @@ $refs += Get-ChildItem 'G:\megame\client\Assets\Plugins\Grpc' -Filter *.dll | Fo
 
 # 3) response file to bypass command-line length limits
 $rspPath = Join-Path $env:TEMP 'smoke.rsp'
-$rspLines = @('-target:library', '-nostdlib+', '-noconfig', '-nowarn:0169,0649,0414,0162,0219,1701,1702')
+$rspLines = @('-target:library', '-nostdlib+', '-noconfig', '-unsafe', '-nowarn:0169,0649,0414,0162,0219,1701,1702')
 $rspLines += ($refs | ForEach-Object { '-r:"' + $_ + '"' })
 $rspLines += ($src | ForEach-Object { '"' + $_ + '"' })
 if (-not $rspPath) { throw 'rspPath is null' }
@@ -43,19 +43,25 @@ $rspLines | Set-Content -LiteralPath $rspPath -Encoding UTF8
 
 $out = & dotnet $csc "@$rspPath" 2>&1 | Out-String
 
-# 4) keep high-signal codes only (member/arg/access errors on resolved types);
-#    CS0246/CS0103 are mostly noise from missing package refs (TMPro etc.)
-$hi = 'CS1061|CS0117|CS1503|CS1502|CS1501|CS7036|CS0122|CS1929|CS1117|CS1729|CS1612|CS1955|CS8510|CS0311|CS0029|CS0266|CS0070|CS1912|CS1593|CS0104|CS0019|CS1501'
-$all = $out -split "`r?`n" | Where-Object { $_ -match 'error CS\d+' }
-$flagged = $all | Where-Object { $_ -match "error ($hi)" }
-$others = $all | Where-Object { $_ -notmatch "error ($hi)" }
+# 4) Only diagnostics in THIS repository are actionable. Errors inside the
+#    vendored package sources (InputSystem etc.) are noise that used to bury
+#    real errors, so they are counted separately and never reported as ours.
+#    Match on the 'client\Assets\' prefix: the compiler prints absolute paths for
+#    package sources and repo-relative paths for our own files.
+$repoErrors = $out -split "`r?`n" | Where-Object {
+    $_ -match 'error CS\d+' -and $_ -match '[\\/]client[\\/]Assets[\\/]'
+}
 
 $report = @()
-$report += "=== high-signal errors: $($flagged.Count) ==="
-$report += $flagged | Sort-Object -Unique
+$report += "=== repo errors: $($repoErrors.Count) ==="
+$report += ($repoErrors | Sort-Object -Unique)
 $report += ''
-$report += '=== other code histogram ==='
-$others | ForEach-Object { if ($_ -match 'error (CS\d+)') { $Matches[1] } } | Group-Object | Sort-Object Count -Descending | ForEach-Object { "$($_.Name) x$($_.Count)" }
+$report += '=== histogram (repo only) ==='
+$repoErrors | ForEach-Object { if ($_ -match 'error (CS\d+)') { $Matches[1] } } |
+    Group-Object | Sort-Object Count -Descending |
+    ForEach-Object { "$($_.Name) x$($_.Count)" }
+$report += ''
+$report += "(third-party package diagnostics suppressed)"
 $outPath = Join-Path $env:TEMP 'smoke-errors.txt'
 $report | Set-Content -LiteralPath $outPath -Encoding UTF8
-"output: $outPath  (high-signal $($flagged.Count) / total $($all.Count))"
+"output: $outPath  (repo errors $($repoErrors.Count))"

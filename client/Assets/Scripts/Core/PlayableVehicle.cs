@@ -216,7 +216,7 @@ namespace Megame.Client
             bool right = kb[Key.D].isPressed || kb[Key.RightArrow].isPressed;
 
             _throttle = up ? 1f : (down ? -1f : 0f);
-            _brake = down && _rb.velocity.dot(transform.forward) > 0.5f ? 1f : 0f;
+            _brake = down && Vector3.Dot(transform.forward) > 0.5f ? 1f : 0f;
             _steer = (left ? -1f : 0f) + (right ? 1f : 0f);
             _handbrake = kb[Key.Space].isPressed ? 1f : 0f;
         }
@@ -233,7 +233,7 @@ namespace Megame.Client
 
             // Apply steering as yaw torque. Writing transform.localRotation here
             // would compound every frame and spin the car uncontrollably.
-            float forwardSpeed = _rb.velocity.dot(transform.forward);
+            float forwardSpeed = Vector3.Dot(transform.forward);
             float grip = Mathf.Clamp01(Mathf.Abs(forwardSpeed) / 3f);
             float yawTorque = _steerAngle * 0.22f * grip;
             _rb.AddTorque(transform.up * yawTorque, ForceMode.Force);
@@ -242,7 +242,7 @@ namespace Megame.Client
         private void ApplyDrive(float dt)
         {
             Vector3 velocity = _rb.velocity;
-            float forwardSpeed = velocity.dot(transform.forward);
+            float forwardSpeed = Vector3.Dot(velocity, transform.forward);
             Vector3 planar = new Vector3(velocity.x, 0f, velocity.z);
 
             if (_brake > 0f)
@@ -293,7 +293,9 @@ namespace Megame.Client
             }
             _rb.angularVelocity = new Vector3(0f, _rb.angularVelocity.y * 0.92f, 0f);
 
-            CurrentGear = forwardSpeed < -0.5f ? -1 : (1 + Mathf.Clamp(Mathf.Abs(forwardSpeed) / 9f, 0f, 4f));
+            // Mathf.Clamp returns float; CurrentGear is int, so cast explicitly.
+            int gear = 1 + (int)Mathf.Clamp(Mathf.Abs(forwardSpeed) / 9f, 0f, 4f);
+            CurrentGear = forwardSpeed < -0.5f ? -1 : gear;
             EngineRpm = Mathf.Lerp(900f, 6800f, Mathf.Clamp01(Mathf.Abs(forwardSpeed) / MaxSpeed));
         }
 
@@ -302,7 +304,7 @@ namespace Megame.Client
             // A subtle body roll sells the weight transfer without a real
             // wheel-by-wheel raycast rig.
             float speed = _rb.velocity.magnitude;
-            float lateral = _rb.velocity.dot(transform.right);
+            float lateral = Vector3.Dot(transform.right);
             float targetRoll = Mathf.Clamp(-lateral / 20f, -1f, 1f) * BodyRoll;
             Quaternion target = Quaternion.Euler(targetRoll, 0f, 0f);
             _body.localRotation = Quaternion.Slerp(_body.localRotation, target, 6f * dt);
