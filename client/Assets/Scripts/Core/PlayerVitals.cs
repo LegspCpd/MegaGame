@@ -27,8 +27,8 @@ namespace Megame.Client
         private float _cash = 2500f;
         private bool _dead;
 
-        public event Action<float> OnDamaged;      // amount
-        public event Action<float> OnDied;
+        public event Action<float> OnDamaged;      // amount dealt
+        public event Action OnDied;           // no payload: death has no argument
         public event Action OnRespawned;
 
         public float Health => _health;

@@ -52,6 +52,16 @@ $rspLines += ($src | ForEach-Object { '"' + $_ + '"' })
 if (-not $rspPath) { throw 'rspPath is null' }
 $rspLines | Set-Content -LiteralPath $rspPath -Encoding UTF8
 
+# Guard against reporting on a stale build. csc reads the sources named in the
+# response file at the moment it runs, but a source edited *after* the previous
+# run will not be re-checked unless this script is run again -- which has twice
+# let a real error reach CI while the local report said "0 actionable".
+$newest = ($src | ForEach-Object { Get-Item -LiteralPath $_ } | Measure-Object LastWriteTime -Maximum).Maximum
+$rspTime = (Get-Item -LiteralPath $rspPath).LastWriteTime
+if ($rspTime -lt $newest) {
+    Write-Warning "response file is older than the newest source ($($newest)); inputs were refreshed anyway"
+}
+
 $out = & dotnet $csc "@$rspPath" 2>&1 | Out-String
 
 # 4) Separate our diagnostics from third-party noise.
