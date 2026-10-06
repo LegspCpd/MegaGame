@@ -143,7 +143,7 @@ namespace Megame.Client
             return Color.Lerp(new Color(1f, 0.97f, 0.90f), new Color(0.95f, 0.55f, 0.30f), d);
         }
 
-        private static Color SkyZenithAt(float hour)
+        private Color SkyZenithAt(float hour)
         {
             if (IsNightHour(hour)) return NightZenith;
             if (hour < 8f || hour > 17f)
@@ -159,7 +159,7 @@ namespace Megame.Client
             return DayZenith;
         }
 
-        private static Color SkyHorizonAt(float hour)
+        private Color SkyHorizonAt(float hour)
         {
             if (IsNightHour(hour)) return NightHorizon;
             if (hour > 16f || hour < 7.5f) return DuskHorizon;

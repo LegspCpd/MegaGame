@@ -106,6 +106,66 @@ $actionable | ForEach-Object { if ($_ -match 'error (CS\d+)') { $Matches[1] } } 
     ForEach-Object { "$($_.Name) x$($_.Count)" }
 $report += ''
 $report += '(third-party package diagnostics suppressed)'
+
+# ------------------------------------------------------------------------
+# Strict pass over the playable layer.
+#
+# The full compile above always contains declaration-phase errors (CS0246 for
+# TMPro, UnityEngine.UI, Megame.Network and friends, from the legacy files in
+# Scripts/Controllers, Scripts/Systems and Scripts/UI). Roslyn does not bind
+# method bodies in other files once a declaration error exists, so every
+# body-level error in our own code is dropped: CS0120 in DayNightCycle and
+# CS1503 in PlayableNpc both reached CI this way while this script reported
+# zero actionable errors.
+#
+# So the playable layer is compiled again on its own, against hand-written
+# stubs for the two dependencies it cannot resolve here (the Input System
+# package, which cannot compile outside Unity, and the networked GameClient,
+# which needs the generated protobuf). With no declaration errors, method
+# bodies actually get bound and real mistakes surface.
+#
+# Any error here is ours and must be fixed.
+# ------------------------------------------------------------------------
+$playable = @(
+    'CinematicPlayer', 'CinematicStarter', 'DayNightCycle', 'DialogueSystem',
+    'InteriorProps', 'MeshBuilder', 'PauseMenu', 'PlayableCameraRig',
+    'PlayableHUD', 'PlayableNpc', 'PlayablePlayer', 'PlayablePlayerInteraction',
+    'PlayableRadar', 'PlayableVehicle', 'PlayableWeapon', 'PlayableWorld',
+    'PlayerDamage', 'PlayerVitals', 'QuestSystem', 'SaveSystem', 'Staircase',
+    'StreetProps', 'SwingingDoor', 'WeaponInventory', 'WindowCut'
+)
+
+$strictSrc = @()
+foreach ($name in $playable) {
+    $p = Join-Path $repo "Core\$name.cs"
+    if (-not (Test-Path $p)) { throw "playable layer file missing: $p" }
+    $strictSrc += $p
+}
+$stub = Join-Path $PSScriptRoot '..\tools\check\InputSystemStubs.cs'
+if (-not (Test-Path $stub)) { throw "stub file missing: $stub" }
+$strictSrc += $stub
+
+$strictRsp = Join-Path $env:TEMP 'smoke-strict.rsp'
+$strictLines = @('-target:library', '-nostdlib+', '-noconfig', '-unsafe',
+    '-nowarn:0169,0649,0414,0162,0219,1701,1702')
+$strictLines += ($refs | ForEach-Object { '-r:"' + $_ + '"' })
+$strictLines += ($strictSrc | ForEach-Object { '"' + $_ + '"' })
+$strictLines | Set-Content -LiteralPath $strictRsp -Encoding UTF8
+
+$strictOut = & dotnet $csc "@$strictRsp" 2>&1 | Out-String
+$strictErrors = $strictOut -split "`r?`n" |
+    Where-Object { $_ -match 'error CS\d+' } |
+    Sort-Object -Unique
+
+$report += ''
+$report += '=== STRICT pass (playable layer, no stubs tolerated): ' +
+           "$($strictErrors.Count) error(s) ==="
+$report += $strictErrors
+if ($strictErrors.Count -gt 0) {
+    $report += 'These are real errors in our own code. Fix them before committing.'
+}
+
 $outPath = Join-Path $env:TEMP 'smoke-errors.txt'
 $report | Set-Content -LiteralPath $outPath -Encoding UTF8
-"output: $outPath  (actionable $($actionable.Count) / package noise $($knownMissing.Count))"
+"output: $outPath  (strict $($strictErrors.Count) / actionable $($actionable.Count) / package noise $($knownMissing.Count))"
+if ($strictErrors.Count -gt 0) { exit 1 }
