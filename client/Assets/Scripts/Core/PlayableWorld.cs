@@ -43,6 +43,7 @@ namespace Megame.Client
         private static void Build()
         {
             SetupEnvironment();
+            DayNightCycle.Create();
             BuildGround();
             BuildCity();
             BuildProps();
