@@ -96,7 +96,7 @@ namespace Megame.Client
             float dist = Vector3.Distance(player.transform.position, transform.position);
             if (dist > InteractRange) return;
 
-            FaceTowards(player.transform, 6f);
+            FaceTowards(player.transform.position, 6f);
 
             var kb = Keyboard.current;
             if (kb != null && kb[Key.F].wasPressedThisFrame)

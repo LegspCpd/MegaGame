@@ -12,13 +12,24 @@ $src += Get-ChildItem $repo -Recurse -Filter *.cs | ForEach-Object { $_.FullName
 if (Test-Path $protoSrc) { $src += Get-ChildItem $protoSrc -Filter *.cs | ForEach-Object { $_.FullName } }
 
 # The Input System package ships as source, not a DLL. Without its sources the
-# keyboard/mouse code in the playable layer is never type-checked, so pull the
-# package in when it is present locally.
-$isSrc = Join-Path $env:TEMP 'ispkg\package\InputSystem'
-if (Test-Path $isSrc) {
+# keyboard/mouse code in the playable layer is never type-checked. They are
+# vendored under tools/thirdparty rather than %TEMP%: the temp directory gets
+# cleaned, which silently removed them once, after which every Input System
+# file "passed" while actually being unresolvable -- and Roslyn suppresses
+# method-body errors behind declaration errors, so the type errors underneath
+# never showed up either.
+$isCandidates = @(
+    (Join-Path $PSScriptRoot '..\tools\thirdparty\inputsystem\package\InputSystem'),
+    (Join-Path $PSScriptRoot '..\tools\thirdparty\inputsystem\InputSystem')
+)
+$isSrc = $isCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+if ($isSrc) {
     $src += Get-ChildItem $isSrc -Recurse -Filter *.cs |
         Where-Object { $_.FullName -notmatch '\\(Editor|Tests)\\' } |
         ForEach-Object { $_.FullName }
+} else {
+    Write-Warning 'Input System sources missing under tools/thirdparty: input code will not be type-checked.'
 }
 
 # 2) references: net8 ref pack + Unity 6000 Managed (broken install, DLLs intact) + vendored grpc
@@ -43,19 +54,28 @@ $rspLines | Set-Content -LiteralPath $rspPath -Encoding UTF8
 
 $out = & dotnet $csc "@$rspPath" 2>&1 | Out-String
 
-# 4) Only diagnostics in THIS repository are actionable. Errors inside the
-#    vendored package sources (InputSystem etc.) are noise that used to bury
-#    real errors, so they are counted separately and never reported as ours.
+# 4) Separate our diagnostics from third-party noise.
 #
 # Do NOT filter on a path prefix. csc sometimes prints only the bare file name
 # (e.g. "MeshBuilder.cs(18,6): error CS0710") with no directory at all, so a
 # prefix match silently classified our own errors as third-party noise -- which
-# is exactly how a static-class-with-instance-members slipped through. Instead
-# exclude by the known third-party source roots, which are always absolute.
+# is exactly how a static-class-with-instance-members slipped through.
+#
+# Exclusion is by exact third-party roots instead: the vendored Input System
+# sources and the generated protobuf. Everything else, including anything under
+# client\, is ours and is reported.
+$thirdPartyRoots = @(
+    [regex]::Escape($PSScriptRoot + '\..\tools\thirdparty'),
+    [regex]::Escape($PSScriptRoot + '\..\tools\thirdparty'),
+    'tools[\\/]thirdparty',
+    'clientcheck'
+) | ForEach-Object { $_.Trim() }
+
 $repoErrors = $out -split "`r?`n" | Where-Object {
     if ($_ -notmatch 'error CS\d+') { return $false }
-    # Third-party: InputSystem package sources and generated protobuf.
-    if ($_ -match 'ispkg' -or $_ -match 'clientcheck') { return $false }
+    foreach ($root in $thirdPartyRoots) {
+        if ($_ -match $root) { return $false }
+    }
     return $true
 }
 
