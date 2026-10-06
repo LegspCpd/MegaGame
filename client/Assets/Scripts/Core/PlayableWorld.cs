@@ -46,6 +46,7 @@ namespace Megame.Client
             BuildGround();
             BuildCity();
             BuildProps();
+            StreetProps.Build(BlocksPerAxis, BlockSize, RoadWidth, new System.Random(5150));
             DialogueSystem.Create();
             QuestSystem.Create();
             BuildPedestrians();
