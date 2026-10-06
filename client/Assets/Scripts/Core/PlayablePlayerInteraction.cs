@@ -90,6 +90,9 @@ namespace Megame.Client
             _currentVehicle = vehicle;
             vehicle.SetDriving(true);
 
+            var quests = QuestSystem.Instance;
+            if (quests != null) quests.ReportDriving();
+
             _player.enabled = false;
             _player.transform.position = vehicle.transform.position + vehicle.transform.up * 0.4f;
             _player.ResetVelocity();

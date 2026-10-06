@@ -171,8 +171,29 @@ namespace Megame.Client
             var player = Object.FindObjectOfType<PlayablePlayer>();
             if (player != null)
             {
-                player.transform.position = new Vector3(data.PlayerX, data.PlayerY, data.PlayerZ);
+                // A stored position can predate world changes, so drop onto the
+                // nearest ground rather than teleporting into a wall.
+                Vector3 target = new Vector3(data.PlayerX, data.PlayerY, data.PlayerZ);
+                if (Physics.Raycast(target + Vector3.up * 50f, Vector3.down,
+                        out RaycastHit hit, 200f))
+                {
+                    target = hit.point;
+                }
+
+                var cc = player.GetComponent<CharacterController>();
+                if (cc != null) cc.enabled = false;
+                player.transform.position = target;
                 player.transform.rotation = Quaternion.Euler(0f, data.PlayerYaw, 0f);
+                if (cc != null) cc.enabled = true;
+                player.ResetVelocity();
+            }
+
+            // Restoring vitals was missing entirely, so loading a save always
+            // gave full health, no armour and the default wallet.
+            var vitals = PlayerVitals.Instance;
+            if (vitals != null)
+            {
+                vitals.Restore(data.Health, data.Armor, data.Money);
             }
 
             _status = "Loaded '" + saves[saves.Count - 1] + "'.";
@@ -191,6 +212,7 @@ namespace Megame.Client
         private static SaveData BuildSaveData(PlayablePlayer player)
         {
             var data = new SaveData { SlotName = "quicksave", Health = 100f };
+
             if (player != null)
             {
                 var p = player.transform.position;
@@ -200,6 +222,15 @@ namespace Megame.Client
                 data.PlayerYaw = player.transform.eulerAngles.y;
                 data.Stamina = player.Stamina;
             }
+
+            // Health, armour and money were previously hard-coded, so a save
+            // restored a corpse with a full bar and reset the wallet.
+            var vitals = PlayerVitals.Instance;
+            if (vitals != null)
+            {
+                vitals.Capture(out data.Health, out data.Armor, out data.Money);
+            }
+
             return data;
         }
     }

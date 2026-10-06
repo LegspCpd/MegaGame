@@ -47,6 +47,7 @@ namespace Megame.Client
             BuildCity();
             BuildProps();
             DialogueSystem.Create();
+            QuestSystem.Create();
             BuildPedestrians();
 
             var spawn = new Vector3(0f, 1.2f, -RoadWidth * 0.5f - 2f);

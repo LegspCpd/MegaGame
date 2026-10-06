@@ -155,6 +155,7 @@ namespace Megame.Client
         [DataMember] public float PlayerYaw;
 
         [DataMember] public float Health;
+        [DataMember] public float Armor;
         [DataMember] public float Stamina;
         [DataMember] public float Money = 2500f;
         [DataMember] public int WantedLevel;

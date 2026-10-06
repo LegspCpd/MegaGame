@@ -267,6 +267,9 @@ namespace Megame.Client
                 // than free damage.
                 var vitals = PlayerVitals.Instance;
                 if (vitals != null) vitals.AddCash(40f);
+
+                var quests = QuestSystem.Instance;
+                if (quests != null) quests.ReportKill();
             }
         }
 
