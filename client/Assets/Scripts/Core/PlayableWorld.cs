@@ -230,6 +230,8 @@ namespace Megame.Client
             baseTrim.transform.localScale = new Vector3(w + 0.5f, 2.2f, d + 0.5f);
             baseTrim.GetComponent<MeshRenderer>().sharedMaterial = trimMat;
 
+            BuildShopfront(root.transform, w, d, rnd);
+
             if (hasUpper)
             {
                 var roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -298,6 +300,87 @@ namespace Megame.Client
                 NewSharedMaterial(new Color(0.16f, 0.42f, 0.18f));
         }
 
+        /// <summary>
+        /// Ground-floor shopfront: a glazed front, a door, an awning and a lit
+        /// sign. Without it every building meets the street with a blank wall,
+        /// which is what makes a blockout look like a blockout.
+        /// </summary>
+        private static void BuildShopfront(Transform root, float w, float d, System.Random rnd)
+        {
+            var glassMat = NewSharedMaterial(new Color(0.16f, 0.22f, 0.26f));
+            var awningMat = NewSharedMaterial(new Color(0.42f, 0.16f, 0.16f));
+
+            // Pick the face that points at the nearest road.
+            int face = rnd.Next(4);
+            Vector3 outward;
+            Vector3 right;
+            switch (face)
+            {
+                case 0: outward = Vector3.forward; right = Vector3.right; break;
+                case 1: outward = Vector3.right; right = Vector3.back; break;
+                case 2: outward = Vector3.back; right = Vector3.left; break;
+                default: outward = Vector3.left; right = Vector3.forward; break;
+            }
+
+            float halfW = (face % 2 == 0 ? d : w) * 0.5f + 0.06f;
+            Vector3 front = outward * halfW;
+
+            // Glazed shop window split by a door.
+            float windowW = Mathf.Min(2.6f, halfW * 1.1f);
+            float doorW = 1.1f;
+
+            var window = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            window.name = "ShopWindow";
+            window.transform.SetParent(root, false);
+            window.transform.localPosition = front - right * (doorW * 0.5f + windowW * 0.5f)
+                                           + Vector3.up * 2.4f;
+            window.transform.localRotation = Quaternion.LookRotation(outward, Vector3.up);
+            window.transform.localScale = new Vector3(windowW, 2.6f, 0.08f);
+            StripCollider(window);
+            window.GetComponent<MeshRenderer>().sharedMaterial = glassMat;
+
+            var door = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            door.name = "ShopDoor";
+            door.transform.SetParent(root, false);
+            door.transform.localPosition = front + right * (doorW * 0.5f - halfW * 0.9f)
+                                         + Vector3.up * 1.9f;
+            door.transform.localRotation = Quaternion.LookRotation(outward, Vector3.up);
+            door.transform.localScale = new Vector3(doorW, 2.4f, 0.08f);
+            StripCollider(door);
+            door.GetComponent<MeshRenderer>().sharedMaterial = trimMatOrDefault();
+
+            // Awning over the front.
+            var awning = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            awning.name = "Awning";
+            awning.transform.SetParent(root, false);
+            awning.transform.localPosition = front * 1.03f + Vector3.up * 4.1f;
+            awning.transform.localRotation = Quaternion.LookRotation(outward, Vector3.up);
+            awning.transform.localScale = new Vector3(halfW * 1.7f, 0.12f, 1.5f);
+            StripCollider(awning);
+            awning.GetComponent<MeshRenderer>().sharedMaterial = awningMat;
+
+            // Lit sign board above the awning.
+            var hue = (float)rnd.NextDouble();
+            var signMat = NewMaterial(ColorFromHue(hue), emissive: true);
+
+            var sign = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            sign.name = "ShopSign";
+            sign.transform.SetParent(root, false);
+            sign.transform.localPosition = front * 1.04f + Vector3.up * 5.2f;
+            sign.transform.localRotation = Quaternion.LookRotation(outward, Vector3.up);
+            sign.transform.localScale = new Vector3(halfW * 1.5f, 1.1f, 0.16f);
+            StripCollider(sign);
+            sign.GetComponent<MeshRenderer>().sharedMaterial = signMat;
+        }
+
+        private static Material _defaultTrim;
+
+        private static Material trimMatOrDefault()
+        {
+            if (_defaultTrim != null) return _defaultTrim;
+            _defaultTrim = NewSharedMaterial(new Color(0.30f, 0.31f, 0.34f));
+            return _defaultTrim;
+        }
         /// <summary>
         /// Scatters talkable pedestrians along the pavements. They wander a
         /// little and can be spoken to with F, which exercises the branching
