@@ -200,27 +200,38 @@ namespace Megame.Client
             float inset = hasUpper ? 0.8f + 1.4f * (float)rnd.NextDouble() : 0f;
             float twist = hasUpper ? (float)(rnd.NextDouble() * 12f - 6f) : 0f;
 
-            var mb = new MeshBuilder();
-            mb.AddSetbackTower(
-                Vector3.zero,
-                w, d,
-                lowerH,
-                hasUpper ? upperH : 0.01f,
-                inset,
-                twist,
-                uvScale: Mathf.Max(1f, Mathf.Max(w, d) * 0.35f));
+                        // A building is either a solid shell you cannot enter, or a hollow
+            // shell you can walk into. Generating both for the same footprint
+            // would leave the player trapped between two layers of wall, so
+            // the solid mesh is only produced for non-enterable buildings.
+            bool enterable = w >= 7f && d >= 7f && lowerH >= 5f;
 
-            // Root sits on the ground; the mesh is built in local space so the
-            // transform stays a clean parent for roof cap and window bands.
             var root = new GameObject("Building");
             root.transform.position = new Vector3(x, 0f, z);
 
-            var body = mb.ToObject("BuildingBody", bodyMat, Vector3.zero);
-            body.transform.SetParent(root.transform, false);
+            if (enterable)
+            {
+                BuildInterior(root.transform, w, d, lowerH, rnd);
+            }
+            else
+            {
+                var mb = new MeshBuilder();
+                mb.AddSetbackTower(
+                    Vector3.zero,
+                    w, d,
+                    lowerH,
+                    hasUpper ? upperH : 0.01f,
+                    inset,
+                    twist,
+                    uvScale: Mathf.Max(1f, Mathf.Max(w, d) * 0.35f));
 
-            var col = root.AddComponent<BoxCollider>();
-            col.size = new Vector3(w, h, d);
-            col.center = new Vector3(0f, h * 0.5f, 0f);
+                var body = mb.ToObject("BuildingBody", bodyMat, Vector3.zero);
+                body.transform.SetParent(root.transform, false);
+
+                var col = root.AddComponent<BoxCollider>();
+                col.size = new Vector3(w, h, d);
+                col.center = new Vector3(0f, h * 0.5f, 0f);
+            }
 
             // Ground-floor band gives the street level some read.
             var baseTrim = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -241,8 +252,7 @@ namespace Megame.Client
                 roof.transform.localScale = new Vector3(
                     Mathf.Max(0.5f, w - inset * 2f), 0.5f, Mathf.Max(0.5f, d - inset * 2f));
                 roof.transform.localRotation = Quaternion.Euler(0f, twist, 0f);
-                StripCollider(roof);
-                roof.GetComponent<MeshRenderer>().sharedMaterial = trimMat;
+                StripCollider(roof);                roof.GetComponent<MeshRenderer>().sharedMaterial = trimMat;
             }
 
             // Emissive window bands on the lower shaft.
@@ -380,6 +390,104 @@ namespace Megame.Client
             if (_defaultTrim != null) return _defaultTrim;
             _defaultTrim = NewSharedMaterial(new Color(0.30f, 0.31f, 0.34f));
             return _defaultTrim;
+        }
+
+        /// <summary>
+        /// Turns the solid mass into a walk-in shell: four walls, a floor and a
+        /// ceiling, with a doorway punched through one wall. Walls are built as
+        /// segments around the opening rather than with a boolean cut, which
+        /// keeps the geometry plain quads.
+        /// </summary>
+        private static void BuildInterior(Transform root, float w, float d, float height,
+                                          System.Random rnd)
+        {
+            var wallMat = NewSharedMaterial(new Color(0.46f, 0.45f, 0.43f));
+            var floorMat = NewSharedMaterial(new Color(0.30f, 0.29f, 0.31f));
+
+            const float thickness = 0.35f;
+            float halfW = w * 0.5f;
+            float halfD = d * 0.5f;
+
+            int doorFace = rnd.Next(4);
+            const float doorW = 2.2f;
+            const float doorH = 2.8f;
+
+            // Built explicitly rather than through a closure: the segment maths
+            // stays readable next to the four call sites.
+            BuildWall(root, "WallZPos", wallMat, new Vector3(0f, height * 0.5f, halfD),
+                      new Vector3(w, height, thickness),
+                      doorFace == 0, doorW, doorH);
+            BuildWall(root, "WallZNeg", wallMat, new Vector3(0f, height * 0.5f, -halfD),
+                      new Vector3(w, height, thickness),
+                      doorFace == 2, doorW, doorH);
+            BuildWall(root, "WallXPos", wallMat, new Vector3(halfW, height * 0.5f, 0f),
+                      new Vector3(thickness, height, d),
+                      doorFace == 1, doorW, doorH);
+            BuildWall(root, "WallXNeg", wallMat, new Vector3(-halfW, height * 0.5f, 0f),
+                      new Vector3(thickness, height, d),
+                      doorFace == 3, doorW, doorH);
+
+            // Floor and ceiling.
+            Box(root, "InteriorFloor", floorMat,
+                new Vector3(0f, 0.06f, 0f), new Vector3(w - thickness, 0.12f, d - thickness));
+            Box(root, "InteriorCeiling", wallMat,
+                new Vector3(0f, height - 0.08f, 0f), new Vector3(w - thickness, 0.16f, d - thickness));
+
+            // Outer roof slab, so the building is closed from outside.
+            Box(root, "InteriorRoof", wallMat,
+                new Vector3(0f, height + 0.2f, 0f), new Vector3(w + 0.4f, 0.4f, d + 0.4f));
+        }
+
+        /// <summary>
+        /// One wall, built as two side segments plus a lintel when a doorway is
+        /// wanted. Avoids boolean geometry on the mesh.
+        /// </summary>
+        private static void BuildWall(Transform root, string name, Material mat,
+                                      Vector3 centre, Vector3 size,
+                                      bool hasDoor, float doorW, float doorH)
+        {
+            if (!hasDoor)
+            {
+                Box(root, name, mat, centre, size);
+                return;
+            }
+
+            bool alongX = size.x > size.z;
+            float span = alongX ? size.x : size.z;
+            float side = (span - doorW) * 0.5f;
+            float offset = doorW * 0.5f + side * 0.5f;
+
+            Vector3 left = alongX
+                ? new Vector3(centre.x - offset, centre.y, centre.z)
+                : new Vector3(centre.x, centre.y, centre.z - offset);
+            Vector3 right = alongX
+                ? new Vector3(centre.x + offset, centre.y, centre.z)
+                : new Vector3(centre.x, centre.y, centre.z + offset);
+
+            Vector3 segSize = alongX
+                ? new Vector3(side, size.y, size.z)
+                : new Vector3(size.x, size.y, side);
+
+            Box(root, name + "A", mat, left, segSize);
+            Box(root, name + "B", mat, right, segSize);
+
+            // Lintel above the opening.
+            float lintelH = size.y - doorH;
+            Vector3 lintel = new Vector3(alongX ? doorW : size.x, lintelH,
+                                         alongX ? size.z : doorW);
+            Box(root, name + "Lintel", mat,
+                new Vector3(centre.x, doorH + lintelH * 0.5f, centre.z), lintel);
+        }
+
+        private static void Box(Transform parent, string name, Material mat,
+                                Vector3 localPos, Vector3 localScale)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            go.transform.localScale = localScale;
+            go.GetComponent<MeshRenderer>().sharedMaterial = mat;
         }
         /// <summary>
         /// Scatters talkable pedestrians along the pavements. They wander a
