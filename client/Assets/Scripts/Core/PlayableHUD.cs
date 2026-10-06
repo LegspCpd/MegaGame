@@ -22,7 +22,7 @@ namespace Megame.Client
         // FindObjectOfType scans every loaded object, so resolving these on
         // each call is wasteful. Re-resolved only when the target is gone.
         private PlayablePlayer _player;
-        private PlayableWeapon _weapon;
+        private WeaponInventory _inventory;
         private PlayablePlayerInteraction _interaction;
 
         public static PlayableHUD Ensure()
@@ -35,11 +35,11 @@ namespace Megame.Client
         }
 
         /// <summary>Called by the world builder once everything exists.</summary>
-        public void Bind(PlayablePlayer player, PlayableWeapon weapon,
+        public void Bind(PlayablePlayer player, WeaponInventory inventory,
                          PlayablePlayerInteraction interaction)
         {
             _player = player;
-            _weapon = weapon;
+            _inventory = inventory;
             _interaction = interaction;
         }
 
@@ -145,8 +145,8 @@ namespace Megame.Client
 
         private void DrawWeapon(float x, float y)
         {
-            if (_weapon == null) _weapon = Object.FindObjectOfType<PlayableWeapon>();
-            var weapon = _weapon;
+            if (_inventory == null) _inventory = Object.FindObjectOfType<WeaponInventory>();
+            var weapon = _inventory != null ? _inventory.Current : null;
             if (weapon == null || !weapon.gameObject.activeInHierarchy) return;
 
             string ammo = weapon.IsReloading

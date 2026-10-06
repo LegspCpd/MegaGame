@@ -12,7 +12,7 @@ namespace Megame.Client
         public float InteractRange = 4.2f;
 
         private PlayablePlayer _player;
-        private PlayableWeapon _weapon;
+        private WeaponInventory _inventory;
         private PlayableCameraRig _rig;
         private PlayableVehicle _currentVehicle;
         private PlayableVehicle _nearbyVehicle;
@@ -20,12 +20,12 @@ namespace Megame.Client
         public string Prompt { get; private set; } = "";
 
         public static PlayablePlayerInteraction Create(
-            PlayablePlayer player, PlayableWeapon weapon, PlayableCameraRig rig)
+            PlayablePlayer player, WeaponInventory inventory, PlayableCameraRig rig)
         {
             var go = new GameObject("Interaction");
             var handler = go.AddComponent<PlayablePlayerInteraction>();
             handler._player = player;
-            handler._weapon = weapon;
+            handler._inventory = inventory;
             handler._rig = rig;
             return handler;
         }
@@ -55,9 +55,10 @@ namespace Megame.Client
                 Prompt = "";
             }
 
-            if (kb != null && kb[Key.R].wasPressedThisFrame && _weapon != null)
+            var weapon = _inventory != null ? _inventory.Current : null;
+            if (kb != null && kb[Key.R].wasPressedThisFrame && weapon != null)
             {
-                _weapon.StartReload();
+                weapon.StartReload();
             }
         }
 
@@ -94,7 +95,8 @@ namespace Megame.Client
             _player.ResetVelocity();
 
             if (_rig != null) _rig.Follow(vehicle.transform);
-            if (_weapon != null) _weapon.gameObject.SetActive(false);
+            if (_inventory != null && _inventory.Current != null)
+                _inventory.Current.gameObject.SetActive(false);
         }
 
         private void ExitVehicle()
@@ -113,7 +115,8 @@ namespace Megame.Client
             _player.ResetVelocity();
 
             if (_rig != null) _rig.Follow(_player.transform);
-            if (_weapon != null) _weapon.gameObject.SetActive(true);
+            if (_inventory != null && _inventory.Current != null)
+                _inventory.Current.gameObject.SetActive(true);
         }
 
         private Vector3 FindExitSpot()

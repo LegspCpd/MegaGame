@@ -47,12 +47,12 @@ namespace Megame.Client
             var spawn = new Vector3(0f, 1.2f, -RoadWidth * 0.5f - 2f);
             var player = PlayablePlayer.Create(spawn);
             var rig = PlayableCameraRig.AttachTo(player.transform);
-            var weapon = PlayableWeapon.Create(Camera.main, PlayableWeapon.WeaponKind.Rifle);
+            var inventory = WeaponInventory.Create(Camera.main, player.transform);
 
             var hud = PlayableHUD.Ensure();
             PauseMenu.Ensure();
-            var interaction = PlayablePlayerInteraction.Create(player, weapon, rig);
-            hud.Bind(player, weapon, interaction);
+            var interaction = PlayablePlayerInteraction.Create(player, inventory, rig);
+            hud.Bind(player, inventory, interaction);
             PlayableRadar.Create(player.transform);
         }
 
