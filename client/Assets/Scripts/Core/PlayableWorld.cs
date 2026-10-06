@@ -318,7 +318,9 @@ namespace Megame.Client
                 PlayableNpc.Create(
                     new Vector3(x, 0f, z),
                     names[i % names.Length],
-                    ColorFromHue((float)rnd.NextDouble()));
+                    ColorFromHue((float)rnd.NextDouble()),
+                    // Variance so a rifle (26 dmg) does not one-shot everyone.
+                    45f + (float)rnd.NextDouble() * 35f);
             }
         }
 

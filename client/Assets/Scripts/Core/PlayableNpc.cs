@@ -17,6 +17,9 @@ namespace Megame.Client
         public float WanderRadius = 6f;
         public float WanderSpeed = 1.1f;
 
+        [Header("Vitals")]
+        public float MaxHealth = 60f;
+
         private static readonly System.Random Rng = new System.Random(4242);
 
         private Vector3 _home;
@@ -26,7 +29,33 @@ namespace Megame.Client
         private bool _talking;
         private GUIStyle _promptStyle;
 
-        public static PlayableNpc Create(Vector3 position, string displayName, Color tint)
+        private float _health;
+        private bool _dead;
+
+        public bool IsDead => _dead;
+        public float Health01 => MaxHealth > 0f ? Mathf.Clamp01(_health / MaxHealth) : 0f;
+        public string NpcName => DisplayName;
+
+        /// <summary>Applies damage. Returns true when the shot was fatal.</summary>
+        public bool TakeDamage(float amount)
+        {
+            if (_dead || amount <= 0f) return false;
+
+            _health -= amount;
+            if (_health > 0f) return false;
+
+            _health = 0f;
+            _dead = true;
+
+            // Collapse rather than vanish, so the body stays as scenery.
+            transform.localScale = new Vector3(transform.localScale.x * 1.1f,
+                                               transform.localScale.y * 0.35f,
+                                               transform.localScale.z * 1.1f);
+            return true;
+        }
+
+        public static PlayableNpc Create(Vector3 position, string displayName, Color tint,
+                                      float maxHealth = 0f)
         {
             var go = new GameObject("NPC_" + displayName);
             go.transform.position = position;
@@ -36,7 +65,15 @@ namespace Megame.Client
             body.transform.SetParent(go.transform, false);
             body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
             body.transform.localScale = new Vector3(0.55f, 0.9f, 0.55f);
-            Object.Destroy(body.GetComponent<Collider>());
+            // The body keeps a collider: bullets need something to raycast
+            // against, and the player should not walk through a pedestrian.
+            var bodyCol = body.GetComponent<CapsuleCollider>();
+            if (bodyCol != null)
+            {
+                bodyCol.radius = 0.5f;
+                bodyCol.height = 2f;
+                bodyCol.center = Vector3.zero;
+            }
             body.GetComponent<MeshRenderer>().sharedMaterial =
                 PlayableWorld.NewMaterial(tint);
 
@@ -45,6 +82,7 @@ namespace Megame.Client
             head.transform.SetParent(go.transform, false);
             head.transform.localPosition = new Vector3(0f, 1.72f, 0f);
             head.transform.localScale = Vector3.one * 0.42f;
+            // Head collider removed to avoid a second hitbox on the same target.
             Object.Destroy(head.GetComponent<Collider>());
             head.GetComponent<MeshRenderer>().sharedMaterial =
                 PlayableWorld.NewMaterial(new Color(0.86f, 0.68f, 0.55f));
@@ -62,6 +100,8 @@ namespace Megame.Client
             npc.DisplayName = displayName;
             npc._home = position;
             npc._body = body.transform;
+            npc.MaxHealth = maxHealth > 0f ? maxHealth : npc.MaxHealth;
+            npc._health = npc.MaxHealth;
             npc.PickWanderTarget();
             return npc;
         }
@@ -76,6 +116,10 @@ namespace Megame.Client
 
         private void Update()
         {
+            // A downed NPC stops wandering, stops talking and stops being a
+            // conversation target; it just lies there.
+            if (_dead) return;
+
             var dialogue = DialogueSystem.Instance;
 
             if (_talking)

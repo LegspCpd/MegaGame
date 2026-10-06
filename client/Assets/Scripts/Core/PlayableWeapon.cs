@@ -227,6 +227,7 @@ namespace Megame.Client
             {
                 end = hit.point;
                 SpawnImpact(hit.point, hit.normal);
+                ApplyDamage(hit.collider, hit.point);
             }
 
             _tracer.SetPosition(0, _muzzle.position);
@@ -241,6 +242,33 @@ namespace Megame.Client
         }
 
         private float _tracerEndTime;
+        private int _hits;
+
+        /// <summary>How many shots have connected with a pedestrian.</summary>
+        public int Hits => _hits;
+
+        /// <summary>
+        /// Routes a hit to whatever it landed on. Currently only pedestrians
+        /// are damageable; buildings and vehicles absorb the round.
+        /// </summary>
+        private void ApplyDamage(Collider hit, Vector3 point)
+        {
+            if (hit == null) return;
+
+            var npc = hit.GetComponentInParent<PlayableNpc>();
+            if (npc == null || npc.IsDead) return;
+
+            bool killed = npc.TakeDamage(Damage);
+            _hits++;
+
+            if (killed)
+            {
+                // A small reward makes shooting people a real decision rather
+                // than free damage.
+                var vitals = PlayerVitals.Instance;
+                if (vitals != null) vitals.AddCash(40f);
+            }
+        }
 
         private float _rbSpeedFactor()
         {
