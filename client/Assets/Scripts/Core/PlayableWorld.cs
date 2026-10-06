@@ -53,6 +53,7 @@ namespace Megame.Client
             PauseMenu.Ensure();
             var interaction = PlayablePlayerInteraction.Create(player, weapon, rig);
             hud.Bind(player, weapon, interaction);
+            PlayableRadar.Create(player.transform);
         }
 
         private static void SetupEnvironment()
