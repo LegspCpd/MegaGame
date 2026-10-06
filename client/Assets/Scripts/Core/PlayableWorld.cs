@@ -213,6 +213,7 @@ namespace Megame.Client
             {
                 BuildInterior(root.transform, w, d, lowerH, rnd);
                 InteriorProps.Populate(root.transform, w, d, rnd);
+                BuildUpperFloor(root.transform, w, d, lowerH, rnd);
             }
             else
             {
@@ -280,6 +281,94 @@ namespace Megame.Client
             {
                 BuildFacadeWindows(root.transform, w, d, lowerH, rnd);
             }
+        }
+
+        /// <summary>
+        /// Adds a reachable upper storey: a slab, walls, a flight of stairs and
+        /// a light, so tall buildings are not single-storey shells with a flat
+        /// lid. Skipped when the ground floor is too low to stand up under.
+        /// </summary>
+        private static void BuildUpperFloor(Transform root, float w, float d,
+                                            float groundH, System.Random rnd)
+        {
+            if (groundH < 5.0f) return;
+
+            const float upperH = 3.0f;
+            const float thickness = 0.3f;
+
+            // Sit the loft at a normal storey height rather than against the
+            // ceiling. Pushing the slab up to groundH would need a run longer
+            // than the building is deep, and Staircase rejects anything
+            // steeper than about 45 degrees, so the flight would be skipped and
+            // the loft unreachable.
+            float floorY = Mathf.Min(3.2f, groundH - 2.4f);
+            if (floorY < 2.2f) return;
+
+            float halfW = w * 0.5f;
+            float halfD = d * 0.5f;
+
+            var slabMat = NewSharedMaterial(new Color(0.32f, 0.31f, 0.33f));
+            var wallMat = NewSharedMaterial(new Color(0.44f, 0.43f, 0.41f));
+
+            bool alongX = w >= d;
+            float run = Mathf.Min(alongX ? w : d, 5.5f);
+            float stairStart = -(alongX ? halfW : halfD) + 1.2f;
+            float stairEnd = stairStart + run;
+
+            // Floor slab, split so the stairwell stays open.
+            if (alongX)
+            {
+                Box(root, "UpperFloorA", slabMat,
+                    new Vector3((stairStart - halfW) * 0.5f, floorY, 0f),
+                    new Vector3(stairStart + halfW, 0.24f, d));
+                Box(root, "UpperFloorB", slabMat,
+                    new Vector3((stairEnd + halfW) * 0.5f, floorY, 0f),
+                    new Vector3(halfW - stairEnd, 0.24f, d));
+            }
+            else
+            {
+                Box(root, "UpperFloorA", slabMat,
+                    new Vector3(0f, floorY, (stairStart - halfD) * 0.5f),
+                    new Vector3(w, 0.24f, stairStart + halfD));
+                Box(root, "UpperFloorB", slabMat,
+                    new Vector3(0f, floorY, (stairEnd + halfD) * 0.5f),
+                    new Vector3(w, 0.24f, halfD - stairEnd));
+            }
+
+            // Upper walls.
+            Box(root, "UpperWallZPos", wallMat,
+                new Vector3(0f, floorY + upperH * 0.5f, halfD), new Vector3(w, upperH, thickness));
+            Box(root, "UpperWallZNeg", wallMat,
+                new Vector3(0f, floorY + upperH * 0.5f, -halfD), new Vector3(w, upperH, thickness));
+            Box(root, "UpperWallXPos", wallMat,
+                new Vector3(halfW, floorY + upperH * 0.5f, 0f), new Vector3(thickness, upperH, d));
+            Box(root, "UpperWallXNeg", wallMat,
+                new Vector3(-halfW, floorY + upperH * 0.5f, 0f), new Vector3(thickness, upperH, d));
+
+            // Stairs from the ground floor up through the gap.
+            Vector3 from = alongX
+                ? new Vector3(stairStart, 0.2f, 0f)
+                : new Vector3(0f, 0.2f, stairStart);
+            Vector3 to = alongX
+                ? new Vector3(stairEnd, floorY + 0.12f, 0f)
+                : new Vector3(0f, floorY + 0.12f, stairEnd);
+
+            Staircase.Build(root, from, to, 1.5f);
+
+            // Roof over the upper storey.
+            Box(root, "UpperRoof", wallMat,
+                new Vector3(0f, floorY + upperH + 0.2f, 0f),
+                new Vector3(w + 0.4f, 0.4f, d + 0.4f));
+
+            // Light for the upper storey.
+            var lampGo = new GameObject("UpperLight");
+            lampGo.transform.SetParent(root, false);
+            lampGo.transform.localPosition = new Vector3(0f, floorY + upperH - 0.5f, 0f);
+            var lamp = lampGo.AddComponent<Light>();
+            lamp.type = LightType.Point;
+            lamp.color = new Color(1f, 0.93f, 0.80f);
+            lamp.range = Mathf.Max(w, d) * 1.2f;
+            lamp.intensity = Mathf.Max(1.4f, Mathf.Max(w, d) * 0.5f);
         }
 
         /// <summary>
