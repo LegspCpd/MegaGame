@@ -55,6 +55,13 @@ namespace Megame.Client
                 cam.gameObject.AddComponent<AudioListener>();
             }
 
+            // The weapon view model sits roughly 0.3 m in front of the camera.
+            // With the default 0.3 near clip it gets sliced in half, so pull the
+            // near plane in and push the far plane out to keep depth range.
+            cam.nearClipPlane = 0.05f;
+            cam.farClipPlane = 900f;
+            cam.fieldOfView = 70f;
+
             var rig = cam.gameObject.GetComponent<PlayableCameraRig>();
             if (rig == null) rig = cam.gameObject.AddComponent<PlayableCameraRig>();
             rig.Init(target);

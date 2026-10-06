@@ -49,9 +49,10 @@ namespace Megame.Client
             var rig = PlayableCameraRig.AttachTo(player.transform);
             var weapon = PlayableWeapon.Create(Camera.main, PlayableWeapon.WeaponKind.Rifle);
 
-            PlayableHUD.Ensure();
+            var hud = PlayableHUD.Ensure();
             PauseMenu.Ensure();
-            PlayablePlayerInteraction.Create(player, weapon, rig);
+            var interaction = PlayablePlayerInteraction.Create(player, weapon, rig);
+            hud.Bind(player, weapon, interaction);
         }
 
         private static void SetupEnvironment()

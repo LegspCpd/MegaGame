@@ -91,6 +91,7 @@ namespace Megame.Client
 
             _player.enabled = false;
             _player.transform.position = vehicle.transform.position + vehicle.transform.up * 0.4f;
+            _player.ResetVelocity();
 
             if (_rig != null) _rig.Follow(vehicle.transform);
             if (_weapon != null) _weapon.gameObject.SetActive(false);
@@ -100,17 +101,58 @@ namespace Megame.Client
         {
             if (_currentVehicle == null) return;
 
-            Vector3 door = _currentVehicle.transform.position +
-                           _currentVehicle.transform.right * 2.0f + Vector3.up * 0.3f;
-
             _currentVehicle.SetDriving(false);
             _currentVehicle = null;
 
+            // Try both sides, then further out, then finally straight above.
+            // Teleporting into a wall or into the car itself would leave the
+            // player stuck inside geometry.
+            Vector3 spot = FindExitSpot();
             _player.enabled = true;
-            _player.transform.position = door;
+            _player.transform.position = spot;
+            _player.ResetVelocity();
 
             if (_rig != null) _rig.Follow(_player.transform);
             if (_weapon != null) _weapon.gameObject.SetActive(true);
+        }
+
+        private Vector3 FindExitSpot()
+        {
+            Transform car = _currentVehicle != null ? _currentVehicle.transform : null;
+            if (car == null) return _player.transform.position;
+
+            Vector3 origin = car.position + Vector3.up * 0.8f;
+            float[] offsets = { 2.2f, 3.2f, 4.4f };
+
+            foreach (float dist in offsets)
+            {
+                for (int side = 0; side < 4; side++)
+                {
+                    Vector3 dir = side switch
+                    {
+                        0 => car.right,
+                        1 => -car.right,
+                        2 => car.forward,
+                        _ => -car.forward,
+                    };
+                    Vector3 candidate = car.position + dir * dist + Vector3.up * 0.6f;
+
+                    // Reject spots inside geometry.
+                    if (Physics.CheckSphere(candidate, 0.45f, ~0,
+                            QueryTriggerInteraction.Ignore)) continue;
+
+                    // Prefer a spot with ground under it.
+                    if (Physics.Raycast(candidate + Vector3.up * 3f, Vector3.down,
+                            out RaycastHit hit, 8f))
+                    {
+                        return hit.point + Vector3.up * 0.05f;
+                    }
+                    return candidate;
+                }
+            }
+
+            // Nothing clear: drop the player on top of the car.
+            return car.position + Vector3.up * 2.2f;
         }
     }
 }

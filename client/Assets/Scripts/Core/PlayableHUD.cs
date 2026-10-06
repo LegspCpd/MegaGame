@@ -18,6 +18,13 @@ namespace Megame.Client
         private Texture2D _staminaFill;
         private float _fps;
 
+        // Cached references. OnGUI can run several times per frame and
+        // FindObjectOfType scans every loaded object, so resolving these on
+        // each call is wasteful. Re-resolved only when the target is gone.
+        private PlayablePlayer _player;
+        private PlayableWeapon _weapon;
+        private PlayablePlayerInteraction _interaction;
+
         public static PlayableHUD Ensure()
         {
             var existing = Object.FindObjectOfType<PlayableHUD>();
@@ -25,6 +32,15 @@ namespace Megame.Client
 
             var go = new GameObject("PlayableHUD");
             return go.AddComponent<PlayableHUD>();
+        }
+
+        /// <summary>Called by the world builder once everything exists.</summary>
+        public void Bind(PlayablePlayer player, PlayableWeapon weapon,
+                         PlayablePlayerInteraction interaction)
+        {
+            _player = player;
+            _weapon = weapon;
+            _interaction = interaction;
         }
 
         private void Awake()
@@ -71,7 +87,9 @@ namespace Megame.Client
         {
             EnsureStyles();
 
-            var player = Object.FindObjectOfType<PlayablePlayer>();
+            // Unity null: a destroyed object is not C# null, so re-resolve
+            if (_player == null) _player = Object.FindObjectOfType<PlayablePlayer>();
+            var player = _player;
 
             DrawTopLeft(player);
             DrawBars(player);
@@ -127,7 +145,8 @@ namespace Megame.Client
 
         private void DrawWeapon(float x, float y)
         {
-            var weapon = Object.FindObjectOfType<PlayableWeapon>();
+            if (_weapon == null) _weapon = Object.FindObjectOfType<PlayableWeapon>();
+            var weapon = _weapon;
             if (weapon == null || !weapon.gameObject.activeInHierarchy) return;
 
             string ammo = weapon.IsReloading
@@ -138,7 +157,8 @@ namespace Megame.Client
 
         private void DrawPrompt()
         {
-            var interaction = Object.FindObjectOfType<PlayablePlayerInteraction>();
+            if (_interaction == null) _interaction = Object.FindObjectOfType<PlayablePlayerInteraction>();
+            var interaction = _interaction;
             if (interaction == null || string.IsNullOrEmpty(interaction.Prompt)) return;
 
             var style = new GUIStyle(GUI.skin.label)

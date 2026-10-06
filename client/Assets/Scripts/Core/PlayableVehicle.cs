@@ -63,6 +63,14 @@ namespace Megame.Client
 
             var vehicle = go.AddComponent<PlayableVehicle>();
             vehicle.BuildVisual(bodyColor);
+
+            // The visual meshes are collider-free so they cannot fight the
+            // physics shape, but the car itself needs a body collider or it
+            // drives through buildings and the player walks straight into it.
+            var body = go.AddComponent<BoxCollider>();
+            body.size = new Vector3(1.78f, 1.15f, 4.12f);
+            body.center = new Vector3(0f, 0.60f, 0f);
+
             return vehicle;
         }
 

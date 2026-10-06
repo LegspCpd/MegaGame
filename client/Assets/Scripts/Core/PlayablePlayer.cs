@@ -78,6 +78,16 @@ namespace Megame.Client
             _cc = GetComponent<CharacterController>();
         }
 
+        /// <summary>
+        /// Zeroes the accumulated motion. Called after a teleport (entering or
+        /// leaving a car) so the controller does not carry stale velocity into
+        /// the next frame and fling the player.
+        /// </summary>
+        public void ResetVelocity()
+        {
+            Velocity = Vector3.zero;
+        }
+
         private void Update()
         {
             if (_cc == null) _cc = GetComponent<CharacterController>();
