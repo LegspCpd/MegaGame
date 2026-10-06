@@ -92,6 +92,12 @@ namespace Megame.Client
             if (_target == null) return;
             if (_camera == null) _camera = GetComponent<Camera>();
 
+            // A cinematic owns the camera while it plays. LateUpdate runs after
+            // Update, so without this the rig would overwrite every cinematic
+            // camera move on the very frame it happened.
+            if (CinematicPlayer.Instance != null && CinematicPlayer.Instance.IsPlaying)
+                return;
+
             ReadLook();
 
             var rotation = Quaternion.Euler(_pitch, _yaw, 0f);

@@ -56,6 +56,9 @@ namespace Megame.Client
             var interaction = PlayablePlayerInteraction.Create(player, inventory, rig);
             hud.Bind(player, inventory, interaction);
             PlayableRadar.Create(player.transform);
+
+            var cinematic = CinematicPlayer.Create(Camera.main, rig, player.transform);
+            CinematicStarter.Ensure(cinematic);
         }
 
         private static void SetupEnvironment()

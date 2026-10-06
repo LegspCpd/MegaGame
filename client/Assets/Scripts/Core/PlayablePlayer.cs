@@ -93,9 +93,17 @@ namespace Megame.Client
             if (_cc == null) _cc = GetComponent<CharacterController>();
             if (_cc == null) return;
 
+            // Hold still while a cinematic is playing, otherwise the player
+            // wanders off camera during the intro.
+            var cinema = CinematicPlayer.Instance;
+            if (cinema != null && cinema.IsPlaying)
+            {
+                Velocity = Vector3.zero;
+                return;
+            }
+
             float dt = Time.deltaTime;
             var kb = Keyboard.current;
-            var mouse = Mouse.current;
 
             Vector2 move = ReadMove(kb);
             bool sprintHeld = IsDown(kb, Key.LeftShift);
