@@ -43,6 +43,8 @@ namespace Megame.Client
             BuildGround();
             BuildCity();
             BuildProps();
+            DialogueSystem.Create();
+            BuildPedestrians();
 
             var spawn = new Vector3(0f, 1.2f, -RoadWidth * 0.5f - 2f);
             var player = PlayablePlayer.Create(spawn);
@@ -281,6 +283,33 @@ namespace Megame.Client
             StripCollider(crown);
             crown.GetComponent<MeshRenderer>().sharedMaterial =
                 NewMaterial(new Color(0.16f, 0.42f, 0.18f));
+        }
+
+        /// <summary>
+        /// Scatters talkable pedestrians along the pavements. They wander a
+        /// little and can be spoken to with F, which exercises the branching
+        /// dialogue system.
+        /// </summary>
+        private static void BuildPedestrians()
+        {
+            string[] names = { "Stranger", "Office Worker", "Taxi Driver", "Tourist", "Vendor" };
+            var rnd = new System.Random(1717);
+
+            for (int i = 0; i < 14; i++)
+            {
+                float x = (float)((rnd.NextDouble() - 0.5) * BlocksPerAxis * BlockSize);
+                float z = (float)((rnd.NextDouble() - 0.5) * BlocksPerAxis * BlockSize);
+
+                // Snap onto the nearest pavement so NPCs are not inside a block.
+                float offset = RoadWidth * 0.5f + 1.8f;
+                if (i % 2 == 0) x = Mathf.Round(x / (BlockSize * 0.5f)) * (BlockSize * 0.5f) + offset;
+                else z = Mathf.Round(z / (BlockSize * 0.5f)) * (BlockSize * 0.5f) + offset;
+
+                PlayableNpc.Create(
+                    new Vector3(x, 0f, z),
+                    names[i % names.Length],
+                    ColorFromHue((float)rnd.NextDouble()));
+            }
         }
 
         private static void BuildProps()
