@@ -298,14 +298,31 @@ namespace Megame.UI
                 case ShopCategory.Paint: return kit.paintTypes?.Select(p => new ModOption 
                     { name = p.name, modValue = p.typeId, priceMultiplier = p.priceMultiplier }).ToList() 
                     ?? new List<ModOption>();
-                case ShopCategory.Interior: return new List<ModOption>(); // TODO
-                case ShopCategory.Lighting: 
+                case ShopCategory.Interior:
+                    // Only the kit fields that actually exist: partition, gun
+                    // rack and laptop mount are the interior items.
+                    var interior = new List<ModOption>();
+                    if (kit.partitionOptions != null) interior.AddRange(kit.partitionOptions);
+                    if (kit.gunRackOptions != null) interior.AddRange(kit.gunRackOptions);
+                    if (kit.laptopMountOptions != null) interior.AddRange(kit.laptopMountOptions);
+                    return interior;
+                case ShopCategory.Lighting:
                     var lights = new List<ModOption>();
                     if (kit.xenonOptions != null) lights.AddRange(kit.xenonOptions);
                     if (kit.neonOptions != null) lights.AddRange(kit.neonOptions);
+                    if (kit.spotlightOptions != null) lights.AddRange(kit.spotlightOptions);
                     return lights;
                 case ShopCategory.Plates: return kit.plateStyleOptions?.ToList() ?? new List<ModOption>();
-                case ShopCategory.Emergency: return new List<ModOption>(); // TODO
+                case ShopCategory.Emergency:
+                    var emergency = new List<ModOption>();
+                    if (kit.pushBarOptions != null) emergency.AddRange(kit.pushBarOptions);
+                    if (kit.radarOptions != null) emergency.AddRange(kit.radarOptions);
+                    if (kit.spotlightOptions != null) emergency.AddRange(kit.spotlightOptions);
+                    if (kit.sirenSpeakerOptions != null) emergency.AddRange(kit.sirenSpeakerOptions);
+                    if (kit.antennaOptions != null) emergency.AddRange(kit.antennaOptions);
+                    if (kit.partitionOptions != null) emergency.AddRange(kit.partitionOptions);
+                    if (kit.gunRackOptions != null) emergency.AddRange(kit.gunRackOptions);
+                    return emergency;
                 default: return new List<ModOption>();
             }
         }

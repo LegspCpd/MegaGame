@@ -16,6 +16,7 @@ namespace Megame.Client
         private Texture2D _barFill;
         private Texture2D _staminaBg;
         private Texture2D _staminaFill;
+        private Texture2D _armorFill;
         private float _fps;
 
         // Cached references. OnGUI can run several times per frame and
@@ -24,6 +25,7 @@ namespace Megame.Client
         private PlayablePlayer _player;
         private WeaponInventory _inventory;
         private PlayablePlayerInteraction _interaction;
+        private PlayerVitals _vitals;
 
         public static PlayableHUD Ensure()
         {
@@ -36,11 +38,12 @@ namespace Megame.Client
 
         /// <summary>Called by the world builder once everything exists.</summary>
         public void Bind(PlayablePlayer player, WeaponInventory inventory,
-                         PlayablePlayerInteraction interaction)
+                         PlayablePlayerInteraction interaction, PlayerVitals vitals)
         {
             _player = player;
             _inventory = inventory;
             _interaction = interaction;
+            _vitals = vitals;
         }
 
         private void Awake()
@@ -50,6 +53,7 @@ namespace Megame.Client
             _barFill = SolidTexture(new Color(0.85f, 0.25f, 0.25f, 0.95f));
             _staminaBg = SolidTexture(new Color(0f, 0f, 0f, 0.55f));
             _staminaFill = SolidTexture(new Color(0.25f, 0.75f, 0.95f, 0.95f));
+            _armorFill = SolidTexture(new Color(0.70f, 0.75f, 0.85f, 0.90f));
         }
 
         private static Texture2D SolidTexture(Color c)
@@ -123,21 +127,41 @@ namespace Megame.Client
 
         private void DrawBars(PlayablePlayer player)
         {
-            float health = 100f;
+            if (_vitals == null) _vitals = Object.FindObjectOfType<PlayerVitals>();
+
+            float health01 = _vitals != null ? _vitals.Health01 : 1f;
+            float armor01 = _vitals != null ? _vitals.Armor01 : 0f;
             float stamina = player != null ? player.Stamina : 100f;
-            float maxStamina = player != null ? player.MaxStamina : 100f;
+            float maxStamina = player != null && player.MaxStamina > 0f ? player.MaxStamina : 100f;
+            float stamina01 = Mathf.Clamp01(stamina / maxStamina);
 
             float w = 220f, h = 18f;
             float x = Screen.width - w - 16f;
-            float y = Screen.height - 60f;
+            float y = Screen.height - 96f;
 
+            // Health
             GUI.DrawTexture(new Rect(x, y, w, h), _barBg);
-            GUI.DrawTexture(new Rect(x, y, w * (health / 100f), h), _barFill);
-            GUI.Label(new Rect(x, y - 20f, w, 18f), "HEALTH", _label);
+            GUI.DrawTexture(new Rect(x, y, w * health01, h), _barFill);
+            GUI.Label(new Rect(x, y - 20f, w, 18f),
+                _vitals != null ? $"HEALTH  {_vitals.Health:F0}" : "HEALTH", _label);
 
-            GUI.DrawTexture(new Rect(x, y + h + 4f, w, h), _staminaBg);
-            GUI.DrawTexture(new Rect(x, y + h + 4f, w * Mathf.Clamp01(stamina / maxStamina), h), _staminaFill);
-            GUI.Label(new Rect(x, y + h - 16f, w, 18f), "STAMINA", _label);
+            // Armour, drawn under health; only shown once the player has some.
+            if (armor01 > 0.001f)
+            {
+                GUI.DrawTexture(new Rect(x, y + h + 3f, w, h * 0.7f), _barBg);
+                GUI.DrawTexture(new Rect(x, y + h + 3f, w * armor01, h * 0.7f), _armorFill);
+            }
+
+            // Stamina
+            GUI.DrawTexture(new Rect(x, y + h + 22f, w, h), _staminaBg);
+            GUI.DrawTexture(new Rect(x, y + h + 22f, w * stamina01, h), _staminaFill);
+            GUI.Label(new Rect(x, y + h + 2f, w, 18f), "STAMINA", _label);
+
+            if (_vitals != null)
+            {
+                GUI.Label(new Rect(x, y + h + 44f, w, 18f),
+                    $"${_vitals.Cash:F0}", _label);
+            }
 
             DrawWeapon(x, y);
             DrawPrompt();

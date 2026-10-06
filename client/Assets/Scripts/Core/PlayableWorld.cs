@@ -17,6 +17,9 @@ namespace Megame.Client
         public const int BlocksPerAxis = 5;   // 5x5 blocks => 300x300 m
         public const float RoadWidth = 12f;
 
+        /// <summary>Where the player respawns after dying.</summary>
+        public static Vector3 SpawnPoint { get; private set; }
+
         private static bool _built;
 
         /// <summary>
@@ -50,15 +53,19 @@ namespace Megame.Client
             var player = PlayablePlayer.Create(spawn);
             var rig = PlayableCameraRig.AttachTo(player.transform);
             var inventory = WeaponInventory.Create(Camera.main, player.transform);
+            var vitals = PlayerVitals.Create(player.gameObject);
 
             var hud = PlayableHUD.Ensure();
             PauseMenu.Ensure();
             var interaction = PlayablePlayerInteraction.Create(player, inventory, rig);
-            hud.Bind(player, inventory, interaction);
+            hud.Bind(player, inventory, interaction, vitals);
             PlayableRadar.Create(player.transform);
 
             var cinematic = CinematicPlayer.Create(Camera.main, rig, player.transform);
             CinematicStarter.Ensure(cinematic);
+
+            // Spawn point used when the player dies or respawns.
+            SpawnPoint = spawn;
         }
 
         private static void SetupEnvironment()
