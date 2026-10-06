@@ -181,6 +181,34 @@ namespace Megame.Client
             _rb = GetComponent<Rigidbody>();
         }
 
+        /// <summary>
+        /// Reports a collision to the player and to whoever else is riding.
+        /// Impact speed is measured before the solver resolves the collision,
+        /// so it reflects how hard the hit actually was.
+        /// </summary>
+        private void OnCollisionEnter(Collision collision)
+        {
+            float impact = collision.relativeVelocity.magnitude;
+
+            // Being run over hurts whoever is standing there, including NPCs.
+            var npc = collision.collider != null
+                ? collision.collider.GetComponentInParent<PlayableNpc>()
+                : null;
+            if (npc != null && !npc.IsDead && impact > 4f)
+            {
+                npc.TakeDamage(impact * 6f);
+            }
+
+            // The driver only takes damage above a threshold, so kerb-height
+            // scrapes are free.
+            if (IsOccupied && PlayerDamage.Instance != null)
+            {
+                PlayerDamage.Instance.OnVehicleImpact(impact, collision.contacts.Length > 0
+                    ? collision.contacts[0].point
+                    : transform.position);
+            }
+        }
+
         /// <summary>Called by the player when entering or leaving the car.</summary>
         public void SetDriving(bool driving)
         {

@@ -54,6 +54,7 @@ namespace Megame.Client
             var rig = PlayableCameraRig.AttachTo(player.transform);
             var inventory = WeaponInventory.Create(Camera.main, player.transform);
             var vitals = PlayerVitals.Create(player.gameObject);
+            PlayerDamage.Create(player.gameObject, vitals);
 
             var hud = PlayableHUD.Ensure();
             PauseMenu.Ensure();

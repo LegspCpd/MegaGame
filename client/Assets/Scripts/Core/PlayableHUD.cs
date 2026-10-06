@@ -84,8 +84,7 @@ namespace Megame.Client
 
         private void Update()
         {
-            _fps = Mathf.Lerp(_fps, 1f / Mathf.Max(Time.deltaTime, 0.0001f), 0.1f);
-        }
+            _fps = Mathf.Lerp(_fps, 1f / Mathf.Max(Time.deltaTime, 0.0001f), 0.1f);        }
 
         private void OnGUI()
         {
