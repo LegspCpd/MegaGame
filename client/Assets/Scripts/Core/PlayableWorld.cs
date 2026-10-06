@@ -112,7 +112,7 @@ namespace Megame.Client
             }
             ground.isStatic = true;
 
-            var mat = NewMaterial(new Color(0.24f, 0.30f, 0.22f));
+            var mat = NewSharedMaterial(new Color(0.24f, 0.30f, 0.22f));
             ground.GetComponent<MeshRenderer>().sharedMaterial = mat;
 
             // Road grid, drawn as thin slabs sitting just above the ground.
@@ -130,7 +130,7 @@ namespace Megame.Client
 
         private static Material RoadMaterial()
         {
-            return NewMaterial(new Color(0.14f, 0.14f, 0.16f));
+            return NewSharedMaterial(new Color(0.14f, 0.14f, 0.16f));
         }
 
         private static GameObject MakeSlab(string name, Vector3 pos, Vector3 scale)
@@ -246,7 +246,7 @@ namespace Megame.Client
             // Emissive window bands on the lower shaft.
             if (h > 20f)
             {
-                var windowMat = NewMaterial(new Color(0.9f, 0.85f, 0.6f), true);
+                var windowMat = NewSharedMaterial(new Color(0.9f, 0.85f, 0.6f), true);
                 int floors = Mathf.Max(1, (int)(lowerH / 6f));
                 for (int f = 1; f < floors; f++)
                 {
@@ -269,7 +269,7 @@ namespace Megame.Client
             lawn.transform.localScale = new Vector3(BlockSize - RoadWidth - 6f, 0.05f, BlockSize - RoadWidth - 6f);
             StripCollider(lawn);
             lawn.GetComponent<MeshRenderer>().sharedMaterial =
-                NewMaterial(new Color(0.18f, 0.42f, 0.20f));
+                NewSharedMaterial(new Color(0.18f, 0.42f, 0.20f));
 
             int trees = rnd.Next(5, 12);
             for (int i = 0; i < trees; i++)
@@ -287,7 +287,7 @@ namespace Megame.Client
             trunk.transform.position = new Vector3(x, scale * 0.5f, z);
             trunk.transform.localScale = new Vector3(0.3f * scale, scale * 0.5f, 0.3f * scale);
             trunk.GetComponent<MeshRenderer>().sharedMaterial =
-                NewMaterial(new Color(0.30f, 0.20f, 0.12f));
+                NewSharedMaterial(new Color(0.30f, 0.20f, 0.12f));
 
             var crown = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             crown.name = "TreeCrown";
@@ -295,7 +295,7 @@ namespace Megame.Client
             crown.transform.localScale = Vector3.one * scale * 1.15f;
             StripCollider(crown);
             crown.GetComponent<MeshRenderer>().sharedMaterial =
-                NewMaterial(new Color(0.16f, 0.42f, 0.18f));
+                NewSharedMaterial(new Color(0.16f, 0.42f, 0.18f));
         }
 
         /// <summary>
@@ -396,15 +396,34 @@ namespace Megame.Client
             return Shader.Find("Unlit/Color");
         }
 
-        internal static Material NewMaterial(Color color, bool emissive = false)
+        // Buildings tint themselves per instance with a random shade, so caching
+        // them would fill the cache with one-off entries and defeat the point.
+        // Cache only exact-colour requests, which is what the road, pavement
+        // and window materials are.
+        internal static Material NewSharedMaterial(Color color, bool emissive = false)
         {
+            int key = ((int)(color.r * 255) << 24) | ((int)(color.g * 255) << 16)
+                    | ((int)(color.b * 255) << 8) | (emissive ? 1 : 0);
+
+            Material cached;
+            if (_materialCache.TryGetValue(key, out cached) && cached != null) return cached;
+
             var mat = new Material(FindUsableShader()) { color = color };
             if (emissive && mat.HasProperty("_EmissionColor"))
             {
                 mat.EnableKeyword("_EMISSION");
                 mat.SetColor("_EmissionColor", color * 1.6f);
             }
+            _materialCache[key] = mat;
             return mat;
         }
+
+        internal static Material NewMaterial(Color color, bool emissive = false)
+        {
+            return new Material(FindUsableShader()) { color = color };
+        }
+
+        private static readonly System.Collections.Generic.Dictionary<int, Material> _materialCache =
+            new System.Collections.Generic.Dictionary<int, Material>();
     }
 }

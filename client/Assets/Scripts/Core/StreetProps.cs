@@ -29,11 +29,11 @@ namespace Megame.Client
             _wood = new MeshBuilder();
             _paint = new MeshBuilder();
 
-            _curbMat = PlayableWorld.NewMaterial(new Color(0.52f, 0.52f, 0.50f));
-            _postMat = PlayableWorld.NewMaterial(new Color(0.28f, 0.29f, 0.31f));
-            _metalMat = PlayableWorld.NewMaterial(new Color(0.62f, 0.64f, 0.66f));
-            _woodMat = PlayableWorld.NewMaterial(new Color(0.42f, 0.30f, 0.18f));
-            _paintMat = PlayableWorld.NewMaterial(new Color(0.85f, 0.82f, 0.35f));
+            _curbMat = PlayableWorld.NewSharedMaterial(new Color(0.52f, 0.52f, 0.50f));
+            _postMat = PlayableWorld.NewSharedMaterial(new Color(0.28f, 0.29f, 0.31f));
+            _metalMat = PlayableWorld.NewSharedMaterial(new Color(0.62f, 0.64f, 0.66f));
+            _woodMat = PlayableWorld.NewSharedMaterial(new Color(0.42f, 0.30f, 0.18f));
+            _paintMat = PlayableWorld.NewSharedMaterial(new Color(0.85f, 0.82f, 0.35f));
 
             float half = blocksPerAxis / 2f;
             float extent = blocksPerAxis * blockSize;

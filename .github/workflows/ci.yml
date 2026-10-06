@@ -206,8 +206,11 @@ jobs:
             folder: windows
             binary: MegaGame.exe
             archive: windows-amd64
+            # Zip the contents, not the folder: the previous
+            # "zip -r ... build/windows" nested everything one level deep, so
+            # users had to drill into build\windows to find MegaGame.exe.
             packageCommand: >-
-              zip -q -r megame-client-${{ github.ref_name }}-windows-amd64.zip build/windows
+              cd build/windows && zip -q -r "$GITHUB_WORKSPACE/megame-client-${{ github.ref_name }}-windows-amd64.zip" .
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
