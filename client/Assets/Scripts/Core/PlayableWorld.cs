@@ -212,6 +212,7 @@ namespace Megame.Client
             if (enterable)
             {
                 BuildInterior(root.transform, w, d, lowerH, rnd);
+                InteriorProps.Populate(root.transform, w, d, rnd);
             }
             else
             {
