@@ -436,6 +436,29 @@ namespace Megame.Client
             // Outer roof slab, so the building is closed from outside.
             Box(root, "InteriorRoof", wallMat,
                 new Vector3(0f, height + 0.2f, 0f), new Vector3(w + 0.4f, 0.4f, d + 0.4f));
+
+            // Interior lighting. Without this the inside is pitch black: the
+            // sun only reaches through the doorway and the ceiling blocks the
+            // sky contribution.
+            var lampGo = new GameObject("InteriorLight");
+            lampGo.transform.SetParent(root, false);
+            lampGo.transform.localPosition = new Vector3(0f, height - 0.6f, 0f);
+
+            var lamp = lampGo.AddComponent<Light>();
+            lamp.type = LightType.Point;
+            lamp.color = new Color(1f, 0.94f, 0.82f);
+            lamp.range = Mathf.Max(w, d) * 1.3f;
+            lamp.intensity = Mathf.Max(1.6f, Mathf.Max(w, d) * 0.55f);
+
+            // A visible fitting so the light source is not invisible.
+            var fitting = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            fitting.name = "LampFitting";
+            fitting.transform.SetParent(lampGo.transform, false);
+            fitting.transform.localPosition = Vector3.zero;
+            fitting.transform.localScale = new Vector3(1.4f, 0.08f, 0.4f);
+            StripCollider(fitting);
+            fitting.GetComponent<MeshRenderer>().sharedMaterial =
+                NewMaterial(new Color(1f, 0.95f, 0.85f), emissive: true);
         }
 
         /// <summary>
@@ -477,6 +500,12 @@ namespace Megame.Client
                                          alongX ? size.z : doorW);
             Box(root, name + "Lintel", mat,
                 new Vector3(centre.x, doorH + lintelH * 0.5f, centre.z), lintel);
+
+            // Hang a door in the opening, hinged on one side.
+            Vector3 hinge = alongX ? Vector3.left : Vector3.back;
+            SwingingDoor.Create(root, name + "Door",
+                new Vector3(centre.x, doorH * 0.5f, centre.z),
+                doorW, doorH - 0.1f, hinge, alongX);
         }
 
         private static void Box(Transform parent, string name, Material mat,
