@@ -272,6 +272,54 @@ namespace Megame.Client
                     band.GetComponent<MeshRenderer>().sharedMaterial = windowMat;
                 }
             }
+
+            // Solid buildings get real window openings cut into their shell.
+            // Enterable ones already have walls from BuildInterior, and cutting
+            // windows into those as well would double the geometry.
+            if (!enterable && lowerH > 8f)
+            {
+                BuildFacadeWindows(root.transform, w, d, lowerH, rnd);
+            }
+        }
+
+        /// <summary>
+        /// Cuts window bands into the outer shell of a solid building so the
+        /// facade reads as storeys rather than a blank extrusion.
+        /// </summary>
+        private static void BuildFacadeWindows(Transform root, float w, float d,
+                                                float height, System.Random rnd)
+        {
+            const float thickness = 0.32f;
+            float storey = 3.4f;
+            int storeys = Mathf.FloorToInt((height - 2.2f) / storey);
+            if (storeys < 1) return;
+
+            int columns = Mathf.Max(2, Mathf.FloorToInt(Mathf.Max(w, d) / 3.2f));
+
+            // All facades merge into two meshes for the whole building.
+            WindowCut.Begin();
+
+            for (int s = 0; s < storeys; s++)
+            {
+                float y = 2.2f + s * storey + storey * 0.5f;
+
+                WindowCut.Build(new Vector3(0f, y, d * 0.5f),
+                    new Vector3(w, storey, thickness), 1.9f, 1.0f, 1.5f, columns);
+                WindowCut.Build(new Vector3(0f, y, -d * 0.5f),
+                    new Vector3(w, storey, thickness), 1.9f, 1.0f, 1.5f, columns);
+
+                // Side faces, only on wider buildings so it does not overdraw.
+                if (w > 9f)
+                {
+                    int sideCols = Mathf.Max(2, Mathf.FloorToInt(d / 3.2f));
+                    WindowCut.Build(new Vector3(w * 0.5f, y, 0f),
+                        new Vector3(thickness, storey, d), 1.9f, 1.0f, 1.5f, sideCols);
+                    WindowCut.Build(new Vector3(-w * 0.5f, y, 0f),
+                        new Vector3(thickness, storey, d), 1.9f, 1.0f, 1.5f, sideCols);
+                }
+            }
+
+            WindowCut.Flush(root);
         }
 
         private static void CreatePark(float x, float z, System.Random rnd)
